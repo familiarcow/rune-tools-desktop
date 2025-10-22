@@ -1,0 +1,68 @@
+import * as bip39 from 'bip39';
+import { DirectSecp256k1HdWallet } from '@cosmjs/proto-signing';
+import { stringToPath } from '@cosmjs/crypto';
+import { toBech32 } from '@cosmjs/encoding';
+import { WalletInfo } from '../types/wallet';
+import { NetworkService } from './networkService';
+
+export class THORWalletService {
+  private static readonly DERIVATION_PATH = "m/44'/931'/0'/0/0";
+  private networkService: NetworkService;
+
+  constructor(networkService?: NetworkService) {
+    this.networkService = networkService || new NetworkService();
+  }
+
+  private getAddressPrefix(): string {
+    return this.networkService.getNetworkConfigSync().addressPrefix;
+  }
+
+  public static async generateSeedPhrase(): Promise<string> {
+    return bip39.generateMnemonic();
+  }
+
+  public static validateSeedPhrase(mnemonic: string): boolean {
+    return bip39.validateMnemonic(mnemonic);
+  }
+
+  public async createWalletFromSeed(mnemonic: string): Promise<WalletInfo> {
+    if (!THORWalletService.validateSeedPhrase(mnemonic)) {
+      throw new Error('Invalid seed phrase');
+    }
+
+    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+      prefix: this.getAddressPrefix(),
+      hdPaths: [stringToPath(THORWalletService.DERIVATION_PATH)]
+    });
+
+    const accounts = await wallet.getAccounts();
+    const account = accounts[0];
+
+    return {
+      address: account.address,
+      publicKey: Buffer.from(account.pubkey).toString('hex'),
+      mnemonic: mnemonic
+    };
+  }
+
+  public async deriveAddress(mnemonic: string): Promise<string> {
+    const walletInfo = await this.createWalletFromSeed(mnemonic);
+    return walletInfo.address;
+  }
+
+  public setNetwork(network: 'mainnet' | 'stagenet'): void {
+    this.networkService.setNetwork(network);
+  }
+
+  public getCurrentNetwork(): string {
+    return this.networkService.getCurrentNetwork();
+  }
+
+  public async getNetworkConfig() {
+    return await this.networkService.getNetworkConfig();
+  }
+
+  public async getChainId(): Promise<string> {
+    return await this.networkService.getChainId();
+  }
+}
