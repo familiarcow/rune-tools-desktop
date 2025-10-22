@@ -30,6 +30,8 @@ function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    title: 'Rune.Tools (beta)',
+    icon: path.join(__dirname, '../../images/odin.png'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -43,7 +45,27 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(createWindow);
+// Set app name as early as possible
+app.setName('Rune.Tools (beta)');
+
+app.whenReady().then(() => {
+  // Set app name again when ready
+  app.setName('Rune.Tools (beta)');
+  
+  // Set dock icon for macOS
+  if (process.platform === 'darwin' && app.dock) {
+    // Use absolute path from project root
+    const iconPath = path.resolve(process.cwd(), 'images', 'odin.png');
+    console.log('Trying to load icon from:', iconPath);
+    try {
+      app.dock.setIcon(iconPath);
+    } catch (error) {
+      console.error('Failed to set dock icon:', error);
+    }
+  }
+  
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

@@ -1,20 +1,28 @@
 {
   "name": "rune-tools-desktop",
+  "productName": "Rune.Tools (beta)",
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc",
     "start": "npm run build && electron .",
     "dev": "tsc --watch",
+    "dist": "npm run build && electron-builder",
+    "pack": "npm run build && electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "thorchain",
+    "rune",
+    "wallet"
+  ],
+  "author": "familiarcow",
   "license": "ISC",
-  "description": "",
+  "description": "Tools for THORChain",
   "devDependencies": {
     "@types/node": "^24.9.0",
     "electron": "^38.3.0",
+    "electron-builder": "^26.0.12",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
@@ -30,5 +38,27 @@
     "protobufjs": "^7.5.4",
     "qrcode": "^1.5.4",
     "secp256k1": "^5.0.1"
+  },
+  "build": {
+    "appId": "com.familiarcow.runetools",
+    "productName": "Rune.Tools (beta)",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "images/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "icon": "images/odin.png",
+      "category": "public.app-category.finance"
+    },
+    "win": {
+      "icon": "images/odin.png"
+    },
+    "linux": {
+      "icon": "images/odin.png"
+    }
   }
 }

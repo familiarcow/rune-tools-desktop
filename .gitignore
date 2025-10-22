@@ -9,6 +9,8 @@ out/
 # Electron build artifacts
 .electron-builder/
 app-builds/
+dist-electron/
+release/
 
 # Runtime files
 *.log
