@@ -1409,6 +1409,179 @@
       font-weight: 500;
       font-size: 14px;
     }
+
+    /* Receive Transaction Popup Styles */
+    .receive-popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .receive-popup {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80%;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .receive-popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .receive-title h2 {
+      margin: 0 0 4px 0;
+      color: var(--text-primary);
+      font-size: 20px;
+    }
+
+    .receive-title p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .receive-popup-content {
+      flex: 1;
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+    }
+
+    .wallet-info-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-color);
+    }
+
+    .wallet-name {
+      color: var(--text-primary);
+      font-size: 16px;
+    }
+
+    .network-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .network-badge.mainnet {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .network-badge.stagenet {
+      background: var(--warning);
+      color: var(--bg-primary);
+    }
+
+    .qr-code-section {
+      text-align: center;
+      margin: var(--spacing-lg) 0;
+    }
+
+    .qr-code-container {
+      display: inline-block;
+      padding: var(--spacing-md);
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-code-image {
+      display: block;
+      width: 256px;
+      height: 256px;
+      border-radius: 4px;
+    }
+
+    .qr-loading, .qr-error {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 256px;
+      height: 256px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .qr-error {
+      color: var(--error);
+    }
+
+    .address-section {
+      margin: var(--spacing-lg) 0;
+    }
+
+    .address-label {
+      margin-bottom: var(--spacing-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .address-display {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+    }
+
+    .address-text {
+      flex: 1;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text-primary);
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .copy-address-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .copy-address-btn.success {
+      background: var(--success);
+      color: white;
+    }
+
+    .copy-address-btn.error {
+      background: var(--error);
+      color: white;
+    }
+
+
   </style>
 </head>
 <body>

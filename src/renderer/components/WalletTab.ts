@@ -10,6 +10,7 @@
 
 import { BackendService } from '../services/BackendService'
 import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction'
+import { ReceiveTransaction, ReceiveTransactionData } from './ReceiveTransaction'
 
 export interface WalletTabData {
     walletId: string
@@ -43,6 +44,7 @@ export class WalletTab {
     private walletData: WalletTabData | null = null
     private refreshInterval: NodeJS.Timeout | null = null
     private sendTransaction: SendTransaction | null = null
+    private receiveTransaction: ReceiveTransaction | null = null
     private collapsedSections: Set<string> = new Set() // Sections start expanded, collapse only if empty
 
     constructor(container: HTMLElement, backend: BackendService) {
@@ -679,9 +681,44 @@ export class WalletTab {
         }
     }
 
-    private showReceiveDialog(): void {
-        // TODO: Implement receive dialog with QR code
-        this.showInfo('Receive dialog coming soon...')
+    private async showReceiveDialog(): Promise<void> {
+        try {
+            console.log('📨 Opening Receive dialog')
+            
+            if (!this.walletData) {
+                this.showError('Wallet data not available')
+                return
+            }
+
+            // Use global overlay container for popup
+            const dialogContainer = document.getElementById('global-overlay-container')
+            if (!dialogContainer) {
+                console.error('Global overlay container not found')
+                return
+            }
+
+            // Initialize ReceiveTransaction component if not exists
+            if (!this.receiveTransaction) {
+                this.receiveTransaction = new ReceiveTransaction(dialogContainer)
+            }
+
+            // Prepare wallet data for receive dialog
+            const receiveWalletData: ReceiveTransactionData = {
+                walletId: this.walletData.walletId,
+                name: this.walletData.name,
+                address: this.walletData.address,
+                network: this.walletData.network
+            }
+
+            // Initialize and show the receive dialog
+            await this.receiveTransaction.initialize(receiveWalletData, () => {
+                console.log('📨 Receive dialog closed')
+            })
+
+        } catch (error) {
+            console.error('❌ Failed to show receive dialog:', error)
+            this.showError('Failed to open receive dialog: ' + (error as Error).message)
+        }
     }
 
     private async showSendDialog(): Promise<void> {
