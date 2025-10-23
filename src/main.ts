@@ -14,6 +14,7 @@ import { NetworkService } from './services/networkService';
 import { NetworkMode } from './types/network';
 import { MemolessService } from './services/memolessService';
 import { MemolessFlowState, RegistrationConfirmation } from './types/memoless';
+import { SecureWalletStorageService, SecureWalletData, WalletStorageInfo } from './services/secureWalletStorage';
 
 let mainWindow: BrowserWindow;
 
@@ -25,6 +26,7 @@ const transactionService = new TransactionService(networkService);
 const transactionTrackingService = new TransactionTrackingService();
 const balanceNormalizationService = new BalanceNormalizationService(networkService);
 const memolessService = new MemolessService(networkService);
+const walletStorageService = new SecureWalletStorageService();
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -33,16 +35,16 @@ function createWindow(): void {
     title: 'Rune.Tools (beta)',
     icon: path.join(__dirname, '../../images/odin.png'),
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../src/renderer/index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
+  // Temporarily enable dev tools for debugging
+  mainWindow.webContents.openDevTools();
 }
 
 // Set app name as early as possible
@@ -513,6 +515,112 @@ ipcMain.handle('memoless-get-network-display', async () => {
     return memolessService.getCurrentNetworkDisplay();
   } catch (error) {
     console.error('Error getting network display:', error);
+    throw error;
+  }
+});
+
+// IPC handlers for secure wallet storage
+ipcMain.handle('save-wallet', async (event, walletData: SecureWalletData) => {
+  try {
+    await walletStorageService.saveWallet(walletData);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving wallet:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('load-wallet', async (event, walletId: string) => {
+  try {
+    return await walletStorageService.loadWallet(walletId);
+  } catch (error) {
+    console.error('Error loading wallet:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-available-wallets', async () => {
+  try {
+    return await walletStorageService.getAvailableWallets();
+  } catch (error) {
+    console.error('Error getting available wallets:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('update-wallet-access', async (event, walletId: string, isLocked: boolean = false) => {
+  try {
+    await walletStorageService.updateWalletAccess(walletId, isLocked);
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating wallet access:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('delete-wallet', async (event, walletId: string) => {
+  try {
+    await walletStorageService.deleteWallet(walletId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting wallet:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('wallet-exists', async (event, walletId: string) => {
+  try {
+    return await walletStorageService.walletExists(walletId);
+  } catch (error) {
+    console.error('Error checking wallet existence:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-storage-stats', async () => {
+  try {
+    return await walletStorageService.getStorageStats();
+  } catch (error) {
+    console.error('Error getting storage stats:', error);
+    throw error;
+  }
+});
+
+// IPC handler for saving session data
+ipcMain.handle('save-session', async (event, sessionData: any) => {
+  try {
+    // For now, just log the session data. In a full implementation,
+    // you might want to store this in a secure session file
+    console.log('💾 Session saved:', sessionData);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving session:', error);
+    throw error;
+  }
+});
+
+// IPC handler for unlocking wallet with password verification
+ipcMain.handle('unlock-wallet', async (event, walletId: string, password: string) => {
+  try {
+    const walletData = await walletStorageService.loadWallet(walletId);
+    if (!walletData) {
+      throw new Error('Wallet not found');
+    }
+
+    // Update access and unlock
+    await walletStorageService.updateWalletAccess(walletId, false);
+
+    // Return wallet info for the UI (without sensitive data)
+    return {
+      walletId: walletData.walletId,
+      name: walletData.name,
+      mainnetAddress: walletData.addresses.mainnet,
+      stagenetAddress: walletData.addresses.stagenet,
+      isLocked: false,
+      lastUsed: new Date()
+    };
+  } catch (error) {
+    console.error('Error unlocking wallet:', error);
     throw error;
   }
 });

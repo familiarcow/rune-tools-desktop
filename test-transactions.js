@@ -6,7 +6,7 @@ async function testTransactions() {
     
     try {
         console.log('🔧 Testing Transaction Service...');
-        console.log('Test seed phrase:', testSeedPhrase);
+        console.log('Test seed phrase: [REDACTED FOR SECURITY]');
         
         // Create wallet
         const walletInfo = await THORWalletService.createWalletFromSeed(testSeedPhrase);

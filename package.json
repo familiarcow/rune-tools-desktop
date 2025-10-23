@@ -4,9 +4,13 @@
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && vite build && cp src/preload.js dist/preload.js",
+    "build:main": "tsc",
+    "build:renderer": "vite build",
     "start": "npm run build && electron .",
-    "dev": "tsc --watch",
+    "dev": "concurrently \"tsc --watch\" \"vite\"",
+    "dev:main": "tsc --watch",
+    "dev:renderer": "vite",
     "dist": "npm run build && electron-builder",
     "pack": "npm run build && electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,11 +24,14 @@
   "license": "ISC",
   "description": "Tools for THORChain",
   "devDependencies": {
-    "@types/node": "^24.9.0",
+    "@types/bip39": "^2.4.2",
+    "@types/node": "^24.9.1",
+    "concurrently": "^9.2.1",
     "electron": "^38.3.0",
     "electron-builder": "^26.0.12",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^7.1.11"
   },
   "dependencies": {
     "@cosmjs/amino": "^0.36.1",
@@ -35,6 +42,7 @@
     "@types/qrcode": "^1.5.5",
     "axios": "^1.12.2",
     "bip39": "^3.1.0",
+    "buffer": "^6.0.3",
     "protobufjs": "^7.5.4",
     "qrcode": "^1.5.4",
     "secp256k1": "^5.0.1"
