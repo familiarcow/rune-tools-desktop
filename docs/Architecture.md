@@ -732,17 +732,29 @@ class MemolessTab extends TabComponent {
 
 **Features**:
 - Portfolio summary with USD values
-- Three-tier asset display (THOR Native, Secured, Trade)
+- Four-tier asset display (THOR Native, Secured, Trade, Synthetic - filtered out)
 - Real-time balance updates
 - Quick actions (Send, Receive, Copy Address)
 - Network switching
 - Wallet management (Settings, Logout, Switch)
 
-**Data Sources**:
-- `GET /cosmos/bank/v1beta1/balances/{address}` - Wallet balances
+**Data Sources & Processing**:
+- `GET /cosmos/bank/v1beta1/balances/{address}` - Raw wallet balances  
+- `BalanceNormalizationService.getCombinedNormalizedBalances()` - **Our internal processing service** (primary source)
 - `GET /thorchain/trade/account/{address}` - Trade account balances
 - `GET /thorchain/pools` - Asset prices via AMM formula
-- `GET /thorchain/network` - RUNE price in USD
+- `GET /thorchain/network` - RUNE price in USD (`rune_price_in_tor/1e8`)
+
+**Asset Classification System**:
+Uses separator-based classification with first-separator-wins logic:
+- `/` separator = synthetic (deprecated) - **excluded from display**
+- `~` separator = trade asset
+- `-` separator = secured asset  
+- `.` separator = native asset
+- Single words (rune, tcy) = native asset
+
+**Complex Processing Pipeline**:
+Due to THORChain's complex asset naming and multiple data formats, the implementation includes sophisticated normalization, classification, and pricing logic. See `WalletBalances.md` for complete technical details.
 
 #### **SwapTab.js** - Asset Swapping
 **Purpose**: Provide comprehensive asset swapping functionality

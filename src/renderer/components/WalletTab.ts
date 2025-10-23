@@ -244,22 +244,42 @@ export class WalletTab {
         const processedBalances: AssetBalance[] = []
         let totalUsd = 0
 
-        // Process regular balances
-        if (balances.status === 'fulfilled' && balances.value) {
-            for (const balance of balances.value) {
-                const assetBalance = await this.createAssetBalance(balance, 'secured')
-                processedBalances.push(assetBalance)
-                totalUsd += assetBalance.usdValue
-            }
-        }
-
-        // Process normalized balances (THOR native)
+        // Use normalized balances as primary source (they're already enriched with proper formatting)
         if (normalizedBalances.status === 'fulfilled' && normalizedBalances.value) {
-            for (const balance of normalizedBalances.value) {
-                const assetBalance = await this.createAssetBalance(balance, 'thor-native')
-                processedBalances.push(assetBalance)
-                totalUsd += assetBalance.usdValue
+            console.log('🔍 Processing normalized balances (primary):', normalizedBalances.value)
+            
+            // Extract the actual balance array from the normalized response
+            const normalizedArray = normalizedBalances.value.balances || 
+                                   (Array.isArray(normalizedBalances.value) ? normalizedBalances.value : [normalizedBalances.value])
+            
+            if (Array.isArray(normalizedArray)) {
+                console.log('📊 Detailed normalized balances inspection:', normalizedArray)
+                
+                for (const balance of normalizedArray) {
+                    const assetName = this.extractAssetName(balance)
+                    const assetType = this.getAssetType(assetName)
+                    
+                    console.log('🔍 Balance classification:', {
+                        balance: balance,
+                        extractedAssetName: assetName,
+                        assetType: assetType
+                    })
+                    
+                    // Skip deprecated synthetic assets
+                    if (assetType === 'synthetic') {
+                        console.log('🚫 Skipping deprecated synthetic asset:', assetName)
+                        continue
+                    }
+                    
+                    const assetBalance = await this.createAssetBalance(balance, assetType)
+                    processedBalances.push(assetBalance)
+                    totalUsd += assetBalance.usdValue
+                }
+            } else {
+                console.warn('⚠️ Normalized balances is not an array:', typeof normalizedArray, normalizedArray)
             }
+        } else if (normalizedBalances.status === 'rejected') {
+            console.warn('⚠️ Normalized balances failed to load:', normalizedBalances.reason)
         }
 
         // Process trade account balances
@@ -277,17 +297,254 @@ export class WalletTab {
     }
 
     private async createAssetBalance(rawBalance: any, tier: AssetBalance['tier']): Promise<AssetBalance> {
-        // Mock USD conversion for now - in production this would use oracle prices
-        const mockUsdValue = parseFloat(rawBalance.amount || '0') * 1.5
-
-        return {
-            asset: rawBalance.asset || 'UNKNOWN',
-            chain: rawBalance.chain || 'THOR',
-            tier,
-            balance: rawBalance.amount || '0',
-            usdValue: mockUsdValue,
-            price: 1.5 // Mock price
+        console.log('🔧 Creating asset balance for tier:', tier, 'data:', rawBalance)
+        
+        let asset: string
+        let balance: string
+        let normalizedAmount: number = 0
+        
+        if (typeof rawBalance.asset === 'object' && rawBalance.asset !== null) {
+            // Normalized balance format with rich asset object
+            asset = this.extractAssetName(rawBalance)
+            balance = rawBalance.amountFormatted || rawBalance.amount || '0'
+            normalizedAmount = rawBalance.amountNormalized || 0
+        } else {
+            // Simple balance format
+            asset = rawBalance.asset || 'UNKNOWN'
+            balance = rawBalance.amount || '0'
+            normalizedAmount = parseFloat(balance) / 100000000 // Convert from e8 format
         }
+        
+        // Use the passed tier (determined by getAssetType)
+        const finalTier = tier
+        
+        // Normalize asset for pool lookup
+        const poolAssetId = this.normalizeAssetForPoolLookup(asset)
+        
+        // Get USD price from pools
+        const { price, usdValue } = await this.getAssetPricing(poolAssetId, normalizedAmount)
+        
+        console.log('💰 Asset pricing:', { asset, poolAssetId, normalizedAmount, price, usdValue })
+        
+        return {
+            asset,
+            chain: this.getAssetChain(asset),
+            tier: finalTier,
+            balance,
+            usdValue,
+            price
+        }
+    }
+    
+    private determineAssetTier(asset: string): AssetBalance['tier'] {
+        const assetUpper = asset.toUpperCase()
+        
+        // Native assets: rune, tcy (no separator)
+        if (assetUpper === 'RUNE' || assetUpper === 'TCY' || assetUpper.startsWith('THOR.')) {
+            return 'thor-native'
+        }
+        
+        // Trade assets: contain ~ separator (BTC~BTC, ETH~USDC-0x123)
+        if (assetUpper.includes('~')) {
+            return 'trade'
+        }
+        
+        // Secured assets: contain - separator but not ~ (BTC-BTC, ETH-USDC-0x123)
+        if (assetUpper.includes('-') && !assetUpper.includes('~')) {
+            return 'secured'
+        }
+        
+        // Default fallback
+        return 'secured'
+    }
+    
+    private normalizeAssetForPoolLookup(asset: string): string {
+        const assetUpper = asset.toUpperCase()
+        
+        // Native assets: rune -> THOR.RUNE, tcy -> THOR.TCY
+        if (assetUpper === 'RUNE') {
+            return 'THOR.RUNE'
+        }
+        if (assetUpper === 'TCY') {
+            return 'THOR.TCY'
+        }
+        
+        // Already normalized format (THOR.RUNE)
+        if (assetUpper.startsWith('THOR.')) {
+            return assetUpper
+        }
+        
+        // Secured assets: BTC-BTC -> BTC.BTC, ETH-USDC-0x123 -> ETH.USDC-0x123
+        if (assetUpper.includes('-')) {
+            return assetUpper.replace('-', '.')
+        }
+        
+        // Trade assets: BTC~BTC -> BTC.BTC, ETH~USDC-0x123 -> ETH.USDC-0x123
+        if (assetUpper.includes('~')) {
+            return assetUpper.replace('~', '.')
+        }
+        
+        return assetUpper
+    }
+    
+    private getAssetChain(asset: string): string {
+        const assetUpper = asset.toUpperCase()
+        
+        if (assetUpper === 'RUNE' || assetUpper === 'TCY' || assetUpper.startsWith('THOR.')) {
+            return 'THOR'
+        }
+        
+        // Extract chain from asset format
+        const parts = assetUpper.split(/[-~.]/);
+        return parts[0] || 'THOR'
+    }
+    
+    private async getAssetPricing(poolAssetId: string, normalizedAmount: number): Promise<{ price: number, usdValue: number }> {
+        try {
+            // Special handling for RUNE - get price from /network endpoint
+            if (poolAssetId === 'THOR.RUNE' || poolAssetId.includes('RUNE')) {
+                return await this.getRunePricing(normalizedAmount)
+            }
+            
+            // Get pools data for other assets
+            const pools = await this.backend.getPools()
+            const pool = pools.find((p: any) => p.asset.toLowerCase() === poolAssetId.toLowerCase())
+            
+            if (pool && pool.asset_price_usd) {
+                // Use asset_price_usd for USD price
+                const price = parseFloat(pool.asset_price_usd) || 0
+                const usdValue = normalizedAmount * price
+                return { price, usdValue }
+            } else {
+                console.warn('⚠️ Pool not found for asset:', poolAssetId, 'using fallback pricing')
+                // Fallback pricing based on asset type
+                let fallbackPrice = 1.0
+                if (poolAssetId.includes('BTC')) fallbackPrice = 45000
+                else if (poolAssetId.includes('ETH')) fallbackPrice = 3000
+                
+                return { price: fallbackPrice, usdValue: normalizedAmount * fallbackPrice }
+            }
+        } catch (error) {
+            console.error('❌ Failed to get asset pricing:', error)
+            // Fallback to mock pricing
+            return { price: 1.0, usdValue: normalizedAmount * 1.0 }
+        }
+    }
+    
+    private async getRunePricing(normalizedAmount: number): Promise<{ price: number, usdValue: number }> {
+        try {
+            // Get RUNE price from /network endpoint
+            const network = await this.backend.getThorchainNetwork()
+            if (network && network.rune_price_in_tor) {
+                // Convert from tor units to USD (rune_price_in_tor/1e8)
+                const price = parseFloat(network.rune_price_in_tor) / 100000000 // 1e8
+                const usdValue = normalizedAmount * price
+                console.log('💎 RUNE price from network:', { price, normalizedAmount, usdValue })
+                return { price, usdValue }
+            } else {
+                console.warn('⚠️ RUNE price not found in network data, using fallback')
+                return { price: 5.50, usdValue: normalizedAmount * 5.50 }
+            }
+        } catch (error) {
+            console.error('❌ Failed to get RUNE price from network:', error)
+            return { price: 5.50, usdValue: normalizedAmount * 5.50 }
+        }
+    }
+    
+    /**
+     * Extract asset name from balance object (handles both simple strings and complex objects)
+     */
+    private extractAssetName(balance: any): string {
+        const asset = balance.asset
+        
+        if (typeof asset === 'string') {
+            return asset
+        }
+        
+        if (typeof asset === 'object' && asset !== null) {
+            // Try different fields to get the asset identifier
+            return asset.asset || asset.identifier || asset.symbol || 'UNKNOWN'
+        }
+        
+        return 'UNKNOWN'
+    }
+    
+    /**
+     * Classify asset type based on separator patterns
+     * PRIORITY: Synthetic check first (/) overrides everything else
+     * Logic: Any asset containing '/' is synthetic regardless of other separators
+     * `/` = synthetic (deprecated) - exclude
+     * `~` = trade asset
+     * `-` = secured
+     * `.` = native
+     * No separators = native
+     */
+    private getAssetType(assetName: string): 'thor-native' | 'secured' | 'trade' | 'synthetic' {
+        if (!assetName || assetName === 'UNKNOWN') {
+            return 'secured' // default fallback
+        }
+        
+        const asset = assetName.toUpperCase()
+        
+        // PRIORITY 1: Check for synthetic assets FIRST - overrides everything
+        if (asset.includes('/')) {
+            return 'synthetic' // Deprecated - will be filtered out
+        }
+        
+        // Special case: Single word native assets (no separators)
+        if (asset === 'RUNE' || asset === 'TCY') {
+            return 'thor-native'
+        }
+        
+        // PRIORITY 2: Find first non-synthetic separator for classification
+        const separators = ['~', '-', '.']
+        let firstSeparator = null
+        let firstSeparatorIndex = asset.length
+        
+        for (const separator of separators) {
+            const index = asset.indexOf(separator)
+            if (index !== -1 && index < firstSeparatorIndex) {
+                firstSeparator = separator
+                firstSeparatorIndex = index
+            }
+        }
+        
+        // Classify based on the first non-synthetic separator found
+        if (firstSeparator === '~') {
+            return 'trade'
+        }
+        
+        if (firstSeparator === '-') {
+            return 'secured'
+        }
+        
+        if (firstSeparator === '.') {
+            return 'thor-native'
+        }
+        
+        // No separators found - single word asset
+        return 'thor-native'
+    }
+    
+    private extractAssetIdentifier(balance: any): string {
+        const asset = balance.asset
+        
+        if (typeof asset === 'object' && asset !== null) {
+            // Try to get the full asset identifier from different fields
+            // Priority: full identifier > chain/symbol combination > fallback to symbol
+            if (asset.identifier && asset.chain) {
+                return `${asset.chain}/${asset.identifier}`
+            }
+            if (asset.asset) {
+                return asset.asset
+            }
+            if (asset.chain && asset.symbol) {
+                return `${asset.chain}-${asset.symbol}`
+            }
+            return asset.symbol || asset.identifier || 'UNKNOWN'
+        }
+        
+        return asset || 'UNKNOWN'
     }
 
     private calculateTierValues(): void {

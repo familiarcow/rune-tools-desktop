@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { THORWalletService } from './services/walletService';
 import { ThorchainApiService } from './services/thorchainApiService';
 import { TransactionService } from './services/transactionService';
@@ -17,6 +18,37 @@ import { MemolessFlowState, RegistrationConfirmation } from './types/memoless';
 import { SecureWalletStorageService, SecureWalletData, WalletStorageInfo } from './services/secureWalletStorage';
 
 let mainWindow: BrowserWindow;
+
+// Password verification utilities (mirroring CryptoUtils for main process)
+async function verifyPassword(password: string, storedSalt: string, storedHash: string): Promise<boolean> {
+  const salt = Buffer.from(storedSalt, 'hex');
+  const hash = await deriveKey(password, salt);
+  const computedHash = hash.toString('hex');
+  
+  return constantTimeCompare(computedHash, storedHash);
+}
+
+async function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(password, salt, 100000, 32, 'sha256', (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
+
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  
+  return result === 0;
+}
 
 // Initialize services with network support
 const networkService = new NetworkService();
@@ -43,8 +75,14 @@ function createWindow(): void {
 
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
 
-  // Temporarily enable dev tools for debugging
-  mainWindow.webContents.openDevTools();
+  // Force dev tools open for debugging - always enabled in development
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  
+  // Also ensure dev tools open after the page loads
+  mainWindow.webContents.once('did-finish-load', () => {
+    console.log('Page loaded, ensuring dev tools are open...');
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+  });
 }
 
 // Set app name as early as possible
@@ -607,7 +645,21 @@ ipcMain.handle('unlock-wallet', async (event, walletId: string, password: string
       throw new Error('Wallet not found');
     }
 
-    // Update access and unlock
+    // CRITICAL SECURITY: Verify password before allowing access
+    const isPasswordValid = await verifyPassword(
+      password,
+      walletData.salt,
+      walletData.passwordHash
+    );
+
+    if (!isPasswordValid) {
+      console.warn('⚠️ Invalid password attempt for wallet:', walletId);
+      throw new Error('Invalid password');
+    }
+
+    console.log('✅ Password verified successfully for wallet:', walletId);
+
+    // Password is valid - update access and unlock
     await walletStorageService.updateWalletAccess(walletId, false);
 
     // Return wallet info for the UI (without sensitive data)
