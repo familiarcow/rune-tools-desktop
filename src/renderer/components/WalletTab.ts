@@ -43,6 +43,7 @@ export class WalletTab {
     private walletData: WalletTabData | null = null
     private refreshInterval: NodeJS.Timeout | null = null
     private sendTransaction: SendTransaction | null = null
+    private collapsedSections: Set<string> = new Set() // Sections start expanded, collapse only if empty
 
     constructor(container: HTMLElement, backend: BackendService) {
         this.container = container
@@ -112,7 +113,6 @@ export class WalletTab {
                         <div class="total-value">
                             <span class="value-label">Total Portfolio Value</span>
                             <span class="value-amount" id="total-usd-value">$0.00</span>
-                            <span class="value-change" id="value-change-24h">+0.00%</span>
                         </div>
                     </div>
                 </div>
@@ -125,9 +125,6 @@ export class WalletTab {
                             <h4>⚡ THOR Native Assets</h4>
                             <span class="tier-value" id="thor-native-value">$0.00</span>
                         </div>
-                        <div class="tier-description">
-                            <p>Assets native to THORChain network (RUNE, Synthetic assets)</p>
-                        </div>
                         <div class="asset-list" id="thor-native-assets">
                             <div class="loading-state">
                                 <span>🔄 Loading THOR native assets...</span>
@@ -136,13 +133,13 @@ export class WalletTab {
                     </div>
 
                     <!-- Secured Assets -->
-                    <div class="asset-tier">
-                        <div class="tier-header">
-                            <h4>🔒 Secured Assets</h4>
+                    <div class="asset-tier" id="secured-assets-tier">
+                        <div class="tier-header" data-tier="secured">
+                            <div class="tier-header-left">
+                                <button class="collapse-btn" id="secured-collapse-btn" title="Toggle secured assets">▼</button>
+                                <h4>🔒 Secured Assets</h4>
+                            </div>
                             <span class="tier-value" id="secured-value">$0.00</span>
-                        </div>
-                        <div class="tier-description">
-                            <p>Cross-chain assets secured by THORChain (BTC, ETH, etc.)</p>
                         </div>
                         <div class="asset-list" id="secured-assets">
                             <div class="loading-state">
@@ -152,13 +149,13 @@ export class WalletTab {
                     </div>
 
                     <!-- Trade Assets -->
-                    <div class="asset-tier">
-                        <div class="tier-header">
-                            <h4>💱 Trade Assets</h4>
+                    <div class="asset-tier" id="trade-assets-tier">
+                        <div class="tier-header" data-tier="trade">
+                            <div class="tier-header-left">
+                                <button class="collapse-btn" id="trade-collapse-btn" title="Toggle trade assets">▼</button>
+                                <h4>💱 Trade Assets</h4>
+                            </div>
                             <span class="tier-value" id="trade-value">$0.00</span>
-                        </div>
-                        <div class="tier-description">
-                            <p>Assets available for trading through THORChain</p>
                         </div>
                         <div class="asset-list" id="trade-assets">
                             <div class="loading-state">
@@ -178,9 +175,6 @@ export class WalletTab {
                     </span>
                 </div>
             </div>
-            
-            <!-- Send Transaction Dialog Container -->
-            <div class="send-dialog-container" id="sendDialogContainer"></div>
         `
 
         this.setupEventListeners()
@@ -208,6 +202,17 @@ export class WalletTab {
         const refreshBtn = this.container.querySelector('#refresh-balances-btn')
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.refreshData())
+        }
+
+        // Collapse buttons
+        const securedCollapseBtn = this.container.querySelector('#secured-collapse-btn')
+        if (securedCollapseBtn) {
+            securedCollapseBtn.addEventListener('click', () => this.toggleSection('secured'))
+        }
+
+        const tradeCollapseBtn = this.container.querySelector('#trade-collapse-btn')
+        if (tradeCollapseBtn) {
+            tradeCollapseBtn.addEventListener('click', () => this.toggleSection('trade'))
         }
     }
 
@@ -617,6 +622,9 @@ export class WalletTab {
         this.updateAssetList('thor-native', 'thor-native-assets')
         this.updateAssetList('secured', 'secured-assets')
         this.updateAssetList('trade', 'trade-assets')
+        
+        // Apply initial collapsed states
+        this.applyCollapsedStates()
     }
 
     private updateAssetList(tier: AssetBalance['tier'], containerId: string): void {
@@ -639,7 +647,7 @@ export class WalletTab {
         container.innerHTML = assets.map(asset => `
             <div class="asset-item">
                 <div class="asset-info">
-                    <div class="asset-symbol">${asset.asset}</div>
+                    <div class="asset-symbol">${asset.asset} - ${this.formatPrice(asset.price)}</div>
                     <div class="asset-chain">${asset.chain}</div>
                 </div>
                 <div class="asset-amounts">
@@ -685,10 +693,10 @@ export class WalletTab {
                 return
             }
 
-            // Create send dialog container if not exists
-            const dialogContainer = document.getElementById('sendDialogContainer')
+            // Use global overlay container for popup
+            const dialogContainer = document.getElementById('global-overlay-container')
             if (!dialogContainer) {
-                console.error('Send dialog container not found')
+                console.error('Global overlay container not found')
                 return
             }
 
@@ -813,5 +821,66 @@ export class WalletTab {
     private showInfo(message: string): void {
         // Create temporary info notification
         console.log('ℹ️', message)
+    }
+
+    private toggleSection(tier: 'secured' | 'trade'): void {
+        const isCollapsed = this.collapsedSections.has(tier)
+        
+        if (isCollapsed) {
+            this.collapsedSections.delete(tier)
+        } else {
+            this.collapsedSections.add(tier)
+        }
+        
+        this.updateSectionVisibility(tier)
+    }
+
+    private updateSectionVisibility(tier: 'secured' | 'trade'): void {
+        const isCollapsed = this.collapsedSections.has(tier)
+        const assetList = this.container.querySelector(`#${tier}-assets`) as HTMLElement
+        const collapseBtn = this.container.querySelector(`#${tier}-collapse-btn`) as HTMLElement
+        
+        if (assetList) {
+            assetList.style.display = isCollapsed ? 'none' : 'block'
+        }
+        
+        if (collapseBtn) {
+            collapseBtn.textContent = isCollapsed ? '▶' : '▼'
+        }
+    }
+
+    private applyCollapsedStates(): void {
+        // Check if sections should be collapsed by default (when no assets)
+        const securedAssets = this.walletData?.balances.filter(b => b.tier === 'secured') || []
+        const tradeAssets = this.walletData?.balances.filter(b => b.tier === 'trade') || []
+        
+        // Only collapse sections if they have no assets AND they're not already expanded by user
+        if (securedAssets.length === 0) {
+            this.collapsedSections.add('secured')
+        } else {
+            // If section has assets, make sure it's expanded
+            this.collapsedSections.delete('secured')
+        }
+        
+        if (tradeAssets.length === 0) {
+            this.collapsedSections.add('trade')
+        } else {
+            // If section has assets, make sure it's expanded
+            this.collapsedSections.delete('trade')
+        }
+        
+        // Apply visual states
+        this.updateSectionVisibility('secured')
+        this.updateSectionVisibility('trade')
+    }
+
+    private formatPrice(price?: number): string {
+        if (!price || price === 0) return '$0.00'
+        return price.toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })
     }
 }

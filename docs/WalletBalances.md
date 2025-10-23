@@ -2,6 +2,8 @@
 
 This document provides a complete technical breakdown of how wallet balances are fetched, processed, classified, and displayed in the THORChain desktop application.
 
+**Latest Updates**: Added collapsible asset sections, asset price display, and cleaned UI (November 2024)
+
 ---
 
 ## 🔄 **Processing Flow Overview**
@@ -298,6 +300,25 @@ private async getAssetPricing(poolAssetId: string, normalizedAmount: number): Pr
 
 ## 📱 **UI Display System**
 
+### **New UI Features (2024 Update)**
+
+**Collapsible Asset Sections**
+- Secured and Trade asset sections now have collapse/expand buttons (▼/▶)
+- Sections are collapsed by default when they contain no assets
+- Users can toggle visibility to reduce visual clutter
+- State is managed in the `collapsedSections` Set
+
+**Asset Price Display**
+- Each asset now shows its current USD price next to the name
+- Format: `THOR.RUNE - $1.05` (2 decimal places)
+- Prices are fetched from pool data and network endpoints
+- Integrated into the asset display template
+
+**Cleaned Up UI**
+- Removed description text under tier headers ("Assets native to THORChain...")
+- Removed percentage change display from portfolio summary
+- More focused, streamlined interface
+
 ### **Portfolio Tier Calculation: `calculateTierValues()`** (`WalletTab.ts:538-562`)
 
 ```typescript
@@ -329,10 +350,11 @@ private updateAssetList(tier: AssetBalance['tier'], containerId: string): void {
         return
     }
     
+    // NEW: Asset display now includes price in the asset name
     container.innerHTML = assets.map(asset => `
         <div class="asset-item">
             <div class="asset-info">
-                <div class="asset-symbol">${asset.asset}</div>
+                <div class="asset-symbol">${asset.asset} - ${this.formatPrice(asset.price)}</div>
                 <div class="asset-chain">${asset.chain}</div>
             </div>
             <div class="asset-amounts">
@@ -357,7 +379,7 @@ export interface AssetBalance {
     tier: 'thor-native' | 'secured' | 'trade'      // Classification tier
     balance: string                                  // Formatted balance amount
     usdValue: number                                // USD equivalent value
-    price?: number                                  // Price per unit in USD
+    price?: number                                  // Price per unit in USD (NEW: displayed in UI)
 }
 
 export interface PortfolioSummary {
@@ -365,7 +387,23 @@ export interface PortfolioSummary {
     thorNativeValue: number    // THOR native assets USD value
     securedValue: number       // Secured assets USD value  
     tradeValue: number        // Trade assets USD value
-    change24h?: number        // 24h change percentage (future)
+    change24h?: number        // 24h change percentage (removed from UI)
+}
+
+// NEW: Collapse state management
+export class WalletTab {
+    private collapsedSections: Set<string> = new Set(['secured', 'trade']) // Default collapsed
+    
+    // NEW: Formatting methods
+    private formatPrice(price?: number): string {
+        if (!price || price === 0) return '$0.00'
+        return price.toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })
+    }
 }
 ```
 
@@ -551,3 +589,77 @@ The wallet balance processing system handles the complexity of THORChain's diver
 This architecture successfully transforms raw THORChain data into a clean, categorized portfolio display while filtering out problematic assets and handling the complexity of multi-network, multi-asset-type scenarios.
 
 The implementation is more complex than originally anticipated in the Architecture specification, but this complexity is necessary to handle the real-world intricacies of THORChain's asset ecosystem and provide users with accurate, reliable balance information.
+
+### **Recent UI Enhancements**
+
+**Collapsible Sections Implementation**
+```typescript
+// Toggle section visibility
+private toggleSection(tier: 'secured' | 'trade'): void {
+    const isCollapsed = this.collapsedSections.has(tier)
+    
+    if (isCollapsed) {
+        this.collapsedSections.delete(tier)
+    } else {
+        this.collapsedSections.add(tier)
+    }
+    
+    this.updateSectionVisibility(tier)
+}
+
+// Apply visual states with auto-collapse for empty sections
+private applyCollapsedStates(): void {
+    const securedAssets = this.walletData?.balances.filter(b => b.tier === 'secured') || []
+    const tradeAssets = this.walletData?.balances.filter(b => b.tier === 'trade') || []
+    
+    // Auto-collapse empty sections
+    if (securedAssets.length === 0) this.collapsedSections.add('secured')
+    if (tradeAssets.length === 0) this.collapsedSections.add('trade')
+    
+    this.updateSectionVisibility('secured')
+    this.updateSectionVisibility('trade')
+}
+```
+
+**HTML Structure Updates**
+```html
+<!-- NEW: Collapsible header structure -->
+<div class="tier-header" data-tier="secured">
+    <div class="tier-header-left">
+        <button class="collapse-btn" id="secured-collapse-btn" title="Toggle secured assets">▼</button>
+        <h4>🔒 Secured Assets</h4>
+    </div>
+    <span class="tier-value" id="secured-value">$0.00</span>
+</div>
+```
+
+**CSS Additions**
+```css
+.tier-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.collapse-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.collapse-btn:hover {
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+```
+
+These enhancements improve the user experience by:
+1. **Reducing visual clutter** - Empty sections are collapsed by default
+2. **Providing price context** - Users can quickly see current asset values
+3. **Enabling customization** - Users control which sections they want to see
+4. **Maintaining clean design** - Removed redundant text and percentage displays

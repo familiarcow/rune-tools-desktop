@@ -119,6 +119,30 @@ export class SendConfirmation {
 
     this.container.innerHTML = `
       <div class="send-confirmation-content">
+        <!-- Password Input (moved to top) -->
+        <div class="confirmation-section">
+          <h4 class="section-title">Authorize Transaction</h4>
+          <div class="password-input-group">
+            <label class="form-label" for="transactionPassword">
+              Wallet Password
+              <span class="required">*</span>
+            </label>
+            <div class="password-field">
+              <input 
+                type="password" 
+                class="form-control" 
+                id="transactionPassword" 
+                placeholder="Enter wallet password"
+                autocomplete="current-password"
+              >
+              <button type="button" class="password-toggle" id="passwordToggle">
+                <span id="toggleIcon">👁️</span>
+              </button>
+            </div>
+            <div class="form-error hidden" id="passwordError"></div>
+          </div>
+        </div>
+
         <!-- Transaction Review -->
         <div class="confirmation-section">
           <h4 class="section-title">Review Transaction</h4>
@@ -161,7 +185,6 @@ export class SendConfirmation {
               <span class="detail-label">Network Fee:</span>
               <span class="detail-value fee">
                 ${this.formatFee(fee)} RUNE
-                <span class="detail-description">(Gas: ${this.formatGas(fee.gas)})</span>
               </span>
             </div>
             
@@ -173,54 +196,6 @@ export class SendConfirmation {
             </div>
           </div>
         </div>
-
-        <!-- Security Notice -->
-        <div class="confirmation-section">
-          <div class="security-notice">
-            <div class="security-icon">🔐</div>
-            <div class="security-content">
-              <h5>Secure Transaction</h5>
-              <p>Your wallet password is required to sign this transaction. Your private key will be decrypted only during signing and immediately cleared from memory.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Password Input -->
-        <div class="confirmation-section">
-          <h4 class="section-title">Authorize Transaction</h4>
-          <div class="password-input-group">
-            <label class="form-label" for="transactionPassword">
-              Wallet Password
-              <span class="required">*</span>
-            </label>
-            <div class="password-field">
-              <input 
-                type="password" 
-                class="form-control" 
-                id="transactionPassword" 
-                placeholder="Enter wallet password"
-                autocomplete="current-password"
-              >
-              <button type="button" class="password-toggle" id="passwordToggle">
-                <span id="toggleIcon">👁️</span>
-              </button>
-            </div>
-            <div class="form-helper">
-              <small>This password unlocks your wallet for this transaction only</small>
-            </div>
-            <div class="form-error hidden" id="passwordError"></div>
-          </div>
-        </div>
-
-        <!-- Final Warning -->
-        <div class="confirmation-section">
-          <div class="warning-notice">
-            <div class="warning-icon">⚠️</div>
-            <div class="warning-content">
-              <p><strong>Important:</strong> This transaction cannot be reversed once broadcast to the network. Please verify all details are correct.</p>
-            </div>
-          </div>
-        </div>
       </div>
     `
   }
@@ -228,7 +203,10 @@ export class SendConfirmation {
   private setupEventListeners(): void {
     // Password field focus handling
     const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
-    passwordInput?.addEventListener('input', () => this.clearPasswordError())
+    passwordInput?.addEventListener('input', () => {
+      this.clearPasswordError()
+      this.updateSendButtonState()
+    })
     passwordInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault()
@@ -239,6 +217,22 @@ export class SendConfirmation {
     // Password visibility toggle
     const passwordToggle = document.getElementById('passwordToggle')
     passwordToggle?.addEventListener('click', () => this.togglePasswordVisibility())
+  }
+
+  private updateSendButtonState(): void {
+    const confirmBtn = document.getElementById('confirmBtn') as HTMLButtonElement
+    const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
+    
+    if (confirmBtn && passwordInput) {
+      const hasPassword = passwordInput.value.trim().length > 0
+      confirmBtn.disabled = !hasPassword
+      
+      if (hasPassword) {
+        confirmBtn.classList.remove('btn-disabled')
+      } else {
+        confirmBtn.classList.add('btn-disabled')
+      }
+    }
   }
 
   private togglePasswordVisibility(): void {
@@ -274,6 +268,11 @@ export class SendConfirmation {
 
       // Step 2: Verify password and get encrypted data from main process
       console.log('🔓 Getting encrypted data for mnemonic decryption...')
+      console.log('🔐 DEBUG: Calling decryptWalletMnemonic with:', {
+        walletId: this.walletData.walletId,
+        passwordLength: password.length,
+        passwordProvided: password ? 'YES' : 'NO'
+      })
       const encryptedData = await this.backend.decryptWalletMnemonic(this.walletData.walletId, password)
       
       // Step 3: Decrypt mnemonic in renderer using CryptoUtils
@@ -302,6 +301,14 @@ export class SendConfirmation {
       }
 
       console.log('📡 Broadcasting transaction to network...')
+      console.log('🔐 DEBUG: Transaction params being sent:', {
+        asset: this.transactionParams.asset,
+        amount: this.transactionParams.amount,
+        amountType: typeof this.transactionParams.amount,
+        toAddress: this.transactionParams.toAddress,
+        memo: this.transactionParams.memo,
+        useMsgDeposit: this.transactionParams.useMsgDeposit
+      })
 
       // Step 5: Broadcast transaction using the temporary wallet
       const result = await this.backend.broadcastTransaction(signingWallet, this.transactionParams)
@@ -325,13 +332,21 @@ export class SendConfirmation {
 
       // Handle specific error types
       if ((error as Error).message.includes('Invalid password')) {
-        this.showPasswordError('Incorrect password. Please try again.')
+        this.showPasswordError('Incorrect password. Please verify your wallet password and try again.')
+        
+        // Focus password field for retry
+        const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
+        if (passwordInput) {
+          passwordInput.focus()
+          passwordInput.select() // Select all text for easy re-entry
+        }
+        
+        // Don't re-throw, let user retry
+        throw new Error('Password verification failed')
       } else {
         // Re-throw for parent component to handle
         throw error
       }
-
-      throw error
     }
   }
 
@@ -389,7 +404,7 @@ export class SendConfirmation {
     try {
       const amount = parseFloat(params.amount)
       const feeAmount = fee.amount.find(coin => coin.denom === 'rune')
-      const feeInRune = feeAmount ? parseFloat(feeAmount.amount) / 1000000 : 0
+      const feeInRune = feeAmount ? parseFloat(feeAmount.amount) / 100000000 : 0 // Fix: use 1e8 like formatFee
       
       // If sending RUNE, add fee to amount
       if (params.asset === 'THOR.RUNE' || params.asset === 'RUNE') {
@@ -423,7 +438,15 @@ export class SendConfirmation {
   // Public methods
   getPassword(): string {
     const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
-    return passwordInput?.value?.trim() || ''
+    const password = passwordInput?.value || ''
+    
+    console.log('🔐 DEBUG: Getting password from input:', {
+      inputExists: !!passwordInput,
+      passwordLength: password.length,
+      passwordValue: password ? '[REDACTED]' : 'EMPTY'
+    })
+    
+    return password // Remove trim() in case it's causing issues
   }
 
   public clearSensitiveData(): void {
@@ -441,6 +464,13 @@ export class SendConfirmation {
   }
 
   isPasswordProvided(): boolean {
-    return this.getPassword().length > 0
+    const password = this.getPassword()
+    const hasPassword = password.length > 0
+    
+    if (!hasPassword) {
+      this.showPasswordError('Password is required to authorize this transaction')
+    }
+    
+    return hasPassword
   }
 }

@@ -45,11 +45,12 @@ export class SendForm {
     try {
       console.log('📝 Initializing send form with', balances.length, 'assets')
       
-      this.availableBalances = balances
+      // Sort assets by USD value of wallet positions
+      this.availableBalances = await this.sortAssetsByUsdValue(balances)
       
-      // Select first asset by default
-      if (balances.length > 0) {
-        this.selectedAsset = balances[0].asset
+      // Select first asset by default (highest balance)
+      if (this.availableBalances.length > 0) {
+        this.selectedAsset = this.availableBalances[0].asset
       }
 
       this.render()
@@ -111,16 +112,13 @@ export class SendForm {
         <div class="form-section" id="addressSection">
           <label class="form-label" for="toAddressInput">To Address</label>
           <input type="text" class="form-control" id="toAddressInput" placeholder="thor1...">
-          <div class="form-helper">
-            <small>Enter a valid THORChain address (thor1... or sthor1...)</small>
-          </div>
           <div class="form-error hidden" id="addressError"></div>
         </div>
 
         <!-- Memo Input -->
         <div class="form-section">
           <label class="form-label" for="memoInput">Memo</label>
-          <input type="text" class="form-control" id="memoInput" placeholder="Optional memo">
+          <input type="text" class="form-control" id="memoInput" placeholder="Memo (Optional)">
           <div class="form-helper" id="memoHelper">
             <small id="memoHelperText">Optional memo for this transaction</small>
           </div>
@@ -273,9 +271,10 @@ export class SendForm {
       const formattedBalance = this.formatBalance(balance.balance)
       balanceInfo.textContent = `Available: ${formattedBalance} ${this.selectedAsset}`
       
-      // Add USD value if available
+      // Add USD value if available (format to 2 decimal places)
       if (balance.usdValue) {
-        balanceInfo.innerHTML += ` <span class="usd-value">(~$${balance.usdValue})</span>`
+        const usdFormatted = parseFloat(balance.usdValue).toFixed(2)
+        balanceInfo.innerHTML += ` <span class="usd-value">(~$${usdFormatted})</span>`
       }
     } else {
       balanceInfo.textContent = 'Available: 0.00'
@@ -424,6 +423,31 @@ export class SendForm {
   }
 
   // Helper methods
+  private async sortAssetsByUsdValue(balances: AssetBalance[]): Promise<AssetBalance[]> {
+    try {
+      console.log('💰 Sorting assets by USD value of wallet positions...')
+      
+      // Sort by USD value descending (user's actual position value)
+      const sortedBalances = [...balances].sort((a, b) => {
+        const aUsdValue = parseFloat(a.usdValue || '0')
+        const bUsdValue = parseFloat(b.usdValue || '0')
+        return bUsdValue - aUsdValue
+      })
+      
+      console.log('✅ Assets sorted by USD position value:', sortedBalances.map(b => ({
+        asset: b.asset,
+        usdValue: b.usdValue || '0'
+      })))
+      
+      return sortedBalances
+      
+    } catch (error) {
+      console.warn('⚠️ Failed to sort assets by USD value, using original order:', error)
+      return balances
+    }
+  }
+
+
   private getSelectedTransactionType(): 'send' | 'deposit' {
     const txTypeSend = document.getElementById('txTypeSend') as HTMLInputElement
     return txTypeSend?.checked ? 'send' : 'deposit'
@@ -481,9 +505,19 @@ export class SendForm {
   // Public methods
   getFormData(): TransactionFormData {
     const txType = this.getSelectedTransactionType()
-    const amount = (document.getElementById('amountInput') as HTMLInputElement)?.value?.trim() || ''
+    const amountInput = document.getElementById('amountInput') as HTMLInputElement
+    const amount = amountInput?.value?.trim() || ''
     const toAddress = (document.getElementById('toAddressInput') as HTMLInputElement)?.value?.trim() || ''
     const memo = (document.getElementById('memoInput') as HTMLInputElement)?.value?.trim() || ''
+
+    console.log('📝 DEBUG: SendForm getFormData:', {
+      amountInputExists: !!amountInput,
+      amountInputValue: amountInput?.value,
+      amountAfterTrim: amount,
+      amountAsNumber: parseFloat(amount),
+      selectedAsset: this.selectedAsset,
+      txType: txType
+    })
 
     return {
       transactionType: txType,
