@@ -9,6 +9,7 @@
  */
 
 import { BackendService } from '../services/BackendService'
+import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction'
 
 export interface WalletTabData {
     walletId: string
@@ -41,6 +42,7 @@ export class WalletTab {
     private backend: BackendService
     private walletData: WalletTabData | null = null
     private refreshInterval: NodeJS.Timeout | null = null
+    private sendTransaction: SendTransaction | null = null
 
     constructor(container: HTMLElement, backend: BackendService) {
         this.container = container
@@ -176,6 +178,9 @@ export class WalletTab {
                     </span>
                 </div>
             </div>
+            
+            <!-- Send Transaction Dialog Container -->
+            <div class="send-dialog-container" id="sendDialogContainer"></div>
         `
 
         this.setupEventListeners()
@@ -671,9 +676,54 @@ export class WalletTab {
         this.showInfo('Receive dialog coming soon...')
     }
 
-    private showSendDialog(): void {
-        // TODO: Implement send transaction dialog
-        this.showInfo('Send dialog coming soon...')
+    private async showSendDialog(): Promise<void> {
+        try {
+            console.log('📤 Opening Send transaction dialog')
+            
+            if (!this.walletData) {
+                this.showError('Wallet data not available')
+                return
+            }
+
+            // Create send dialog container if not exists
+            const dialogContainer = document.getElementById('sendDialogContainer')
+            if (!dialogContainer) {
+                console.error('Send dialog container not found')
+                return
+            }
+
+            // Initialize SendTransaction component if not exists
+            if (!this.sendTransaction) {
+                this.sendTransaction = new SendTransaction(dialogContainer, this.backend)
+            }
+
+            // Convert WalletTab balance format to SendTransaction format
+            const sendBalances: SendAssetBalance[] = this.walletData.balances.map(balance => ({
+                asset: balance.asset,
+                balance: balance.balance,
+                usdValue: balance.usdValue.toString()
+            }))
+
+            // Prepare wallet data for send dialog
+            const sendWalletData: SendTransactionData = {
+                walletId: this.walletData.walletId,
+                name: this.walletData.name,
+                currentAddress: this.walletData.address,
+                network: this.walletData.network,
+                availableBalances: sendBalances
+            }
+
+            // Initialize and show the send dialog
+            await this.sendTransaction.initialize(sendWalletData, () => {
+                console.log('📝 Send dialog closed, refreshing wallet data')
+                // Refresh wallet data when send dialog closes (in case of successful transaction)
+                this.refreshData()
+            })
+
+        } catch (error) {
+            console.error('❌ Failed to show send dialog:', error)
+            this.showError('Failed to open send dialog: ' + (error as Error).message)
+        }
     }
 
     // Public methods

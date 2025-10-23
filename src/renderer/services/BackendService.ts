@@ -292,6 +292,14 @@ export class BackendService {
         return await this.ipc.invoke('unlock-wallet', walletId, password)
     }
 
+    async decryptWalletMnemonic(walletId: string, password: string): Promise<{encryptedSeedPhrase: string, salt: string, iv: string}> {
+        return await this.ipc.invoke('decrypt-wallet-mnemonic', walletId, password)
+    }
+
+    async getTransactionStatus(txHash: string): Promise<any> {
+        return await this.ipc.invoke('get-tx-status', txHash)
+    }
+
     async getActiveSession(): Promise<any> {
         // For now, return null - no active session management yet
         return null

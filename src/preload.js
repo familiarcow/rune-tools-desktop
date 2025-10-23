@@ -76,7 +76,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'wallet-exists',
       'get-storage-stats',
       'save-session',
-      'unlock-wallet'
+      'unlock-wallet',
+      'decrypt-wallet-mnemonic'
     ];
     
     if (allowedChannels.includes(channel)) {

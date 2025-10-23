@@ -122,7 +122,7 @@ export class CryptoUtils {
     }
 
     /**
-     * Decrypt sensitive data with a password-derived key
+     * Decrypt sensitive data with a password-derived key (legacy wallet support)
      */
     static async decryptSensitiveData(
         encryptedData: string,
@@ -130,31 +130,63 @@ export class CryptoUtils {
         salt: string,
         iv: string
     ): Promise<string> {
-        const saltBytes = this.hexToUint8Array(salt)
-        const ivBytes = this.hexToUint8Array(iv)
-        const encryptedBytes = this.hexToUint8Array(encryptedData)
-        
-        // Derive the same key
-        const key = await this.deriveKey(password, saltBytes)
-        
-        // Import the key for AES decryption
-        const cryptoKey = await crypto.subtle.importKey(
-            'raw',
-            key.buffer as ArrayBuffer,
-            { name: 'AES-GCM' },
-            false,
-            ['decrypt']
-        )
-        
-        // Decrypt the data
-        const decryptedBuffer = await crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv: ivBytes.buffer as ArrayBuffer },
-            cryptoKey,
-            encryptedBytes.buffer as ArrayBuffer
-        )
-        
-        const decoder = new TextDecoder()
-        return decoder.decode(decryptedBuffer)
+        try {
+            console.log('🔍 CryptoUtils.decryptSensitiveData - Processing data:', {
+                encryptedDataLength: encryptedData.length,
+                saltLength: salt.length,
+                ivLength: iv.length,
+                passwordLength: password.length
+            })
+            
+            const saltBytes = this.hexToUint8Array(salt)
+            const ivBytes = this.hexToUint8Array(iv)
+            const encryptedBytes = this.hexToUint8Array(encryptedData)
+            
+            console.log('🔍 Converted to bytes:', {
+                saltBytesLength: saltBytes.length,
+                ivBytesLength: ivBytes.length,
+                encryptedBytesLength: encryptedBytes.length
+            })
+            
+            // Derive the same key
+            console.log('🔍 Deriving key from password and salt...')
+            const key = await this.deriveKey(password, saltBytes)
+            console.log('🔍 Key derived successfully, length:', key.length)
+            
+            // Import the key for AES decryption
+            console.log('🔍 Importing key for AES-GCM decryption...')
+            const cryptoKey = await crypto.subtle.importKey(
+                'raw',
+                key.buffer as ArrayBuffer,
+                { name: 'AES-GCM' },
+                false,
+                ['decrypt']
+            )
+            console.log('🔍 Key imported successfully')
+            
+            // Decrypt the data
+            console.log('🔍 Attempting AES-GCM decryption...')
+            const decryptedBuffer = await crypto.subtle.decrypt(
+                { name: 'AES-GCM', iv: ivBytes.buffer as ArrayBuffer },
+                cryptoKey,
+                encryptedBytes.buffer as ArrayBuffer
+            )
+            console.log('🔍 Decryption successful, buffer length:', decryptedBuffer.byteLength)
+            
+            const decoder = new TextDecoder()
+            const result = decoder.decode(decryptedBuffer)
+            console.log('🔍 Text decoding successful, result length:', result.length)
+            return result
+            
+        } catch (error) {
+            console.error('❌ CryptoUtils.decryptSensitiveData failed:', error)
+            console.error('❌ Error details:', {
+                name: (error as Error).name,
+                message: (error as Error).message,
+                stack: (error as Error).stack
+            })
+            throw error
+        }
     }
 
     /**
@@ -289,12 +321,30 @@ export class CryptoUtils {
         // Hash password for authentication
         const { salt: passwordSalt, hash: passwordHash } = await this.hashPassword(password)
         
-        // Encrypt mnemonic with password
-        const { 
-            encryptedData: encryptedMnemonic, 
-            salt: mnemonicSalt, 
-            iv: mnemonicIV 
-        } = await this.encryptSensitiveData(mnemonic, password)
+        // Encrypt mnemonic with password using the SAME salt as password hashing
+        // This ensures we can decrypt later using the stored salt
+        const mnemonicIV = this.generateIV()
+        const key = await this.deriveKey(password, this.hexToUint8Array(passwordSalt))
+        
+        // Import the key for AES encryption
+        const cryptoKey = await crypto.subtle.importKey(
+            'raw',
+            key.buffer as ArrayBuffer,
+            { name: 'AES-GCM' },
+            false,
+            ['encrypt']
+        )
+        
+        // Encrypt the mnemonic
+        const encoder = new TextEncoder()
+        const dataBuffer = encoder.encode(mnemonic)
+        const encryptedBuffer = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv: mnemonicIV.buffer as ArrayBuffer },
+            cryptoKey,
+            dataBuffer
+        )
+        
+        const encryptedMnemonic = this.uint8ArrayToHex(new Uint8Array(encryptedBuffer))
         
         return {
             walletId,
@@ -303,7 +353,7 @@ export class CryptoUtils {
             encryptedSeedPhrase: encryptedMnemonic,
             passwordHash,
             salt: passwordSalt,
-            iv: mnemonicIV,
+            iv: this.uint8ArrayToHex(mnemonicIV),
             createdAt: new Date().toISOString(),
             isLocked: true // New wallets start locked
         }

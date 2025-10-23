@@ -677,3 +677,37 @@ ipcMain.handle('unlock-wallet', async (event, walletId: string, password: string
   }
 });
 
+// IPC handler for securely decrypting wallet mnemonic for transactions
+ipcMain.handle('decrypt-wallet-mnemonic', async (event, walletId: string, password: string) => {
+  try {
+    const walletData = await walletStorageService.loadWallet(walletId);
+    if (!walletData) {
+      throw new Error('Wallet not found');
+    }
+    
+    // CRITICAL SECURITY: Verify password first
+    console.log('🔐 Verifying password for mnemonic decryption:', walletId);
+    
+    const isPasswordValid = await verifyPassword(password, walletData.salt, walletData.passwordHash);
+    
+    if (!isPasswordValid) {
+      console.warn('⚠️ Invalid password attempt for mnemonic decryption:', walletId);
+      throw new Error('Invalid password');
+    }
+    
+    console.log('✅ Password verified successfully for mnemonic decryption');
+    
+    // Return encrypted data for renderer to decrypt using CryptoUtils
+    // This avoids the Web Crypto vs Node.js compatibility issues
+    return {
+      encryptedSeedPhrase: walletData.encryptedSeedPhrase,
+      salt: walletData.salt,
+      iv: walletData.iv
+    };
+    
+  } catch (error) {
+    console.error('❌ Error verifying password for mnemonic decryption:', error);
+    throw error;
+  }
+});
+

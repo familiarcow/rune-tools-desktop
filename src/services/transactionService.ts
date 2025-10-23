@@ -5,6 +5,7 @@ import { TransactionParams, TransactionResponse, PreparedTransaction, Coin, Tran
 import { MsgDeposit } from '../utils/msgDeposit';
 import { WalletInfo } from '../types/wallet';
 import { NetworkService } from './networkService';
+import { convertToBaseUnits, convertFromBaseUnits, formatAmount, getAssetDenom } from '../utils/assetUtils';
 
 export class TransactionService {
   private static readonly THORCHAIN_HD_PATH = "m/44'/931'/0'/0/0";
@@ -37,14 +38,20 @@ export class TransactionService {
   }
 
   public static getAssetDenom(asset: string): string {
-    if (asset === 'THOR.RUNE' || asset === 'RUNE') {
-      return 'rune';
-    } else if (asset.startsWith('THOR.')) {
-      return asset.toLowerCase().replace('.', '/');
-    } else {
-      // Secured assets use exact format (e.g., 'BTC.BTC', 'ETH.ETH')
-      return asset;
-    }
+    return getAssetDenom(asset);
+  }
+
+  // Static methods now delegate to centralized assetUtils
+  public static convertToBaseUnits(amount: string, asset: string): string {
+    return convertToBaseUnits(amount, asset);
+  }
+
+  public static convertFromBaseUnits(baseUnits: string, asset: string): string {
+    return convertFromBaseUnits(baseUnits, asset);
+  }
+
+  public static formatAmount(amount: string, asset: string): string {
+    return formatAmount(amount, asset);
   }
 
   public static validateTransactionParams(params: TransactionParams): void {
@@ -87,9 +94,12 @@ export class TransactionService {
 
   public prepareMsgSend(fromAddress: string, params: TransactionParams): PreparedTransaction {
     const denom = TransactionService.getAssetDenom(params.asset);
+    
+    // CRITICAL: params.amount MUST be in NORMALIZED UNITS (user input)
+    // Converting to BASE UNITS for blockchain transaction
     const coin: Coin = {
       denom,
-      amount: params.amount
+      amount: TransactionService.convertToBaseUnits(params.amount, params.asset)
     };
 
     const message: TransactionMessage = {
@@ -106,9 +116,12 @@ export class TransactionService {
 
   public prepareMsgDeposit(fromAddress: string, params: TransactionParams): PreparedTransaction {
     const denom = TransactionService.getAssetDenom(params.asset);
+    
+    // CRITICAL: params.amount MUST be in NORMALIZED UNITS (user input)
+    // Converting to BASE UNITS for blockchain transaction
     const coin: Coin = {
       denom,
-      amount: params.amount
+      amount: TransactionService.convertToBaseUnits(params.amount, params.asset)
     };
 
     const message: TransactionMessage = {
@@ -127,9 +140,12 @@ export class TransactionService {
     // Alternative: Use MsgSend to THORChain module (equivalent to MsgDeposit)
     const denom = TransactionService.getAssetDenom(params.asset);
     const moduleAddress = await this.getThorchainModuleAddress();
+    
+    // CRITICAL: params.amount MUST be in NORMALIZED UNITS (user input)
+    // Converting to BASE UNITS for blockchain transaction
     const coin: Coin = {
       denom,
-      amount: params.amount
+      amount: TransactionService.convertToBaseUnits(params.amount, params.asset)
     };
 
     const message: TransactionMessage = {
@@ -146,7 +162,7 @@ export class TransactionService {
 
   public static getDefaultFee(): TransactionFee {
     return {
-      amount: [{ denom: "rune", amount: "2000000" }], // 2 RUNE
+      amount: [{ denom: "rune", amount: "2000000" }], // 0.02 RUNE (2M base units)
       gas: "50000000"
     };
   }
