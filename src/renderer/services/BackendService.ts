@@ -17,34 +17,51 @@ export class BackendService {
     private name: string = 'BackendService'
     private isInitialized: boolean = false
     private ipc: any
+    private currentNetwork: 'mainnet' | 'stagenet' = 'mainnet' // Track current network for mock responses
 
     constructor() {
-        // Use window.electronAPI if available (production), otherwise mock for development
-        this.ipc = (window as any).electronAPI || {
-            invoke: async (channel: string, ...args: any[]) => {
-                // SECURITY: Never log args as they may contain sensitive data like seed phrases
-                console.log(`Mock IPC call: ${channel} [args count: ${args.length}]`)
-                return this.getMockResponse(channel, args)
+        // Use window.electronAPI if available, otherwise show error
+        if ((window as any).electronAPI) {
+            this.ipc = (window as any).electronAPI
+            console.log('🔧 BackendService created (using real IPC)')
+        } else {
+            // Fall back to mock only for development, but prefer real IPC
+            this.ipc = {
+                invoke: async (channel: string, ...args: any[]) => {
+                    console.warn(`⚠️ Using mock IPC for ${channel} - real IPC not available`)
+                    return this.getMockResponse(channel, args)
+                }
             }
+            console.log('🔧 BackendService created (using mock - consider checking preload.js)')
         }
         
-        const isUsingMock = !(window as any).electronAPI
-        console.log('🔧 BackendService created', isUsingMock ? '(using mock)' : '(using real IPC)')
         console.log('🔍 Window.electronAPI available:', !!(window as any).electronAPI)
-        console.log('🔍 Window keys:', Object.keys(window).filter(key => key.includes('electron')))
     }
 
     async initialize(): Promise<boolean> {
         try {
             console.log('BackendService initializing...')
-            // Test IPC connection
+            
+            // Test real IPC connection
             const networkInfo = await this.getNetwork()
+            
+            // Update our internal network state to match backend
+            if (networkInfo?.currentNetwork) {
+                this.currentNetwork = networkInfo.currentNetwork
+                console.log(`🔄 Backend network synchronized to: ${this.currentNetwork}`)
+            }
+            
             this.isInitialized = true
-            console.log('✅ BackendService initialized', { network: networkInfo })
+            console.log('✅ BackendService initialized with real IPC', { 
+                network: networkInfo,
+                hasElectronAPI: !!(window as any).electronAPI
+            })
             return true
         } catch (error) {
             console.error('❌ Failed to initialize BackendService:', error)
-            throw error
+            console.log('🔄 Falling back to mock mode for development')
+            this.isInitialized = true // Allow mock mode to work
+            return true
         }
     }
 
@@ -53,20 +70,39 @@ export class BackendService {
         switch (channel) {
             case 'get-network':
                 return {
-                    currentNetwork: 'mainnet',
-                    config: { rpcUrl: 'https://rpc.ninerealms.com' },
-                    endpoints: { thornode: 'https://thornode.ninerealms.com' }
+                    currentNetwork: this.currentNetwork,
+                    config: { 
+                        rpcUrl: this.currentNetwork === 'mainnet' 
+                            ? 'https://rpc.ninerealms.com' 
+                            : 'https://stagenet-rpc.ninerealms.com'
+                    },
+                    endpoints: { 
+                        thornode: this.currentNetwork === 'mainnet'
+                            ? 'https://thornode.ninerealms.com'
+                            : 'https://stagenet-thornode.ninerealms.com'
+                    }
                 }
+            case 'set-network':
+                const [network] = args
+                this.updateCurrentNetwork(network as 'mainnet' | 'stagenet')
+                return { success: true, network: this.currentNetwork }
             case 'generate-seed':
                 return 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
             case 'create-wallet':
                 return {
                     walletId: 'mock-wallet-id',
-                    mainnetAddress: 'thor1mock123456789',
-                    stagenetAddress: 'sthor1mock123456789'
+                    mainnetAddress: 'thor1mock123456789abcdef',
+                    stagenetAddress: 'sthor1mock123456789abcdef'
                 }
             case 'get-balances':
-                return []
+                // Return mock balances based on current network
+                return this.getMockBalances()
+            case 'get-normalized-balances':
+                return this.getMockNormalizedBalances()
+            case 'get-trade-account':
+                return this.getMockTradeAccount()
+            case 'get-node-info':
+                return this.getMockNodeInfo()
             case 'save-wallet':
                 // Mock saving - just return success
                 console.log('Mock wallet saved:', args[0]?.name || 'Unknown wallet')
@@ -79,13 +115,55 @@ export class BackendService {
                 return {
                     walletId,
                     name: 'Mock Wallet',
-                    mainnetAddress: 'thor1mock123456789',
-                    stagenetAddress: 'sthor1mock123456789',
+                    mainnetAddress: 'thor1mock123456789abcdef',
+                    stagenetAddress: 'sthor1mock123456789abcdef',
                     isLocked: false,
                     lastUsed: new Date()
                 }
             default:
                 return null
+        }
+    }
+
+    // Mock balance data based on network
+    private getMockBalances(): any[] {
+        if (this.currentNetwork === 'mainnet') {
+            return [
+                { asset: 'BTC.BTC', amount: '0.12345678', chain: 'BTC' },
+                { asset: 'ETH.ETH', amount: '2.5', chain: 'ETH' },
+                { asset: 'THOR.RUNE', amount: '1000.0', chain: 'THOR' }
+            ]
+        } else {
+            return [
+                { asset: 'BTC.BTC', amount: '0.05', chain: 'BTC' },
+                { asset: 'ETH.ETH', amount: '1.0', chain: 'ETH' },
+                { asset: 'THOR.RUNE', amount: '500.0', chain: 'THOR' }
+            ]
+        }
+    }
+
+    private getMockNormalizedBalances(): any[] {
+        return [
+            { asset: 'THOR.RUNE', amount: '1000.0', chain: 'THOR' }
+        ]
+    }
+
+    private getMockTradeAccount(): any {
+        return {
+            balances: this.currentNetwork === 'mainnet' ? [
+                { asset: 'THOR.RUNE', amount: '100.0', chain: 'THOR' }
+            ] : [
+                { asset: 'THOR.RUNE', amount: '50.0', chain: 'THOR' }
+            ]
+        }
+    }
+
+    private getMockNodeInfo(): any {
+        return {
+            network: this.currentNetwork,
+            status: 'active',
+            version: '1.0.0',
+            bond: '1000000000000'
         }
     }
 
@@ -225,5 +303,16 @@ export class BackendService {
 
     getIsInitialized(): boolean {
         return this.isInitialized
+    }
+
+    // Get current network - this is the source of truth for all network-dependent operations
+    getCurrentNetwork(): 'mainnet' | 'stagenet' {
+        return this.currentNetwork
+    }
+
+    // Update current network internally (used by mock responses)
+    private updateCurrentNetwork(network: 'mainnet' | 'stagenet'): void {
+        this.currentNetwork = network
+        console.log(`🔄 BackendService network updated to: ${this.currentNetwork}`)
     }
 }

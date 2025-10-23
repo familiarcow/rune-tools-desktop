@@ -14,6 +14,7 @@ import { UIService } from '../services/UIService'
 import { CryptoUtils } from '../utils/CryptoUtils'
 import { WalletGenerator, GeneratedWallet } from '../components/WalletGenerator'
 import { WalletRestoration, RestoredWallet } from '../components/WalletRestoration'
+import { ApplicationController } from './ApplicationController'
 
 export interface WalletInfo {
     walletId: string
@@ -40,6 +41,7 @@ export class WalletSelectionController {
     private currentNetwork: 'mainnet' | 'stagenet' = 'mainnet'
     private walletGenerator: WalletGenerator | null = null
     private walletRestoration: WalletRestoration | null = null
+    private appController: ApplicationController | null = null
 
     constructor(backend: BackendService, state: StateManager, ui: UIService) {
         this.backend = backend
@@ -98,9 +100,18 @@ export class WalletSelectionController {
             console.log('Refreshing wallet list...')
             
             // Get available wallets from backend
-            const wallets = await this.backend.getAvailableWallets()
-            console.log('Raw wallet list from backend:', wallets)
-            this.availableWallets = wallets || []
+            const rawWallets = await this.backend.getAvailableWallets()
+            console.log('Raw wallet list from backend:', rawWallets)
+            
+            // Map the backend format to frontend format
+            this.availableWallets = (rawWallets || []).map(wallet => ({
+                walletId: wallet.walletId,
+                name: wallet.name,
+                mainnetAddress: wallet.addresses?.mainnet,
+                stagenetAddress: wallet.addresses?.stagenet,
+                isLocked: wallet.isLocked,
+                lastUsed: wallet.lastUsed
+            }))
             
             // Update UI
             this.updateWalletList()
@@ -144,13 +155,16 @@ export class WalletSelectionController {
                 <div class="wallet-info">
                     <div class="wallet-name">${wallet.name}</div>
                     <div class="wallet-address">
-                        ${this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress}
+                        ...${(this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress)?.slice(-4) || 'N/A'}
                     </div>
                     ${wallet.lastUsed ? `<div class="wallet-last-used">Last used: ${wallet.lastUsed.toLocaleDateString()}</div>` : ''}
                 </div>
                 <div class="wallet-actions">
                     <button class="btn btn-primary" onclick="walletController.selectWallet('${wallet.walletId}')">
                         Unlock
+                    </button>
+                    <button class="btn btn-danger" onclick="walletController.showDeleteWalletDialog('${wallet.walletId}')" title="Delete wallet permanently">
+                        🗑️
                     </button>
                 </div>
             </div>
@@ -224,8 +238,77 @@ export class WalletSelectionController {
         }
     }
 
+    showDeleteWalletDialog(walletId: string): void {
+        try {
+            const wallet = this.availableWallets.find(w => w.walletId === walletId)
+            if (!wallet) {
+                throw new Error('Wallet not found')
+            }
+
+            const dialog = document.getElementById('delete-wallet-dialog')
+            if (!dialog) return
+
+            // Set wallet info in dialog
+            const walletNameEl = document.getElementById('delete-wallet-name')
+            if (walletNameEl) walletNameEl.textContent = wallet.name
+
+            const walletAddressEl = document.getElementById('delete-wallet-address')
+            if (walletAddressEl) {
+                const address = this.currentNetwork === 'mainnet' 
+                    ? wallet.mainnetAddress 
+                    : wallet.stagenetAddress
+                walletAddressEl.textContent = address || 'Address not available'
+            }
+
+            // Setup delete confirmation handler
+            const confirmBtn = document.getElementById('confirm-delete-btn')
+            if (confirmBtn) {
+                // Remove any existing listeners
+                const newConfirmBtn = confirmBtn.cloneNode(true) as HTMLElement
+                confirmBtn.parentNode?.replaceChild(newConfirmBtn, confirmBtn)
+                
+                // Add new listener
+                newConfirmBtn.addEventListener('click', () => this.deleteWallet(walletId))
+            }
+
+            // Show dialog
+            dialog.classList.add('active')
+        } catch (error) {
+            console.error('❌ Failed to show delete dialog:', error)
+            this.ui.showError('Failed to show delete dialog: ' + (error as Error).message)
+        }
+    }
+
+    async deleteWallet(walletId: string): Promise<void> {
+        try {
+            console.log('Deleting wallet:', walletId)
+            
+            // Delete wallet via backend
+            await this.backend.deleteWallet(walletId)
+            
+            // Hide delete dialog
+            const dialog = document.getElementById('delete-wallet-dialog')
+            if (dialog) dialog.classList.remove('active')
+            
+            // Show success message
+            this.ui.showSuccess('Wallet deleted successfully')
+            
+            // Refresh wallet list to remove deleted wallet
+            await this.refreshWalletList()
+            
+            console.log('✅ Wallet deleted successfully')
+        } catch (error) {
+            console.error('❌ Failed to delete wallet:', error)
+            this.ui.showError('Failed to delete wallet: ' + (error as Error).message)
+        }
+    }
+
     showCreateWalletFlow(): void {
         console.log('Starting advanced wallet creation flow...')
+        
+        // Clean up any existing components first
+        this.walletGenerator = null
+        this.walletRestoration = null
         
         // Hide wallet selection, show creation flow
         this.ui.hideElement('wallet-selection-content')
@@ -234,6 +317,9 @@ export class WalletSelectionController {
         // Initialize wallet generator
         const generatorContainer = document.getElementById('wallet-generator-container')
         if (generatorContainer) {
+            // Clear any existing content
+            generatorContainer.innerHTML = ''
+            
             this.walletGenerator = new WalletGenerator(generatorContainer, this.backend)
             
             // Set up completion callback
@@ -252,6 +338,10 @@ export class WalletSelectionController {
     showImportWalletFlow(): void {
         console.log('Starting advanced wallet import flow...')
         
+        // Clean up any existing components first
+        this.walletGenerator = null
+        this.walletRestoration = null
+        
         // Hide wallet selection, show import flow
         this.ui.hideElement('wallet-selection-content')
         this.ui.showElement('wallet-import-content')
@@ -259,6 +349,10 @@ export class WalletSelectionController {
         // Initialize wallet restoration
         const restorationContainer = document.getElementById('wallet-restoration-container')
         if (restorationContainer) {
+            // Clear any existing content and ensure it's visible
+            restorationContainer.innerHTML = ''
+            restorationContainer.style.display = 'block'
+            
             this.walletRestoration = new WalletRestoration(restorationContainer)
             
             // Set up completion callback
@@ -267,7 +361,14 @@ export class WalletSelectionController {
             })
 
             // Display restoration interface
-            this.walletRestoration.displayRestoration()
+            try {
+                console.log('📱 Displaying restoration interface...')
+                this.walletRestoration.displayRestoration()
+                console.log('✅ Restoration interface displayed')
+            } catch (error) {
+                console.error('❌ Failed to display restoration interface:', error)
+                throw error
+            }
 
             // Handle back navigation
             restorationContainer.addEventListener('walletRestoration:back', () => {
@@ -356,10 +457,16 @@ export class WalletSelectionController {
             // Validate form data with enhanced security checks
             await this.validateWalletCreationData(data)
 
-            // Create wallet addresses from seed phrase
+            // Create wallet addresses from seed phrase (derives both mainnet and stagenet addresses)
             const wallet = await this.backend.createWallet(data.seedPhrase!)
             
-            // Create secure wallet storage object
+            console.log('✅ Wallet addresses derived:', {
+                mainnet: wallet.mainnetAddress,
+                stagenet: wallet.stagenetAddress,
+                current: wallet.address
+            })
+            
+            // Create secure wallet storage object with real derived addresses
             const secureWalletData = await CryptoUtils.createSecureWalletStorage(
                 data.name,
                 data.seedPhrase!,
@@ -427,10 +534,16 @@ export class WalletSelectionController {
             // Validate form data with enhanced security checks
             await this.validateWalletCreationData(data)
 
-            // Import wallet (create addresses from existing seed phrase)
+            // Import wallet (derive addresses from existing seed phrase for both networks)
             const wallet = await this.backend.createWallet(data.seedPhrase!)
             
-            // Create secure wallet storage object
+            console.log('✅ Imported wallet addresses derived:', {
+                mainnet: wallet.mainnetAddress,
+                stagenet: wallet.stagenetAddress,
+                current: wallet.address
+            })
+            
+            // Create secure wallet storage object with real derived addresses
             const secureWalletData = await CryptoUtils.createSecureWalletStorage(
                 data.name,
                 data.seedPhrase!,
@@ -505,9 +618,60 @@ export class WalletSelectionController {
     }
 
     private returnToWalletSelection(): void {
+        console.log('🧹 Cleaning up and returning to wallet selection...')
+        
+        // Clean up component instances
+        this.walletGenerator = null
+        this.walletRestoration = null
+        
+        // Clear all component containers to prevent conflicts
+        const generatorContainer = document.getElementById('wallet-generator-container')
+        if (generatorContainer) {
+            generatorContainer.innerHTML = ''
+            generatorContainer.style.display = 'none'
+        }
+        
+        const restorationContainer = document.getElementById('wallet-restoration-container')
+        if (restorationContainer) {
+            restorationContainer.innerHTML = ''
+            restorationContainer.style.display = 'none'
+        }
+        
+        // Clear finalization containers that might be dynamically created
+        const finalizationContainer = document.getElementById('wallet-finalization-container')
+        if (finalizationContainer) {
+            finalizationContainer.innerHTML = ''
+            finalizationContainer.remove() // Remove it completely
+        }
+        
+        // Clear simple forms
+        const simpleCreationForm = document.getElementById('simple-creation-form')
+        if (simpleCreationForm) {
+            simpleCreationForm.style.display = 'none'
+        }
+        
+        const simpleImportForm = document.getElementById('simple-import-form')
+        if (simpleImportForm) {
+            simpleImportForm.style.display = 'none'
+        }
+        
+        // Reset container displays to default
+        const creationContent = document.getElementById('wallet-creation-content')
+        if (creationContent) {
+            creationContent.style.display = ''
+        }
+        
+        const importContent = document.getElementById('wallet-import-content')
+        if (importContent) {
+            importContent.style.display = ''
+        }
+        
+        // Hide all content sections and show wallet selection
         this.ui.hideElement('wallet-creation-content')
         this.ui.hideElement('wallet-import-content')
         this.ui.showElement('wallet-selection-content')
+        
+        console.log('✅ Returned to wallet selection')
     }
 
     async proceedToMainApp(wallet: WalletInfo): Promise<void> {
@@ -525,16 +689,27 @@ export class WalletSelectionController {
                 timestamp: new Date().toISOString()
             })
             
-            // Transition to main application
+            // Transition to main application UI
             this.ui.hideElement('wallet-selection-phase')
             this.ui.showElement('main-application-phase')
             
-            // Initialize main application (TODO: implement main app controller)
+            // Initialize Application Controller
+            if (!this.appController) {
+                this.appController = new ApplicationController(this.backend, this.state, this.ui)
+            }
+            
+            // Initialize main application with wallet and network
+            await this.appController.initialize(wallet, this.currentNetwork)
+            
             console.log('🚀 Main application phase activated')
             
         } catch (error) {
             console.error('❌ Failed to proceed to main app:', error)
             this.ui.showError('Failed to start application: ' + (error as Error).message)
+            
+            // Revert UI state on error
+            this.ui.hideElement('main-application-phase')
+            this.ui.showElement('wallet-selection-phase')
         }
     }
 
