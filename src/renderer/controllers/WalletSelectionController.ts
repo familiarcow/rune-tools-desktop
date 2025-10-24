@@ -88,11 +88,6 @@ export class WalletSelectionController {
             importWalletBtn.addEventListener('click', () => this.showImportWalletFlow())
         }
 
-        // Refresh wallets button
-        const refreshBtn = document.getElementById('refresh-wallets-btn')
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => this.refreshWalletList())
-        }
     }
 
     async refreshWalletList(): Promise<void> {
@@ -304,7 +299,7 @@ export class WalletSelectionController {
     }
 
     showCreateWalletFlow(): void {
-        console.log('Starting advanced wallet creation flow...')
+        console.log('🚀 Starting advanced wallet creation flow...')
         
         // Clean up any existing components first
         this.walletGenerator = null
@@ -316,10 +311,18 @@ export class WalletSelectionController {
         
         // Initialize wallet generator
         const generatorContainer = document.getElementById('wallet-generator-container')
+        console.log('🔍 Generator container found:', !!generatorContainer, 'display:', generatorContainer?.style.display)
+        
         if (generatorContainer) {
-            // Clear any existing content
+            // Clear any existing content and ensure it's visible
             generatorContainer.innerHTML = ''
+            generatorContainer.style.display = 'block'
+            generatorContainer.style.visibility = 'visible'
+            generatorContainer.style.opacity = '1'
             
+            console.log('🔍 After reset - display:', generatorContainer.style.display, 'visibility:', generatorContainer.style.visibility)
+            
+            console.log('🔧 Creating new WalletGenerator...')
             this.walletGenerator = new WalletGenerator(generatorContainer, this.backend)
             
             // Set up completion callback
@@ -328,7 +331,13 @@ export class WalletSelectionController {
             })
 
             // Start the generation process
+            console.log('🎲 Starting wallet generation...')
             this.startWalletGeneration()
+            
+            // Handle exit event from wallet generator
+            generatorContainer.addEventListener('walletGeneration:exit', () => {
+                this.returnToWalletSelection()
+            })
         }
         
         // Setup fallback creation form
@@ -618,11 +627,16 @@ export class WalletSelectionController {
     }
 
     private returnToWalletSelection(): void {
-        console.log('🧹 Cleaning up and returning to wallet selection...')
+        console.log('🧹 Returning to wallet selection...')
         
-        // Clean up component instances
-        this.walletGenerator = null
-        this.walletRestoration = null
+        // Clean up component instances (may have already been done by performThoroughCleanup)
+        if (this.walletGenerator) {
+            this.walletGenerator.reset()
+            this.walletGenerator = null
+        }
+        if (this.walletRestoration) {
+            this.walletRestoration = null
+        }
         
         // Clear all component containers to prevent conflicts
         const generatorContainer = document.getElementById('wallet-generator-container')
@@ -848,8 +862,8 @@ export class WalletSelectionController {
                         <button type="submit" class="btn btn-primary">
                             🚀 ${action} Wallet
                         </button>
-                        <button type="button" id="finalizationBackBtn" class="btn btn-secondary">
-                            ← Back
+                        <button type="button" id="finalizationCancelBtn" class="btn btn-danger">
+                            ✕ Cancel
                         </button>
                     </div>
                 </form>
@@ -871,7 +885,7 @@ export class WalletSelectionController {
      */
     private setupFinalizationForm(seedPhrase: string, isImport: boolean): void {
         const form = document.getElementById('finalizationForm') as HTMLFormElement
-        const backBtn = document.getElementById('finalizationBackBtn')
+        const cancelBtn = document.getElementById('finalizationCancelBtn')
 
         if (form) {
             form.addEventListener('submit', async (e) => {
@@ -880,21 +894,102 @@ export class WalletSelectionController {
             })
         }
 
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                // Show previous step
-                const generatorContainer = document.getElementById('wallet-generator-container')
-                const restorationContainer = document.getElementById('wallet-restoration-container')
-                const finalizationContainer = document.getElementById('wallet-finalization-container')
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                // Show confirmation dialog before canceling
+                const actionType = isImport ? 'wallet restoration' : 'wallet creation'
+                const confirmed = confirm(
+                    `Are you sure you want to cancel ${actionType}?\n\n` +
+                    `This will discard your progress and return to the main screen.`
+                )
                 
-                if (finalizationContainer) finalizationContainer.style.display = 'none'
-                
-                if (isImport && restorationContainer) {
-                    restorationContainer.style.display = 'block'
-                } else if (!isImport && generatorContainer) {
-                    generatorContainer.style.display = 'block'
+                if (confirmed) {
+                    console.log('🚫 User confirmed cancellation, performing thorough cleanup...')
+                    
+                    // Clear sensitive data from memory
+                    if (seedPhrase) {
+                        console.log('🧹 Clearing sensitive data from memory')
+                    }
+                    
+                    // Perform thorough cleanup before returning to wallet selection
+                    this.performThoroughCleanup()
+                    
+                    // Cancel the entire process and return to wallet selection
+                    this.returnToWalletSelection()
                 }
             })
+        }
+    }
+
+    /**
+     * Perform thorough cleanup of all wallet creation/restoration state
+     */
+    private performThoroughCleanup(): void {
+        console.log('🧹 Performing thorough wallet creation state cleanup...')
+        
+        try {
+            // 1. Reset component instances with proper cleanup
+            if (this.walletGenerator) {
+                this.walletGenerator.reset()
+                this.walletGenerator = null
+            }
+            if (this.walletRestoration) {
+                this.walletRestoration = null
+            }
+            
+            // 2. Clear all containers and remove all child elements (only if they exist)
+            const containers = [
+                'wallet-generator-container',
+                'wallet-restoration-container', 
+                'wallet-finalization-container',
+                'simple-creation-form',
+                'simple-import-form'
+            ]
+            
+            containers.forEach(containerId => {
+                const container = document.getElementById(containerId)
+                if (container && container.parentNode) {
+                    try {
+                        // Remove all event listeners by cloning and replacing
+                        const newContainer = container.cloneNode(false) as HTMLElement
+                        container.parentNode.replaceChild(newContainer, container)
+                        
+                        // Clear content and hide
+                        newContainer.innerHTML = ''
+                        newContainer.style.display = 'none'
+                        
+                        console.log(`✅ Cleaned container: ${containerId}`)
+                    } catch (containerError) {
+                        console.warn(`⚠️ Could not clean container ${containerId}:`, containerError)
+                        // Fallback: just clear content
+                        container.innerHTML = ''
+                    }
+                }
+            })
+            
+            // 3. Remove any dynamically created elements (defensive)
+            try {
+                const dynamicElements = document.querySelectorAll('.wallet-generator, .wallet-restoration, .wallet-finalization')
+                dynamicElements.forEach(element => {
+                    if (element.parentNode) {
+                        element.remove()
+                    }
+                })
+            } catch (dynamicError) {
+                console.warn('⚠️ Error removing dynamic elements:', dynamicError)
+            }
+            
+            // 4. Clear any global state that might be set
+            const globalOverlay = document.getElementById('global-overlay-container')
+            if (globalOverlay) {
+                globalOverlay.innerHTML = ''
+            }
+            
+            console.log('✅ Thorough cleanup completed')
+            
+        } catch (error) {
+            console.error('❌ Error during thorough cleanup:', error)
+            // Don't re-throw, just log and continue
         }
     }
 

@@ -557,6 +557,16 @@ ipcMain.handle('memoless-get-network-display', async () => {
   }
 });
 
+ipcMain.handle('get-memoless-service', async () => {
+  try {
+    // Return the memoless service instance
+    return memolessService;
+  } catch (error) {
+    console.error('Error getting memoless service:', error);
+    throw error;
+  }
+});
+
 // IPC handlers for secure wallet storage
 ipcMain.handle('save-wallet', async (event, walletData: SecureWalletData) => {
   try {

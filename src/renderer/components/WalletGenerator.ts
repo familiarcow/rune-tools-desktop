@@ -91,33 +91,17 @@ export class WalletGenerator {
      * Display the generated seed phrase with security warnings
      */
     displaySeedPhrase(wallet: GeneratedWallet): void {
+        console.log('🖼️ displaySeedPhrase called, container:', this.container, 'visible:', this.container.style.display !== 'none')
+        
+        // Clean up any existing components first
+        this.cleanupCurrentState()
+        
         const words = wallet.seedPhrase.split(' ')
         
+        console.log('🖼️ Setting innerHTML for container...')
         this.container.innerHTML = `
             <div class="wallet-generator">
-                <div class="security-warning">
-                    <div class="warning-icon">⚠️</div>
-                    <div class="warning-content">
-                        <h3>Important Security Information</h3>
-                        <ul>
-                            <li><strong>Write this down:</strong> Store your seed phrase in a secure, offline location</li>
-                            <li><strong>Never share:</strong> Anyone with this phrase can access your wallet</li>
-                            <li><strong>No screenshots:</strong> Avoid digital copies that could be compromised</li>
-                            <li><strong>Verify storage:</strong> You'll need to confirm you've saved it securely</li>
-                        </ul>
-                    </div>
-                </div>
-
                 <div class="seed-phrase-container">
-                    <div class="seed-phrase-header">
-                        <h3>Your ${wallet.wordCount}-Word Recovery Phrase</h3>
-                        <div class="seed-phrase-actions">
-                            <button id="regenerateBtn" class="btn btn-secondary" title="Generate new phrase">
-                                🎲 New Phrase
-                            </button>
-                        </div>
-                    </div>
-                    
                     <!-- Seed phrase display will be rendered here -->
                     <div id="seedPhraseDisplayContainer"></div>
 
@@ -133,21 +117,23 @@ export class WalletGenerator {
 
                 <div class="verification-section">
                     <div class="verification-warning">
-                        <p>⚠️ <strong>Before continuing, write down your seed phrase in order.</strong></p>
-                        <p>You will be asked to verify that you have saved it correctly.</p>
+                        <p>⚠️ Write down your seed phrase securely - anyone with these words can access your wallet. You will be asked to verify on the next screen.</p>
                     </div>
                     
                     <div class="verification-actions">
                         <button id="startVerificationBtn" class="btn btn-primary">
                             ✅ I have written it down - Continue
                         </button>
-                        <button id="backToGenerateBtn" class="btn btn-secondary">
-                            ← Generate Different Phrase
+                        <button id="exitWalletCreationBtn" class="btn btn-danger">
+                            ✕ Exit Wallet Creation
                         </button>
                     </div>
                 </div>
             </div>
         `
+        
+        console.log('🖼️ HTML set, container innerHTML length:', this.container.innerHTML.length)
+        console.log('🖼️ Container parent:', this.container.parentElement, 'parent display:', this.container.parentElement?.style.display)
 
         // Create and render the seed phrase display component
         const seedPhraseContainer = this.container.querySelector('#seedPhraseDisplayContainer') as HTMLElement
@@ -158,6 +144,17 @@ export class WalletGenerator {
                 {
                     allowCopy: true,
                     showNumbers: true,
+                    additionalActions: `
+                        <button id="regenerateBtn" class="btn btn-secondary" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            font-size: 13px;
+                            padding: 6px 12px;
+                        " title="Generate new phrase">
+                            🎲 New Phrase
+                        </button>
+                    `,
                     onCopy: () => {
                         console.log('📋 Seed phrase copied to clipboard')
                     }
@@ -189,20 +186,27 @@ export class WalletGenerator {
                     <p>Please enter the requested words from your recovery phrase to confirm you have saved it correctly.</p>
 
                     <form id="verificationForm" class="verification-form">
-                        ${this.verificationWords.map((item, i) => `
-                            <div class="verification-word">
-                                <label class="form-label">Word #${item.index + 1}:</label>
-                                <input 
-                                    type="text" 
-                                    id="verify-${item.index}" 
-                                    class="form-input verification-input" 
-                                    placeholder="Enter word ${item.index + 1}"
-                                    autocomplete="off"
-                                    spellcheck="false"
-                                    required
-                                >
-                            </div>
-                        `).join('')}
+                        <div class="verification-grid" style="
+                            display: grid;
+                            grid-template-columns: repeat(4, 1fr);
+                            gap: 16px;
+                            margin-bottom: 24px;
+                        ">
+                            ${this.verificationWords.map((item, i) => `
+                                <div class="verification-word">
+                                    <label class="form-label">Word #${item.index + 1}:</label>
+                                    <input 
+                                        type="text" 
+                                        id="verify-${item.index}" 
+                                        class="form-input verification-input" 
+                                        placeholder="Enter word ${item.index + 1}"
+                                        autocomplete="off"
+                                        spellcheck="false"
+                                        required
+                                    >
+                                </div>
+                            `).join('')}
+                        </div>
 
                         <div class="verification-actions">
                             <button type="submit" class="btn btn-primary">
@@ -211,12 +215,11 @@ export class WalletGenerator {
                             <button type="button" id="backToSeedBtn" class="btn btn-secondary">
                                 ← Back to Seed Phrase
                             </button>
+                            <button type="button" id="exitVerificationBtn" class="btn btn-danger">
+                                ✕ Exit Wallet Creation
+                            </button>
                         </div>
                     </form>
-
-                    <div class="verification-help">
-                        <p><small>💡 <strong>Tip:</strong> Words are case-insensitive and must be spelled exactly as shown.</small></p>
-                    </div>
                 </div>
             </div>
         `
@@ -245,51 +248,6 @@ export class WalletGenerator {
         return true
     }
 
-    /**
-     * Complete the wallet generation process
-     */
-    completeGeneration(): void {
-        if (!this.generatedWallet) return
-
-        this.container.innerHTML = `
-            <div class="wallet-generator">
-                <div class="completion-container">
-                    <div class="success-icon">🎉</div>
-                    <h3>Seed Phrase Verified!</h3>
-                    <p>Your recovery phrase has been confirmed. Your wallet is ready to be created.</p>
-                    
-                    <div class="completion-info">
-                        <div class="wallet-info">
-                            <p><strong>Seed Phrase:</strong> ${this.generatedWallet.wordCount} words</p>
-                            <p><strong>Entropy:</strong> ${this.generatedWallet.entropy.length * 4} bits</p>
-                            <p><strong>Security:</strong> Cryptographically secure</p>
-                        </div>
-                        
-                        <div class="security-reminder">
-                            <h4>🔒 Final Security Reminder</h4>
-                            <ul>
-                                <li>Keep your recovery phrase safe and private</li>
-                                <li>Never enter it on websites or share with others</li>
-                                <li>Consider using a hardware wallet for large amounts</li>
-                                <li>Test wallet recovery before depositing funds</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="completion-actions">
-                        <button id="proceedToWalletBtn" class="btn btn-primary">
-                            🚀 Create Wallet
-                        </button>
-                        <button id="startOverBtn" class="btn btn-secondary">
-                            ↻ Generate New Phrase
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `
-
-        this.setupCompletionListeners()
-    }
 
     /**
      * Set up event listeners for the main generation interface
@@ -310,13 +268,15 @@ export class WalletGenerator {
             verifyBtn.addEventListener('click', () => this.startVerification())
         }
 
-        // Back to generation
-        const backBtn = document.getElementById('backToGenerateBtn')
-        if (backBtn) {
-            backBtn.addEventListener('click', async () => {
-                if (this.generatedWallet) {
-                    this.displaySeedPhrase(this.generatedWallet)
-                }
+
+        // Exit wallet creation
+        const exitBtn = document.getElementById('exitWalletCreationBtn')
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => {
+                // Emit custom event to trigger return to wallet selection
+                this.container.dispatchEvent(new CustomEvent('walletGeneration:exit', {
+                    bubbles: true
+                }))
             })
         }
     }
@@ -341,7 +301,10 @@ export class WalletGenerator {
                 const isValid = await this.verifySeedPhrase(inputs)
                 
                 if (isValid) {
-                    this.completeGeneration()
+                    // Skip completion page and proceed directly to wallet creation
+                    if (this.onCompleteCallback && this.generatedWallet) {
+                        this.onCompleteCallback(this.generatedWallet)
+                    }
                 } else {
                     // Show error
                     this.showVerificationError()
@@ -354,33 +317,25 @@ export class WalletGenerator {
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 if (this.generatedWallet) {
+                    // Clean up current state before going back
+                    this.cleanupCurrentState()
                     this.displaySeedPhrase(this.generatedWallet)
                 }
             })
         }
-    }
 
-    /**
-     * Set up event listeners for completion interface
-     */
-    private setupCompletionListeners(): void {
-        const proceedBtn = document.getElementById('proceedToWalletBtn')
-        if (proceedBtn) {
-            proceedBtn.addEventListener('click', () => {
-                if (this.onCompleteCallback && this.generatedWallet) {
-                    this.onCompleteCallback(this.generatedWallet)
-                }
-            })
-        }
-
-        const startOverBtn = document.getElementById('startOverBtn')
-        if (startOverBtn) {
-            startOverBtn.addEventListener('click', async () => {
-                const newWallet = await this.generateSeedPhrase()
-                this.displaySeedPhrase(newWallet)
+        // Exit wallet creation from verification
+        const exitBtn = document.getElementById('exitVerificationBtn')
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => {
+                // Emit custom event to trigger return to wallet selection
+                this.container.dispatchEvent(new CustomEvent('walletGeneration:exit', {
+                    bubbles: true
+                }))
             })
         }
     }
+
 
     /**
      * Show verification error message
@@ -416,6 +371,23 @@ export class WalletGenerator {
     }
 
     /**
+     * Clean up current component state
+     */
+    private cleanupCurrentState(): void {
+        // Clean up SeedPhraseDisplay component if it exists
+        if (this.seedPhraseDisplay) {
+            this.seedPhraseDisplay.destroy()
+            this.seedPhraseDisplay = null
+        }
+        
+        // Reset verification mode
+        this.verificationMode = false
+        this.verificationWords = []
+        
+        console.log('🧹 WalletGenerator state cleaned up')
+    }
+
+    /**
      * Get random indices for verification
      */
     private getRandomIndices(max: number, count: number): number[] {
@@ -448,12 +420,7 @@ export class WalletGenerator {
      */
     reset(): void {
         this.generatedWallet = null
-        this.verificationMode = false
-        this.verificationWords = []
-        if (this.seedPhraseDisplay) {
-            this.seedPhraseDisplay.destroy()
-            this.seedPhraseDisplay = null
-        }
+        this.cleanupCurrentState()
         this.container.innerHTML = ''
     }
 }

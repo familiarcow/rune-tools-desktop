@@ -1581,6 +1581,326 @@
       color: white;
     }
 
+    /* Memoless Tab Styles */
+    .memoless-tab {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--spacing-lg);
+    }
+
+    .memoless-header {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .header-content h2 {
+      margin: 0 0 6px 0;
+      color: var(--text-primary);
+      font-size: 24px;
+    }
+
+    .header-content p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-lg);
+      padding: var(--spacing-md) 0;
+    }
+
+    .progress-steps .step {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: var(--border-radius);
+      border: 2px solid var(--border-color);
+      background: var(--bg-secondary);
+      transition: all 0.2s;
+    }
+
+    .progress-steps .step.active {
+      border-color: var(--accent-primary);
+      background: var(--bg-input);
+    }
+
+    .progress-steps .step.current {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .progress-steps .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--border-color);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .progress-steps .step.active .step-number {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .progress-steps .step.current .step-number {
+      background: white;
+      color: var(--accent-primary);
+    }
+
+    .progress-steps .step-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .progress-steps .step.active .step-label {
+      color: var(--text-primary);
+    }
+
+    .progress-steps .step.current .step-label {
+      color: white;
+    }
+
+    .memoless-content {
+      flex: 1;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .step-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      min-height: 400px;
+    }
+
+    .step-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .step-title h3 {
+      margin: 0 0 6px 0;
+      color: var(--text-primary);
+      font-size: 20px;
+    }
+
+    .step-title p {
+      margin: 0 0 var(--spacing-lg) 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .memo-input {
+      min-height: 80px;
+      resize: vertical;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .form-helper ul {
+      margin: var(--spacing-sm) 0 0 0;
+      padding-left: var(--spacing-md);
+    }
+
+    .form-helper li {
+      color: var(--text-muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .selected-asset-info {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+    }
+
+    .selected-asset-info h4 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .asset-details .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+
+    .asset-details .detail-row span:first-child {
+      color: var(--text-secondary);
+    }
+
+    .asset-details .detail-row span:last-child {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .summary-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .summary-card h4 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+
+    .detail-row span:first-child {
+      color: var(--text-secondary);
+    }
+
+    .detail-row span:last-child {
+      color: var(--text-primary);
+    }
+
+    .mono {
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .registration-actions {
+      text-align: center;
+      margin-top: var(--spacing-md);
+    }
+
+    .info-card {
+      padding: var(--spacing-md);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-color);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .info-card.success {
+      background: rgba(0, 255, 136, 0.1);
+      border-color: var(--success);
+    }
+
+    .info-card h4 {
+      margin: 0 0 var(--spacing-sm) 0;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .reference-id {
+      background: var(--accent-primary);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .amount-input-group {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .unit-selector {
+      width: 120px;
+    }
+
+    .calculated-amount {
+      margin-top: var(--spacing-sm);
+      padding: var(--spacing-sm);
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-size: 14px;
+    }
+
+    .qr-section {
+      text-align: center;
+      margin: var(--spacing-lg) 0;
+    }
+
+    .qr-container {
+      display: inline-block;
+      padding: var(--spacing-md);
+      background: white;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .instructions h4 {
+      color: var(--warning);
+      margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    }
+
+    .warning-list {
+      color: var(--text-primary);
+      padding-left: var(--spacing-md);
+    }
+
+    .warning-list li {
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .warning-list strong {
+      color: var(--warning);
+    }
+
+    .tracking-section {
+      text-align: center;
+      margin-top: var(--spacing-lg);
+      padding-top: var(--spacing-md);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .memoless-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) 0;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .loading-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: var(--spacing-lg);
+      font-size: 14px;
+    }
+
+    .error-state {
+      text-align: center;
+      color: var(--error);
+      padding: var(--spacing-lg);
+      font-size: 14px;
+    }
 
   </style>
 </head>
@@ -1599,7 +1919,6 @@
             <div class="wallet-actions">
               <button id="create-wallet-btn" class="btn btn-primary">Create New Wallet</button>
               <button id="import-wallet-btn" class="btn btn-secondary">Import Wallet</button>
-              <button id="refresh-wallets-btn" class="btn btn-secondary">🔄 Refresh</button>
             </div>
 
             <div class="wallet-list">
@@ -1726,6 +2045,9 @@
           <button class="tab-button active" data-tab="wallet">
             💰 Wallet
           </button>
+          <button class="tab-button" data-tab="memoless">
+            🔗 Memoless
+          </button>
           <button class="tab-button" data-tab="trade">
             🔄 Trade
           </button>
@@ -1745,6 +2067,11 @@
           <!-- Wallet Tab -->
           <div id="wallet-tab-content" class="tab-content">
             <!-- WalletTab component will be mounted here -->
+          </div>
+          
+          <!-- Memoless Tab -->
+          <div id="memoless-tab-content" class="tab-content hidden">
+            <!-- MemolessTab component will be mounted here -->
           </div>
           
           <!-- Trade Tab -->

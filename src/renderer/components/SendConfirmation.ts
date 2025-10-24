@@ -119,9 +119,8 @@ export class SendConfirmation {
 
     this.container.innerHTML = `
       <div class="send-confirmation-content">
-        <!-- Password Input (moved to top) -->
+        <!-- Password Input -->
         <div class="confirmation-section">
-          <h4 class="section-title">Authorize Transaction</h4>
           <div class="password-input-group">
             <label class="form-label" for="transactionPassword">
               Wallet Password
@@ -143,9 +142,9 @@ export class SendConfirmation {
           </div>
         </div>
 
-        <!-- Transaction Review -->
+        <!-- Transaction Details -->
         <div class="confirmation-section">
-          <h4 class="section-title">Review Transaction</h4>
+          <h4 class="section-title">Transaction Details</h4>
           <div class="transaction-details">
             <div class="detail-row">
               <span class="detail-label">Type:</span>
@@ -210,7 +209,11 @@ export class SendConfirmation {
     passwordInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault()
-        // Could auto-confirm on Enter if desired
+        // Trigger the confirm button click on Enter key
+        const confirmBtn = document.getElementById('confirmBtn') as HTMLButtonElement
+        if (confirmBtn && !confirmBtn.disabled) {
+          confirmBtn.click()
+        }
       }
     })
 

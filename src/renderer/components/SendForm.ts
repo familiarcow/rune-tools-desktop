@@ -80,78 +80,61 @@ export class SendForm {
               <input type="radio" name="txType" value="deposit" id="txTypeDeposit">
               <span class="radio-label">
                 <strong>MsgDeposit</strong>
-                <small>Deposit to THORChain for swaps/LP</small>
+                <small>Deposit to THORChain</small>
               </span>
             </label>
           </div>
         </div>
 
-        <!-- Asset Selection -->
+        <!-- Asset & Amount (Same Line) -->
         <div class="form-section">
-          <label class="form-label" for="assetSelector">Asset</label>
-          <select class="form-control" id="assetSelector">
-            <!-- Populated dynamically -->
-          </select>
-          <div class="form-error hidden" id="assetError"></div>
-        </div>
-
-        <!-- Amount Input -->
-        <div class="form-section">
-          <label class="form-label" for="amountInput">Amount</label>
-          <div class="amount-input-group">
-            <input type="text" class="form-control" id="amountInput" placeholder="0.00">
-            <button type="button" class="btn-max" id="maxBtn">MAX</button>
+          <div class="asset-amount-row">
+            <div class="asset-column">
+              <label class="form-label" for="assetSelector">
+                Asset
+                <span class="required-asterisk hidden" id="assetAsterisk">*</span>
+              </label>
+              <select class="form-control" id="assetSelector">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            
+            <div class="amount-column">
+              <label class="form-label" for="amountInput">
+                Amount
+                <span class="required-asterisk hidden" id="amountAsterisk">*</span>
+              </label>
+              <div class="amount-input-group">
+                <input type="text" class="form-control" id="amountInput" placeholder="0.00">
+                <button type="button" class="btn-max" id="maxBtn">MAX</button>
+              </div>
+              <div class="balance-info" id="balanceInfo">
+                Available: 0.00
+              </div>
+            </div>
           </div>
-          <div class="balance-info" id="balanceInfo">
-            Available: 0.00
-          </div>
-          <div class="form-error hidden" id="amountError"></div>
         </div>
 
         <!-- To Address (MsgSend only) -->
         <div class="form-section" id="addressSection">
-          <label class="form-label" for="toAddressInput">To Address</label>
+          <label class="form-label" for="toAddressInput">
+            To Address
+            <span class="required-asterisk hidden" id="addressAsterisk">*</span>
+          </label>
           <input type="text" class="form-control" id="toAddressInput" placeholder="thor1...">
-          <div class="form-error hidden" id="addressError"></div>
         </div>
 
         <!-- Memo Input -->
         <div class="form-section">
           <label class="form-label" for="memoInput">Memo</label>
-          <input type="text" class="form-control" id="memoInput" placeholder="Memo (Optional)">
-          <div class="form-helper" id="memoHelper">
-            <small id="memoHelperText">Optional memo for this transaction</small>
-          </div>
-          <div class="form-error hidden" id="memoError"></div>
+          <input type="text" class="form-control" id="memoInput" placeholder="Optional">
         </div>
 
-        <!-- Transaction Summary -->
-        <div class="form-section">
-          <div class="transaction-summary" id="transactionSummary">
-            <div class="summary-row">
-              <span>Type:</span>
-              <span id="summaryType">MsgSend</span>
-            </div>
-            <div class="summary-row">
-              <span>Asset:</span>
-              <span id="summaryAsset">-</span>
-            </div>
-            <div class="summary-row">
-              <span>Amount:</span>
-              <span id="summaryAmount">-</span>
-            </div>
-            <div class="summary-row" id="summaryAddressRow">
-              <span>To:</span>
-              <span id="summaryAddress">-</span>
-            </div>
-          </div>
-        </div>
       </div>
     `
 
     this.populateAssetSelector()
     this.updateBalanceInfo()
-    this.updateTransactionSummary()
   }
 
   private setupEventListeners(): void {
@@ -210,7 +193,6 @@ export class SendForm {
     console.log('🔄 Transaction type changed to:', type)
     
     const addressSection = document.getElementById('addressSection')
-    const memoHelperText = document.getElementById('memoHelperText')
     const memoInput = document.getElementById('memoInput') as HTMLInputElement
     
     if (type === 'send') {
@@ -218,26 +200,18 @@ export class SendForm {
       if (addressSection) {
         addressSection.style.display = 'block'
       }
-      if (memoHelperText) {
-        memoHelperText.textContent = 'Optional memo for this transaction'
-      }
       if (memoInput) {
-        memoInput.placeholder = 'Optional memo'
+        memoInput.placeholder = 'Optional'
       }
     } else {
       // MsgDeposit: No address (goes to module), memo for operations
       if (addressSection) {
         addressSection.style.display = 'none'
       }
-      if (memoHelperText) {
-        memoHelperText.textContent = 'Memo for swap/LP operations (e.g., SWAP:BTC.BTC:thor1...)'
-      }
       if (memoInput) {
         memoInput.placeholder = 'Swap/LP memo'
       }
     }
-
-    this.updateTransactionSummary()
   }
 
   private onAssetChange(): void {
@@ -249,17 +223,15 @@ export class SendForm {
 
     this.updateBalanceInfo()
     this.validateAmount()
-    this.updateTransactionSummary()
     this.clearError('asset')
   }
 
   private onAmountChange(): void {
     this.clearError('amount')
-    this.updateTransactionSummary()
   }
 
   private onMemoChange(): void {
-    this.updateTransactionSummary()
+    // Clear any memo-related errors if needed in future
   }
 
   private updateBalanceInfo(): void {
@@ -281,41 +253,6 @@ export class SendForm {
     }
   }
 
-  private updateTransactionSummary(): void {
-    const summaryType = document.getElementById('summaryType')
-    const summaryAsset = document.getElementById('summaryAsset')
-    const summaryAmount = document.getElementById('summaryAmount')
-    const summaryAddress = document.getElementById('summaryAddress')
-    const summaryAddressRow = document.getElementById('summaryAddressRow')
-
-    // Get current form values
-    const txType = this.getSelectedTransactionType()
-    const amount = (document.getElementById('amountInput') as HTMLInputElement)?.value || '0'
-    const toAddress = (document.getElementById('toAddressInput') as HTMLInputElement)?.value || ''
-
-    // Update summary
-    if (summaryType) {
-      summaryType.textContent = txType === 'send' ? 'MsgSend' : 'MsgDeposit'
-    }
-    
-    if (summaryAsset) {
-      summaryAsset.textContent = this.selectedAsset || '-'
-    }
-    
-    if (summaryAmount) {
-      summaryAmount.textContent = amount ? `${amount} ${this.selectedAsset}` : '-'
-    }
-
-    // Show/hide address row based on transaction type
-    if (summaryAddressRow && summaryAddress) {
-      if (txType === 'send') {
-        summaryAddressRow.style.display = 'flex'
-        summaryAddress.textContent = toAddress ? this.truncateAddress(toAddress) : '-'
-      } else {
-        summaryAddressRow.style.display = 'none'
-      }
-    }
-  }
 
   private setMaxAmount(): void {
     const balance = this.getAssetBalance(this.selectedAsset)
@@ -473,10 +410,10 @@ export class SendForm {
   private showFieldError(field: string, message: string): ValidationResult {
     this.validationErrors.set(field, message)
     
-    const errorEl = document.getElementById(`${field}Error`)
-    if (errorEl) {
-      errorEl.textContent = message
-      errorEl.classList.remove('hidden')
+    // Show red asterisk instead of error text
+    const asteriskEl = document.getElementById(`${field}Asterisk`)
+    if (asteriskEl) {
+      asteriskEl.classList.remove('hidden')
     }
 
     return { valid: false, error: message }
@@ -485,19 +422,19 @@ export class SendForm {
   private clearError(field: string): void {
     this.validationErrors.delete(field)
     
-    const errorEl = document.getElementById(`${field}Error`)
-    if (errorEl) {
-      errorEl.textContent = ''
-      errorEl.classList.add('hidden')
+    // Hide red asterisk
+    const asteriskEl = document.getElementById(`${field}Asterisk`)
+    if (asteriskEl) {
+      asteriskEl.classList.add('hidden')
     }
   }
 
   private clearAllErrors(): void {
     this.validationErrors.clear()
     
-    const errorElements = this.container.querySelectorAll('.form-error')
-    errorElements.forEach(el => {
-      el.textContent = ''
+    // Hide all asterisks
+    const asteriskElements = this.container.querySelectorAll('.required-asterisk')
+    asteriskElements.forEach(el => {
       el.classList.add('hidden')
     })
   }

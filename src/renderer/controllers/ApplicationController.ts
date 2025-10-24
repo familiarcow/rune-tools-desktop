@@ -12,6 +12,7 @@ import { BackendService } from '../services/BackendService'
 import { StateManager } from '../services/StateManager'
 import { UIService } from '../services/UIService'
 import { WalletTab } from '../components/WalletTab'
+import { MemolessTab } from '../components/MemolessTab'
 import { HeaderDisplay } from '../components/HeaderDisplay'
 
 export interface ActiveWallet {
@@ -37,6 +38,7 @@ export class ApplicationController {
     private currentNetwork: 'mainnet' | 'stagenet' = 'mainnet'
     private currentTab: string = 'wallet'
     private walletTab: WalletTab | null = null
+    private memolessTab: MemolessTab | null = null
     private headerDisplay: HeaderDisplay | null = null
     private isInitialized: boolean = false
 
@@ -59,6 +61,9 @@ export class ApplicationController {
             
             // Initialize wallet tab as the default tab
             await this.initializeWalletTab()
+            
+            // Initialize memoless tab
+            await this.initializeMemolessTab()
             
             // Setup tab navigation
             this.setupTabNavigation()
@@ -95,6 +100,38 @@ export class ApplicationController {
         
         // Show wallet tab by default
         this.showTab('wallet')
+    }
+
+    private async initializeMemolessTab(): Promise<void> {
+        const memolessTabContainer = document.getElementById('memoless-tab-content')
+        if (!memolessTabContainer) {
+            throw new Error('Memoless tab container not found')
+        }
+
+        this.memolessTab = new MemolessTab(memolessTabContainer, this.backend)
+        
+        // Initialize with wallet data when tab is accessed
+        console.log('🔗 MemolessTab component prepared')
+    }
+
+    private initializeMemolessTabContent(): void {
+        if (!this.memolessTab || !this.activeWallet) return
+        
+        // Initialize memoless tab with current wallet data
+        const memolessWalletData = {
+            walletId: this.activeWallet.walletId,
+            name: this.activeWallet.name,
+            address: this.currentNetwork === 'mainnet' 
+                ? this.activeWallet.mainnetAddress! 
+                : this.activeWallet.stagenetAddress!,
+            network: this.currentNetwork
+        }
+        
+        this.memolessTab.initialize(memolessWalletData)
+            .catch(error => {
+                console.error('❌ Failed to initialize memoless tab content:', error)
+                this.ui.showError('Failed to load memoless functionality')
+            })
     }
 
     private setupTabNavigation(): void {
@@ -157,9 +194,11 @@ export class ApplicationController {
             selectedButton.classList.add('active')
         }
 
-        // Handle settings tab specific initialization
+        // Handle tab specific initialization
         if (tabName === 'settings') {
             this.initializeSettingsTab()
+        } else if (tabName === 'memoless') {
+            this.initializeMemolessTabContent()
         }
 
         this.currentTab = tabName
@@ -284,6 +323,11 @@ export class ApplicationController {
                 // Update wallet tab address first, then network
                 this.walletTab.updateWalletAddress(this.activeWallet, network)
                 updatePromises.push(this.walletTab.updateNetwork(network))
+            }
+            
+            // Update memoless tab if it's active
+            if (this.memolessTab && this.activeWallet && this.currentTab === 'memoless') {
+                this.initializeMemolessTabContent() // Re-initialize with new network
             }
             
             // Wait for all component updates

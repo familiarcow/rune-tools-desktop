@@ -66,6 +66,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       'memoless-calculate-usd',
       'memoless-is-stagenet',
       'memoless-get-network-display',
+      'get-memoless-service',
       
       // Secure wallet storage
       'save-wallet',

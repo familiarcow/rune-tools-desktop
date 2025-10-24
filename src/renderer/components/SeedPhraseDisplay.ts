@@ -17,6 +17,7 @@ export interface SeedPhraseDisplayOptions {
     gridCols?: number
     className?: string
     onCopy?: () => void
+    additionalActions?: string  // HTML for additional action buttons
 }
 
 export class SeedPhraseDisplay {
@@ -137,18 +138,25 @@ export class SeedPhraseDisplay {
                 margin-bottom: 12px;
             ">
                 <h4 style="margin: 0; color: var(--text-primary);">
-                    Your Recovery Phrase
+                    Recovery Phrase
                 </h4>
-                <button id="copySeedPhraseBtn" class="btn btn-secondary" style="
+                <div class="action-buttons" style="
                     display: flex;
+                    gap: 8px;
                     align-items: center;
-                    gap: 6px;
-                    font-size: 13px;
-                    padding: 6px 12px;
-                " title="Copy to clipboard">
-                    <span class="copy-icon">📋</span>
-                    <span class="copy-text">Copy</span>
-                </button>
+                ">
+                    ${this.options.additionalActions || ''}
+                    <button id="copySeedPhraseBtn" class="btn btn-secondary" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        font-size: 13px;
+                        padding: 6px 12px;
+                    " title="Copy to clipboard">
+                        <span class="copy-icon">📋</span>
+                        <span class="copy-text">Copy</span>
+                    </button>
+                </div>
             </div>
         `
     }

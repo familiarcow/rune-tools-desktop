@@ -47,6 +47,11 @@ export interface TransactionResponse {
   events: any[]
 }
 
+export interface SendTransactionCallback {
+  onClose?: () => void
+  onSuccess?: (result: TransactionResponse) => void
+}
+
 export class SendTransaction {
   private container: HTMLElement
   private backend: BackendService
@@ -59,7 +64,7 @@ export class SendTransaction {
   
   private currentPage: 1 | 2 | 3 | 4 = 1  // 1=Information, 2=Review, 3=Sending, 4=Details
   private transactionResult: TransactionResponse | null = null
-  private onCloseCallback?: () => void
+  private callbacks: SendTransactionCallback = {}
   private capturedTransactionParams: TransactionParams | null = null // Capture before navigation
 
   constructor(container: HTMLElement, backend: BackendService) {
@@ -72,12 +77,18 @@ export class SendTransaction {
   /**
    * Initialize the Send dialog with wallet data (non-sensitive only)
    */
-  async initialize(walletData: SendTransactionData, onClose?: () => void): Promise<void> {
+  async initialize(walletData: SendTransactionData, callbacks?: SendTransactionCallback | (() => void)): Promise<void> {
     try {
       console.log('💳 Initializing Send dialog for wallet:', walletData.name)
       
       this.transactionData = walletData
-      this.onCloseCallback = onClose
+      
+      // Handle legacy callback format
+      if (typeof callbacks === 'function') {
+        this.callbacks = { onClose: callbacks }
+      } else {
+        this.callbacks = callbacks || {}
+      }
       
       // Reset to information page
       this.currentPage = 1
@@ -138,7 +149,6 @@ export class SendTransaction {
             <div class="send-page ${this.currentPage === 1 ? 'active' : ''}" id="sendPageInformation">
               <div class="page-title">
                 <h2>Send Transaction</h2>
-                <p>Enter transaction details</p>
               </div>
               <div class="page-content" id="sendFormContainer"></div>
             </div>
@@ -146,18 +156,14 @@ export class SendTransaction {
             <!-- Page 2: Review -->
             <div class="send-page ${this.currentPage === 2 ? 'active' : ''}" id="sendPageReview">
               <div class="page-title">
-                <h2>Review Transaction</h2>
-                <p>Verify details and confirm</p>
+                <h2>Authorize Transaction</h2>
+                <p>Review details and authorize</p>
               </div>
               <div class="page-content" id="sendConfirmationContainer"></div>
             </div>
             
             <!-- Page 3: Sending -->
             <div class="send-page ${this.currentPage === 3 ? 'active' : ''}" id="sendPageSending">
-              <div class="page-title">
-                <h2>Sending Transaction</h2>
-                <p>Processing your transaction</p>
-              </div>
               <div class="page-content" id="sendProgressContainer"></div>
             </div>
             
@@ -409,6 +415,11 @@ export class SendTransaction {
           const result = await this.confirmation.executeSecureTransaction(password)
           this.transactionResult = result
           
+          // Call success callback if provided
+          if (this.callbacks.onSuccess) {
+            this.callbacks.onSuccess(result)
+          }
+          
           // Move to details page when complete
           this.navigateToPage(4)
         } catch (error) {
@@ -522,8 +533,8 @@ export class SendTransaction {
     this.container.innerHTML = ''
     
     // Call close callback
-    if (this.onCloseCallback) {
-      this.onCloseCallback()
+    if (this.callbacks.onClose) {
+      this.callbacks.onClose()
     }
     
     // Remove event listener

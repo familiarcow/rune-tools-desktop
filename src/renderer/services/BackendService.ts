@@ -255,6 +255,31 @@ export class BackendService {
         return await this.ipc.invoke('memoless-is-stagenet')
     }
 
+    async memolessGetReference(txId: string): Promise<any> {
+        return await this.ipc.invoke('memoless-get-memo-reference', txId)
+    }
+
+    async memolessGetInboundAddresses(): Promise<any> {
+        return await this.ipc.invoke('memoless-get-inbound-addresses')
+    }
+
+    async memolessValidateAmountForDeposit(userInput: string, referenceID: string, assetDecimals: number, dustThreshold: number): Promise<any> {
+        return await this.ipc.invoke('memoless-validate-amount-for-deposit', userInput, referenceID, assetDecimals, dustThreshold)
+    }
+
+    async memolessFormatAmountWithReference(userInput: string, referenceID: string, assetDecimals: number): Promise<any> {
+        return await this.ipc.invoke('memoless-format-amount-with-reference', userInput, referenceID, assetDecimals)
+    }
+
+    async memolessCalculateUSD(amount: string, priceUSD: number): Promise<any> {
+        return await this.ipc.invoke('memoless-calculate-usd', amount, priceUSD)
+    }
+
+    // Get memoless service instance from main process (DEPRECATED - causes serialization issues)
+    async getMemolessService(): Promise<any> {
+        return await this.ipc.invoke('get-memoless-service')
+    }
+
     // Secure wallet storage operations
     async saveWallet(walletData: any): Promise<any> {
         return await this.ipc.invoke('save-wallet', walletData)
