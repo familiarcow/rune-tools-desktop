@@ -341,7 +341,7 @@ export class MemolessTab {
 
         <!-- Final Amount Emphasized Section -->
         <div class="final-amount-section">
-          <div class="final-amount-header">Final Amount to Send</div>
+          <div class="final-amount-header" id="finalAmountHeader">Final Amount to Send</div>
           <div class="final-amount-display">
             <span class="final-amount-primary" id="finalAmountDisplay">0.00100002 BNB</span>
             <span class="final-amount-secondary" id="finalAmountUSD">$0.90 USD</span>
@@ -2037,6 +2037,7 @@ export class MemolessTab {
     // Update Final Amount emphasized section
     const finalAmountDisplay = document.getElementById('finalAmountDisplay')
     const finalAmountUSD = document.getElementById('finalAmountUSD')
+    const finalAmountHeader = document.getElementById('finalAmountHeader')
 
     if (finalAmountDisplay) {
       if (isValid && finalAmount) {
@@ -2045,14 +2046,32 @@ export class MemolessTab {
         const assetSymbol = this.state.selectedAsset?.split('.')[1] || 'ASSET'
         finalAmountDisplay.textContent = `${formattedAmount} ${assetSymbol}`
         finalAmountDisplay.style.color = 'var(--accent-primary, #007bff)' // Blue for valid
+        
+        // Reset header to normal
+        if (finalAmountHeader) {
+          finalAmountHeader.textContent = 'Final Amount to Send'
+          finalAmountHeader.style.color = 'var(--text-primary, #fff)'
+        }
       } else if (errorMessage) {
-        // Error - show error message
-        finalAmountDisplay.textContent = errorMessage
+        // Error - show ERROR in red
+        finalAmountDisplay.textContent = 'ERROR'
         finalAmountDisplay.style.color = 'var(--error, #ef4444)' // Red for errors
+        
+        // Change header to ERROR with red color
+        if (finalAmountHeader) {
+          finalAmountHeader.textContent = 'ERROR'
+          finalAmountHeader.style.color = 'var(--error, #ef4444)'
+        }
       } else {
         // Empty state
         finalAmountDisplay.textContent = '-'
         finalAmountDisplay.style.color = 'var(--text-secondary, #999)'
+        
+        // Reset header to normal
+        if (finalAmountHeader) {
+          finalAmountHeader.textContent = 'Final Amount to Send'
+          finalAmountHeader.style.color = 'var(--text-primary, #fff)'
+        }
       }
     }
 

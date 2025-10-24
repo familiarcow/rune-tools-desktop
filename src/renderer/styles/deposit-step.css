@@ -91,6 +91,12 @@
   margin-bottom: 8px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.5px !important;
+  transition: color 0.3s ease !important;
+}
+
+.step-content.deposit-step .final-amount-header[style*="#ef4444"] {
+  animation: pulse-error 1.5s ease-in-out infinite alternate !important;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.4) !important;
 }
 
 .step-content.deposit-step .final-amount-display {
@@ -106,6 +112,15 @@
   color: var(--accent-primary, #007bff) !important;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
   text-shadow: 0 1px 2px rgba(0, 123, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.step-content.deposit-step .final-amount-primary[style*="#ef4444"] {
+  animation: pulse-error 1.5s ease-in-out infinite alternate !important;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
 }
 
 .step-content.deposit-step .final-amount-secondary {
@@ -448,6 +463,17 @@
   }
   to {
     opacity: 0.6;
+  }
+}
+
+@keyframes pulse-error {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.7;
+    transform: scale(1.02);
   }
 }
 
