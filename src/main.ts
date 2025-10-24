@@ -503,11 +503,11 @@ ipcMain.handle('memoless-validate-dust-threshold', async (event, amount: string,
   }
 });
 
-ipcMain.handle('memoless-validate-amount-for-deposit', async (event, userInput: string, referenceID: string, assetDecimals: number, dustThreshold: number) => {
+ipcMain.handle('memoless-validate-amount-for-deposit', async (event, asset: string, exactAmount: string, decimals: number, expectedMemo: string, expectedReference: string) => {
   try {
-    return memolessService.validateAmountForDeposit(userInput, referenceID, assetDecimals, dustThreshold);
+    return memolessService.validateMemoRegistration(asset, exactAmount, decimals, expectedMemo, expectedReference);
   } catch (error) {
-    console.error('Error validating amount for deposit:', error);
+    console.error('Error validating memo registration:', error);
     throw error;
   }
 });

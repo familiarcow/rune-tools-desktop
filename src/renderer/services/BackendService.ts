@@ -263,8 +263,8 @@ export class BackendService {
         return await this.ipc.invoke('memoless-get-inbound-addresses')
     }
 
-    async memolessValidateAmountForDeposit(userInput: string, referenceID: string, assetDecimals: number, dustThreshold: number): Promise<any> {
-        return await this.ipc.invoke('memoless-validate-amount-for-deposit', userInput, referenceID, assetDecimals, dustThreshold)
+    async memolessValidateAmountForDeposit(asset: string, exactAmount: string, decimals: number, expectedMemo: string, expectedReference: string): Promise<any> {
+        return await this.ipc.invoke('memoless-validate-amount-for-deposit', asset, exactAmount, decimals, expectedMemo, expectedReference)
     }
 
     async memolessFormatAmountWithReference(userInput: string, referenceID: string, assetDecimals: number): Promise<any> {
@@ -275,6 +275,9 @@ export class BackendService {
         return await this.ipc.invoke('memoless-calculate-usd', amount, priceUSD)
     }
 
+    async memolessGetExpiryEstimate(expiryBlock: string): Promise<any> {
+        return await this.ipc.invoke('memoless-get-expiry-estimate', expiryBlock)
+    }
 
     // Get memoless service instance from main process (DEPRECATED - causes serialization issues)
     async getMemolessService(): Promise<any> {

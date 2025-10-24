@@ -32,6 +32,7 @@ export interface MemolessState {
   dustThreshold: number
   validAmount: string | null
   qrCodeData: string | null
+  validationData: any | null
   isComplete: boolean
 }
 
@@ -62,6 +63,7 @@ export class MemolessTab {
     dustThreshold: 0,
     validAmount: null,
     qrCodeData: null,
+    validationData: null,
     isComplete: false
   }
 
@@ -93,6 +95,9 @@ export class MemolessTab {
   }
 
   private resetState(): void {
+    // Stop validation refresh timer
+    this.stopValidationRefresh()
+    
     this.state = {
       currentStep: 1,
       memoToRegister: '',
@@ -106,6 +111,7 @@ export class MemolessTab {
       dustThreshold: 0,
       validAmount: null,
       qrCodeData: null,
+      validationData: null,
       isComplete: false
     }
   }
@@ -358,23 +364,31 @@ export class MemolessTab {
                 <div class="qr-box" id="qrContainer">
                   ${this.state.inboundAddress ? '' : '<div class="qr-loading">Loading QR...</div>'}
                 </div>
+                <!-- Asset info (moved below QR) -->
+                <div class="asset-below-qr">
+                  <div class="network-display">
+                    <span id="networkAndAsset">${this.state.selectedAsset ? `${this.state.selectedAsset.split('.')[1]} on ${this.state.selectedAsset.split('.')[0]}` : 'Loading...'}</span>
+                  </div>
+                </div>
               </div>
               
               <!-- Transaction Details -->
               <div class="transaction-details-compact">
-                <!-- Asset and Reference on same line -->
-                <div class="detail-row-dual">
-                  <div class="detail-half">
-                    <label>Asset to Send:</label>
-                    <div class="network-display">
-                      <span id="networkAndAsset">${this.state.selectedAsset ? `${this.state.selectedAsset.split('.')[1]} on ${this.state.selectedAsset.split('.')[0]}` : 'Loading...'}</span>
-                    </div>
-                  </div>
-                  <div class="detail-half">
+                <!-- Top row: Reference ID, Expiry, Uses -->
+                <div class="detail-row-triple">
+                  <div class="detail-third">
                     <label>Reference ID:</label>
                     <div class="reference-display">
                       <span id="referenceNumber">${this.state.referenceId || 'Loading...'}</span>
                     </div>
+                  </div>
+                  <div class="detail-third">
+                    <label>Expires:</label>
+                    <div id="expiryCompact" class="expiry-compact">Loading...</div>
+                  </div>
+                  <div class="detail-third">
+                    <label>Uses:</label>
+                    <div id="usageCompact" class="usage-compact">Loading...</div>
                   </div>
                 </div>
                 
@@ -1939,6 +1953,7 @@ export class MemolessTab {
       )
 
       if (!formatResult.isValid) {
+        this.stopValidationRefresh()
         this.updateCompactDisplay('', '', `${formatResult.errors.join(', ')}`, false)
         return
       }
@@ -1952,14 +1967,37 @@ export class MemolessTab {
         usdEquivalent = usdResult || '0.00'
       }
       
-      // Store the valid amount
+      // Step 7 validation: Validate memo registration with amount
+      console.log('🔍 Validating memo registration with amount...')
+      const validationResult = await this.backend.memolessValidateAmountForDeposit(
+        this.state.selectedAsset,
+        finalAmount,
+        this.state.assetDecimals,
+        this.state.registrationData.memo,
+        this.state.referenceId
+      )
+
+      if (!validationResult.isValid) {
+        console.error('❌ Memo validation failed:', validationResult.errors)
+        this.stopValidationRefresh()
+        this.updateCompactDisplay('', '', `Validation failed: ${validationResult.errors.join(', ')}`, false)
+        return
+      }
+
+      console.log('✅ Memo validation successful:', validationResult.memoCheck)
+
+      // Store the valid amount and validation data
       this.state.validAmount = finalAmount
+      this.state.validationData = validationResult.memoCheck
 
       // Update all UI elements
       this.updateCompactDisplay(finalAmount, usdEquivalent, '', true)
 
       // Generate QR code
       await this.generateDepositQRCode(finalAmount)
+
+      // Start validation refresh timer
+      this.startValidationRefresh()
 
       console.log('✅ Compact amount validation successful:', {
         userInput: `${userInput} ${this.displayUnit}`,
@@ -2065,7 +2103,121 @@ export class MemolessTab {
       }
     }
 
+    // Update usage statistics and expiry time
+    this.updateUsageAndExpiryInfo(isValid && !!finalAmount)
+
     // Update address display
     this.updateAddressDisplay()
+  }
+
+  private async updateUsageAndExpiryInfo(isValid: boolean): Promise<void> {
+    const usageStats = document.getElementById('usageStats')
+    const usageCompact = document.getElementById('usageCompact')
+    const expiryCompact = document.getElementById('expiryCompact')
+
+    if (!isValid || !this.state.validationData) {
+      // Clear displays when not valid
+      if (usageStats) usageStats.textContent = 'Loading...'
+      if (usageCompact) usageCompact.textContent = 'Loading...'
+      if (expiryCompact) expiryCompact.textContent = 'Loading...'
+      return
+    }
+
+    try {
+      // Re-validate to get fresh usage count and expiry data
+      await this.refreshValidationData()
+      
+      const validation = this.state.validationData
+      
+      // Update usage statistics
+      const usageText = `${validation.usage_count}/${validation.max_use}`
+      if (usageStats) {
+        usageStats.innerHTML = `<span class="usage-text">Used ${validation.usage_count} of ${validation.max_use} times</span>`
+      }
+      if (usageCompact) {
+        usageCompact.innerHTML = `<span class="usage-compact-text">${usageText}</span>`
+      }
+
+      // Calculate and update expiry time
+      if (validation.expires_at) {
+        const expiryResult = await this.backend.memolessGetExpiryEstimate(validation.expires_at)
+        
+        if (expiryResult && expiryResult.timeRemaining) {
+          let timeDisplay = expiryResult.timeRemaining
+          let colorClass = 'time-good'
+          
+          // Color coding based on time remaining
+          if (timeDisplay === 'Expired') {
+            colorClass = 'time-expired'
+          } else if (timeDisplay.endsWith('m') || timeDisplay === '<1m') {
+            colorClass = 'time-urgent'
+          } else if (timeDisplay.endsWith('h') && parseInt(timeDisplay) < 2) {
+            colorClass = 'time-warning'
+          }
+          
+          if (expiryCompact) {
+            expiryCompact.innerHTML = `<span class="${colorClass}">~${timeDisplay}</span>`
+          }
+        } else {
+          if (expiryCompact) expiryCompact.innerHTML = '<span class="time-unknown">Unknown</span>'
+        }
+      }
+    } catch (error) {
+      console.error('Error updating usage and expiry info:', error)
+      if (usageStats) usageStats.textContent = 'Error loading stats'
+      if (usageCompact) usageCompact.textContent = 'Error'
+      if (expiryCompact) expiryCompact.textContent = 'Error'
+    }
+  }
+
+  private async refreshValidationData(): Promise<void> {
+    if (!this.state.selectedAsset || !this.state.validAmount || !this.state.registrationData) {
+      return
+    }
+
+    try {
+      console.log('🔄 Refreshing validation data...')
+      const validationResult = await this.backend.memolessValidateAmountForDeposit(
+        this.state.selectedAsset,
+        this.state.validAmount,
+        this.state.assetDecimals,
+        this.state.registrationData.memo,
+        this.state.referenceId || ''
+      )
+
+      if (validationResult.isValid) {
+        this.state.validationData = validationResult.memoCheck
+        console.log('✅ Validation data refreshed:', validationResult.memoCheck)
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing validation data:', error)
+    }
+  }
+
+  private validationRefreshInterval: NodeJS.Timeout | null = null
+
+  private startValidationRefresh(): void {
+    // Clear existing interval
+    if (this.validationRefreshInterval) {
+      clearInterval(this.validationRefreshInterval)
+    }
+
+    // Start new interval every 15 seconds
+    this.validationRefreshInterval = setInterval(async () => {
+      if (this.state.validAmount && this.state.validationData) {
+        console.log('⏰ Periodic validation refresh...')
+        await this.updateUsageAndExpiryInfo(true)
+      }
+    }, 15000) // 15 seconds
+
+    console.log('⏰ Started validation refresh timer (15s interval)')
+  }
+
+  private stopValidationRefresh(): void {
+    if (this.validationRefreshInterval) {
+      clearInterval(this.validationRefreshInterval)
+      this.validationRefreshInterval = null
+      console.log('⏹️ Stopped validation refresh timer')
+    }
   }
 }

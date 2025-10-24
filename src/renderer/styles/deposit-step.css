@@ -223,6 +223,28 @@
   flex-direction: column !important;
 }
 
+.step-content.deposit-step .detail-row-triple {
+  display: flex !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.step-content.deposit-step .detail-third {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.step-content.deposit-step .asset-below-qr {
+  margin-top: 8px !important;
+  text-align: center !important;
+}
+
+.step-content.deposit-step .asset-below-qr .network-display {
+  font-size: 12px !important;
+  padding: 6px 8px !important;
+}
+
 .step-content.deposit-step .detail-row label,
 .step-content.deposit-step .detail-half label {
   font-weight: 500 !important;
@@ -337,6 +359,98 @@
   font-weight: 600 !important;
 }
 
+/* Usage Statistics and Expiry Info */
+.step-content.deposit-step .usage-stats {
+  font-size: 11px !important;
+  color: var(--text-secondary, #ccc) !important;
+  margin-top: 4px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+.step-content.deposit-step .usage-text {
+  background: rgba(0, 123, 255, 0.1) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 123, 255, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.step-content.deposit-step .usage-compact,
+.step-content.deposit-step .expiry-compact {
+  background: var(--bg-input, #1a1a1a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 13px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-weight: 600 !important;
+}
+
+.step-content.deposit-step .usage-compact-text {
+  color: var(--accent-primary, #007bff) !important;
+}
+
+.step-content.deposit-step .expiry-info {
+  text-align: center !important;
+  margin-top: 8px !important;
+  padding: 8px !important;
+  background: var(--bg-secondary, #2a2a2a) !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color, #444) !important;
+}
+
+.step-content.deposit-step .expiry-label {
+  font-size: 10px !important;
+  color: var(--text-secondary, #ccc) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+}
+
+.step-content.deposit-step .time-remaining {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+.step-content.deposit-step .time-good {
+  color: var(--accent-secondary, #28a745) !important;
+  text-shadow: 0 1px 2px rgba(40, 167, 69, 0.3) !important;
+}
+
+.step-content.deposit-step .time-warning {
+  color: var(--warning, #ffa500) !important;
+  text-shadow: 0 1px 2px rgba(255, 165, 0, 0.3) !important;
+}
+
+.step-content.deposit-step .time-urgent {
+  color: var(--error, #ef4444) !important;
+  text-shadow: 0 1px 2px rgba(239, 68, 68, 0.3) !important;
+  animation: pulse-urgent 1.5s ease-in-out infinite alternate !important;
+}
+
+.step-content.deposit-step .time-expired {
+  color: var(--error, #ef4444) !important;
+  text-shadow: 0 1px 2px rgba(239, 68, 68, 0.3) !important;
+  text-decoration: line-through !important;
+}
+
+.step-content.deposit-step .time-unknown {
+  color: var(--text-secondary, #999) !important;
+  font-style: italic !important;
+}
+
+@keyframes pulse-urgent {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .step-content.deposit-step .qr-transaction-layout {
@@ -356,5 +470,9 @@
   .step-content.deposit-step .qr-box {
     max-width: 200px !important;
     max-height: 200px !important;
+  }
+  
+  .step-content.deposit-step .expiry-info {
+    margin-top: 12px !important;
   }
 }
