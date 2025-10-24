@@ -124,7 +124,7 @@ export class SendTransaction {
               </div>
               <div class="step ${this.currentPage >= 2 ? 'active' : ''}" data-step="2">
                 <div class="step-number">2</div>
-                <div class="step-label">Review</div>
+                <div class="step-label">Authorize</div>
               </div>
               <div class="step ${this.currentPage >= 3 ? 'active' : ''}" data-step="3">
                 <div class="step-number">3</div>
@@ -132,7 +132,7 @@ export class SendTransaction {
               </div>
               <div class="step ${this.currentPage >= 4 ? 'active' : ''}" data-step="4">
                 <div class="step-number">4</div>
-                <div class="step-label">Details</div>
+                <div class="step-label">Complete</div>
               </div>
             </div>
             <button class="close-btn" id="closeBtn">
@@ -153,12 +153,8 @@ export class SendTransaction {
               <div class="page-content" id="sendFormContainer"></div>
             </div>
             
-            <!-- Page 2: Review -->
+            <!-- Page 2: Authorize -->
             <div class="send-page ${this.currentPage === 2 ? 'active' : ''}" id="sendPageReview">
-              <div class="page-title">
-                <h2>Authorize Transaction</h2>
-                <p>Review details and authorize</p>
-              </div>
               <div class="page-content" id="sendConfirmationContainer"></div>
             </div>
             
@@ -169,23 +165,27 @@ export class SendTransaction {
             
             <!-- Page 4: Details -->
             <div class="send-page ${this.currentPage === 4 ? 'active' : ''}" id="sendPageDetails">
-              <div class="page-title">
-                <h2>Transaction Complete</h2>
-                <p>View transaction details</p>
-              </div>
               <div class="page-content" id="sendDetailsContainer"></div>
             </div>
           </div>
           
           <!-- Footer Actions -->
           <div class="send-popup-actions">
-            <button class="btn btn-secondary" id="backBtn" ${this.currentPage <= 1 || this.currentPage >= 4 ? 'style="display: none;"' : ''}>Back</button>
-            <button class="btn btn-secondary" id="cancelBtn" ${this.currentPage >= 4 ? 'style="display: none;"' : ''}>Cancel</button>
-            <div class="action-buttons">
-              <button class="btn btn-primary" id="nextBtn" ${this.currentPage >= 2 ? 'style="display: none;"' : ''}>Continue</button>
-              <button class="btn btn-primary" id="confirmBtn" ${this.currentPage !== 2 ? 'style="display: none;"' : ''} disabled>Send Transaction</button>
-              <button class="btn btn-primary" id="doneBtn" ${this.currentPage !== 4 ? 'style="display: none;"' : ''}>Done</button>
-            </div>
+            ${this.currentPage === 4 ? `
+              <!-- Page 4: Complete - Done button on right -->
+              <div class="spacer"></div>
+              <div class="action-buttons">
+                <button class="btn btn-primary" id="doneBtn">Done</button>
+              </div>
+            ` : `
+              <!-- Other pages - normal layout -->
+              <button class="btn btn-secondary" id="backBtn" ${this.currentPage <= 1 ? 'style="display: none;"' : ''}>Back</button>
+              <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+              <div class="action-buttons">
+                <button class="btn btn-primary" id="nextBtn" ${this.currentPage >= 2 ? 'style="display: none;"' : ''}>Continue</button>
+                <button class="btn btn-primary" id="confirmBtn" ${this.currentPage !== 2 ? 'style="display: none;"' : ''} disabled>Send Transaction</button>
+              </div>
+            `}
           </div>
         </div>
       </div>
@@ -306,6 +306,12 @@ export class SendTransaction {
     console.log('📊 Sending page initialized - ready to show progress')
   }
 
+  private truncateHash(hash: string): string {
+    if (hash.length <= 12) return hash
+    // Show first 6 characters + "..." + last 4 characters
+    return `${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`
+  }
+
   private async initializeDetailsPage(): Promise<void> {
     const detailsContainer = document.getElementById('sendDetailsContainer')
     if (!detailsContainer || !this.transactionResult) return
@@ -326,11 +332,18 @@ export class SendTransaction {
           <div class="info-row">
             <label>Transaction Hash:</label>
             <div class="hash-container">
-              <code class="transaction-hash">${this.transactionResult.transactionHash}</code>
-              <button class="copy-btn" onclick="navigator.clipboard.writeText('${this.transactionResult.transactionHash}')">
+              <code class="transaction-hash">${this.truncateHash(this.transactionResult.transactionHash)}</code>
+              <button class="copy-btn" onclick="navigator.clipboard.writeText('${this.transactionResult.transactionHash}')" title="Copy full hash">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
                   <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+                </svg>
+              </button>
+              <button class="explorer-btn" onclick="window.open('https://thorchain.net/tx/${this.transactionResult.transactionHash}', '_blank')" title="View on Explorer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15,3 21,3 21,9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
                 </svg>
               </button>
             </div>
@@ -347,11 +360,6 @@ export class SendTransaction {
           </div>
         </div>
         
-        <div class="action-links">
-          <a href="#" class="view-explorer" onclick="window.open('https://viewblock.io/thorchain/tx/${this.transactionResult.transactionHash}', '_blank')">
-            View on Explorer
-          </a>
-        </div>
       </div>
     `
   }

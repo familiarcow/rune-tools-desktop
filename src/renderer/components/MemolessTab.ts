@@ -65,6 +65,8 @@ export class MemolessTab {
     isComplete: false
   }
 
+  private displayUnit: 'asset' | 'usd' = 'asset' // Track current display unit
+
   constructor(container: HTMLElement, backend: BackendService) {
     this.container = container
     this.backend = backend
@@ -150,17 +152,27 @@ export class MemolessTab {
 
         <!-- Navigation -->
         <div class="memoless-actions">
-          <button class="btn btn-secondary" id="backBtn" ${this.state.currentStep <= 1 ? 'style="display: none;"' : ''}>
-            ← Back
-          </button>
-          <div class="action-buttons">
-            <button class="btn btn-secondary" id="resetBtn">
-              🔄 Reset
+          ${this.state.currentStep === 4 ? `
+            <!-- Step 4: Only Reset button -->
+            <div class="step4-actions">
+              <button class="btn btn-secondary" id="resetBtn">
+                🔄 Reset
+              </button>
+            </div>
+          ` : `
+            <!-- Other Steps: Back, Reset, Next -->
+            <button class="btn btn-secondary" id="backBtn" ${this.state.currentStep <= 1 ? 'style="display: none;"' : ''}>
+              ← Back
             </button>
-            <button class="btn btn-primary" id="nextBtn" ${this.canProceed() ? '' : 'disabled'}>
-              ${this.getNextButtonText()} →
-            </button>
-          </div>
+            <div class="action-buttons">
+              <button class="btn btn-secondary" id="resetBtn">
+                🔄 Reset
+              </button>
+              <button class="btn btn-primary" id="nextBtn" ${this.canProceed() ? '' : 'disabled'}>
+                ${this.getNextButtonText()} →
+              </button>
+            </div>
+          `}
         </div>
       </div>
     `
@@ -306,91 +318,103 @@ export class MemolessTab {
       <div class="step-content deposit-step">
         <div class="step-title">
           <h3>Step 4: Make Your Deposit</h3>
-          <p>Follow these exact instructions to complete your memoless transaction</p>
         </div>
 
-        <div class="deposit-instructions">
-          <!-- Separated Registration Complete and Reference ID -->
-          <div class="registration-status">
-            <div class="success-banner">
-              <h4>✅ Registration Complete!</h4>
-            </div>
-            <div class="reference-display">
-              <span class="reference-label">Reference ID:</span>
-              <code class="reference-id-compact">${this.state.referenceId}</code>
-            </div>
+        <!-- Amount Input Section -->
+        <div class="amount-input-section">
+          <label for="userAmountInput">Amount:</label>
+          <div class="amount-input-group">
+            <span class="amount-prefix" id="amountPrefix">$</span>
+            <input type="text" id="userAmountInput" placeholder="0.1" class="amount-input">
+            <select id="unitToggle" class="unit-toggle">
+              <option value="asset">${this.state.selectedAsset?.split('.')[1] || 'ASSET'}</option>
+              <option value="usd">USD</option>
+            </select>
           </div>
+        </div>
 
-          <!-- Amount Calculator -->
-          <div class="amount-calculator">
-            <div class="form-section">
-              <label class="form-label">Enter Amount to Send</label>
-              <div class="amount-input-group">
-                <input type="text" class="form-control" id="userAmountInput" placeholder="Enter amount...">
-                <select class="form-control unit-selector" id="unitSelector">
-                  <option value="asset">Asset</option>
-                  <option value="usd">USD</option>
-                </select>
+        <!-- Final Amount Emphasized Section -->
+        <div class="final-amount-section">
+          <div class="final-amount-header">Final Amount to Send</div>
+          <div class="final-amount-display">
+            <span class="final-amount-primary" id="finalAmountDisplay">0.00100002 BNB</span>
+            <span class="final-amount-secondary" id="finalAmountUSD">$0.90 USD</span>
+          </div>
+        </div>
+
+        <!-- Transaction Details Container (Hidden until valid amount) -->
+        <div class="transaction-details-container" id="transactionDetailsContainer" style="display: none;">
+          <!-- Section Divider -->
+          <div class="section-divider"></div>
+
+          <!-- Transaction Details Section -->
+          <div class="transaction-details-main">
+            <div class="section-header">Transaction Details</div>
+            
+            <!-- QR Code and Details Layout -->
+            <div class="qr-transaction-layout">
+              <!-- QR Code -->
+              <div class="qr-container-compact">
+                <div class="qr-box" id="qrContainer">
+                  ${this.state.inboundAddress ? '' : '<div class="qr-loading">Loading QR...</div>'}
+                </div>
               </div>
               
-              <!-- Improved exact amount display -->
-              <div class="exact-amount-section">
-                <div class="exact-amount-box" id="calculatedAmount">
-                  <span class="exact-amount-label">Exact amount to send:</span>
-                  <div class="amount-value">
-                    <span class="mono amount-text">-</span>
-                    <button class="copy-btn-inline" id="copyAmountBtn" style="display: none;" title="Copy amount">
-                      📋
-                    </button>
+              <!-- Transaction Details -->
+              <div class="transaction-details-compact">
+                <!-- Asset and Reference on same line -->
+                <div class="detail-row-dual">
+                  <div class="detail-half">
+                    <label>Asset to Send:</label>
+                    <div class="network-display">
+                      <span id="networkAndAsset">${this.state.selectedAsset ? `${this.state.selectedAsset.split('.')[1]} on ${this.state.selectedAsset.split('.')[0]}` : 'Loading...'}</span>
+                    </div>
+                  </div>
+                  <div class="detail-half">
+                    <label>Reference ID:</label>
+                    <div class="reference-display">
+                      <span id="referenceNumber">${this.state.referenceId || 'Loading...'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Address -->
+                <div class="detail-row">
+                  <label>Deposit Address:</label>
+                  <div class="input-copy-group">
+                    <input type="text" id="fullAddress" value="Loading..." readonly class="detail-input">
+                    <button id="realCopyAddressBtn" class="copy-button">📋</button>
+                  </div>
+                </div>
+                
+                <!-- Amount -->
+                <div class="detail-row">
+                  <label>Deposit Amount:</label>
+                  <div class="input-copy-group">
+                    <input type="text" id="exactAmount" value="-" readonly class="detail-input">
+                    <button id="realCopyAmountBtn" class="copy-button">📋</button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- QR Code Section -->
-          <div class="qr-code-section" id="qrCodeSection" style="display: none;">
-            <div class="section-card">
-              <h4 class="section-title">📱 QR Code</h4>
-              <div class="qr-container" id="qrContainer">
-                <div class="qr-placeholder">
-                  <div class="qr-loading">Enter amount to generate QR code</div>
-                </div>
-              </div>
-              <div class="qr-details" id="qrDetails">
-                <!-- QR code details will be populated here -->
-              </div>
-            </div>
+          <!-- Critical Instructions Below -->
+          <div class="critical-instructions-below">
+            <div class="section-header warning">⚠️ Critical Instructions</div>
+            <ul class="instructions-list-bullets">
+              <li><strong>Send Exact Amount:</strong> Use precisely the calculated amount - no changes</li>
+              <li><strong>Copy Address:</strong> Use copy button to prevent address errors</li>
+              <li><strong>Sufficient Gas:</strong> Ensure confirmation within 10 minutes</li>
+              <li><strong>Final Check:</strong> Verify all details - transactions are irreversible</li>
+            </ul>
           </div>
+        </div>
 
-          <!-- Deposit Instructions -->
-          <div class="deposit-instructions-section">
-            <div class="section-card">
-              <h4 class="section-title">⚠️ Critical Instructions</h4>
-              <div class="instructions-content">
-                <div class="warning-banner">
-                  <strong>Follow these instructions exactly to avoid losing your funds</strong>
-                </div>
-                <ul class="instruction-list">
-                  <li>Send <strong>EXACTLY</strong> the amount shown above</li>
-                  <li>Send to the address: <code class="inline-address" id="inlineAddress">${this.state.inboundAddress || 'Loading...'}</code></li>
-                  <li>Do <strong>NOT</strong> edit the amount under any circumstances</li>
-                  <li>Use sufficient gas to confirm within 10 minutes</li>
-                  <li>Do not send with low gas rate or your transaction may fail</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tracking Section -->
-          <div class="tracking-section">
-            <div class="section-card">
-              <button class="btn btn-secondary btn-large" id="trackTxBtn">
-                🔍 Track My Deposit
-              </button>
-              <p class="tracking-note">After blockchain confirmation, use your transaction ID to track progress</p>
-            </div>
-          </div>
+        <!-- Hidden Reference Display for Internal Use -->
+        <div class="reference-display" style="display: none;">
+          <span class="reference-label">Reference ID:</span>
+          <code class="reference-id-compact">${this.state.referenceId}</code>
         </div>
       </div>
     `
@@ -452,12 +476,27 @@ export class MemolessTab {
 
   private setupDepositStepListeners(): void {
     const userAmountInput = document.getElementById('userAmountInput') as HTMLInputElement
-    const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement
-    const trackTxBtn = document.getElementById('trackTxBtn')
+    const unitToggle = document.getElementById('unitToggle') as HTMLSelectElement
+    const realCopyAddressBtn = document.getElementById('realCopyAddressBtn')
+    const realCopyAmountBtn = document.getElementById('realCopyAmountBtn')
 
-    userAmountInput?.addEventListener('input', async () => await this.calculateValidAmount())
-    unitSelector?.addEventListener('change', async () => await this.calculateValidAmount())
-    trackTxBtn?.addEventListener('click', () => this.showTrackingDialog())
+    // Initialize display with asset as default
+    this.displayUnit = 'asset'
+    this.updateCompactDisplay('', '', '', false)
+
+    // Amount input listener
+    userAmountInput?.addEventListener('input', async () => await this.calculateValidAmountCompact())
+    
+    // Unit toggle (dropdown) listener
+    unitToggle?.addEventListener('change', () => {
+      this.displayUnit = unitToggle.value as 'asset' | 'usd'
+      this.updateCompactDisplay('', '', '', false) // Update prefix immediately
+      this.calculateValidAmountCompact()
+    })
+    
+    // Compact copy buttons with icon feedback
+    realCopyAddressBtn?.addEventListener('click', () => this.copyCompactFeedback(this.state.inboundAddress || '', realCopyAddressBtn, 'Address copied!'))
+    realCopyAmountBtn?.addEventListener('click', () => this.copyCompactFeedback(this.state.validAmount || '', realCopyAmountBtn, 'Amount copied!'))
   }
 
   private canProceed(): boolean {
@@ -749,9 +788,8 @@ export class MemolessTab {
       }
 
       // Construct the registration memo in the format: REFERENCE:{assetToRegister}:{memoToRegister}
-      // Add timestamp to ensure uniqueness across multiple registration attempts
-      const timestamp = Date.now()
-      const registrationMemo = `REFERENCE:${this.state.selectedAsset}:${this.state.memoToRegister}:${timestamp}`
+      // Create registration memo without timestamp
+      const registrationMemo = `REFERENCE:${this.state.selectedAsset}:${this.state.memoToRegister}`
       
       console.log('📝 Registration memo constructed:', registrationMemo)
 
@@ -921,6 +959,9 @@ export class MemolessTab {
       this.state.registrationData = registrationData
       
       console.log('✅ Reference ID retrieved:', registrationData.reference)
+
+      // Load inbound address now that we have all required info
+      await this.loadInboundAddresses()
 
       // Update status with success and registration details
       if (retrievalStatus) {
@@ -1120,10 +1161,7 @@ export class MemolessTab {
         throw new Error('Missing required data for deposit setup')
       }
 
-      // Load inbound addresses for the selected asset
-      await this.loadInboundAddresses()
-      
-      // Load asset-specific parameters
+      // Load asset-specific parameters (inbound addresses already loaded in step 3)
       await this.loadAssetParameters()
       
       console.log('✅ Deposit instructions ready')
@@ -1172,6 +1210,9 @@ export class MemolessTab {
         address: this.state.inboundAddress,
         dustThreshold: this.state.dustThreshold
       })
+
+      // Update the UI with the loaded address
+      this.updateAddressDisplay()
 
     } catch (error) {
       console.error('❌ Failed to load inbound addresses:', error)
@@ -1280,104 +1321,6 @@ export class MemolessTab {
     }
   }
 
-  private async calculateValidAmount(): Promise<void> {
-    try {
-      const userAmountInput = document.getElementById('userAmountInput') as HTMLInputElement
-      const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement
-      const depositDetails = document.getElementById('depositDetails')
-
-      if (!userAmountInput || !unitSelector) return
-
-      const userInput = userAmountInput.value.trim()
-      const unit = unitSelector.value
-
-      if (!userInput || parseFloat(userInput) <= 0) {
-        this.updateAmountDisplay('Enter amount above', false)
-        return
-      }
-
-      // USD minimum validation ($0.01 minimum)
-      if (unit === 'usd' && parseFloat(userInput) < 0.01) {
-        this.updateAmountDisplay('Minimum USD amount is $0.01', false, true)
-        return
-      }
-
-      if (!this.state.referenceId || !this.state.selectedAsset || !this.state.registrationData) {
-        this.updateAmountDisplay('Missing reference data', false, true)
-        return
-      }
-
-      // Convert USD to asset amount if needed
-      let assetAmountInput = userInput
-      if (unit === 'usd' && this.state.assetPrice > 0) {
-        // Simple conversion: USD amount / USD price = asset amount
-        assetAmountInput = (parseFloat(userInput) / this.state.assetPrice).toString()
-      }
-
-      console.log('💰 Starting amount calculation with direct IPC:', {
-        userInput,
-        unit,
-        assetAmountInput,
-        referenceId: this.state.referenceId,
-        selectedAsset: this.state.selectedAsset
-      })
-
-      // Format amount with reference using direct IPC
-      const formatResult = await this.backend.memolessFormatAmountWithReference(
-        assetAmountInput,
-        this.state.referenceId,
-        this.state.assetDecimals
-      )
-
-      if (!formatResult.isValid) {
-        this.updateAmountDisplay(
-          `Validation Error: ${formatResult.errors.join(', ')}`, 
-          false, 
-          true
-        )
-        if (depositDetails) depositDetails.style.display = 'none'
-        return
-      }
-
-      const finalAmount = formatResult.finalAmount
-
-      // Calculate USD equivalent if price is available
-      let usdEquivalent = '0.00'
-      if (this.state.assetPrice > 0) {
-        const usdResult = await this.backend.memolessCalculateUSD(finalAmount, this.state.assetPrice)
-        usdEquivalent = usdResult || '0.00'
-      }
-      
-      // Store the valid amount
-      this.state.validAmount = finalAmount
-
-      // Update display with formatted amount using new helper
-      this.updateAmountDisplay(
-        `${finalAmount} ${this.state.selectedAsset}`,
-        true,
-        false,
-        usdEquivalent,
-        formatResult.warnings
-      )
-
-      // Generate QR code and show deposit details
-      await this.generateDepositQRCode(finalAmount)
-      
-      if (depositDetails) {
-        depositDetails.style.display = 'block'
-      }
-
-      console.log('✅ Amount validation successful:', {
-        userInput: `${userInput} ${unit}`,
-        finalAmount: finalAmount,
-        equivalentUSD: usdEquivalent
-      })
-
-    } catch (error) {
-      console.error('❌ Failed to calculate valid amount:', error)
-      this.updateAmountDisplay(`Error: ${(error as Error).message}`, false, true)
-    }
-  }
 
   // Remove the old incorrect encoding method - now using service layer
 
@@ -1434,9 +1377,13 @@ export class MemolessTab {
         case 'GAIA':
           qrCodeData = `cosmos:${this.state.inboundAddress}?amount=${amount}`
           break
+        case 'TRON':
+          qrCodeData = `tron:${this.state.inboundAddress}?amount=${amount}`
+          break
         default:
-          // Generic format
-          qrCodeData = `${assetChain.toLowerCase()}:${this.state.inboundAddress}?amount=${amount}`
+          // Generic format - log error as specified in docs
+          console.error(`⚠️ Chain ${assetChain} not defined in QR code chain list`)
+          qrCodeData = amount // Only encode amount if chain not recognized
           break
       }
 
@@ -1802,5 +1749,323 @@ export class MemolessTab {
       overlayContainer.style.display = 'none'
       overlayContainer.innerHTML = ''
     }
+  }
+
+  // New UI functionality methods
+  private toggleUnit(): void {
+    const assetOption = document.getElementById('assetOption')
+    const usdOption = document.getElementById('usdOption')
+    const assetDisplay = document.getElementById('assetDisplay')
+
+    if (this.displayUnit === 'asset') {
+      this.displayUnit = 'usd'
+      assetOption?.classList.remove('active')
+      usdOption?.classList.add('active')
+      if (assetDisplay) assetDisplay.textContent = 'USD'
+    } else {
+      this.displayUnit = 'asset'
+      usdOption?.classList.remove('active')
+      assetOption?.classList.add('active')
+      if (assetDisplay) assetDisplay.textContent = this.state.selectedAsset?.split('.')[1] || 'ASSET'
+    }
+
+    // Recalculate amount based on new unit
+    this.calculateValidAmountCompact()
+  }
+
+  private copyToClipboard(text: string, successMessage: string): void {
+    if (!text) return
+
+    navigator.clipboard.writeText(text).then(() => {
+      console.log(`📋 ${successMessage}`, text)
+      // Could show a toast notification here if desired
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+    })
+  }
+
+  private updateAddressDisplay(): void {
+    const fullAddress = document.getElementById('fullAddress') as HTMLInputElement
+    const realCopyAddressBtn = document.getElementById('realCopyAddressBtn')
+
+    if (fullAddress) {
+      if (this.state.inboundAddress) {
+        fullAddress.value = this.state.inboundAddress // Show FULL address in input
+      } else {
+        fullAddress.value = 'Loading address...'
+      }
+    }
+
+    if (realCopyAddressBtn) {
+      if (this.state.inboundAddress) {
+        (realCopyAddressBtn as HTMLButtonElement).disabled = false
+        realCopyAddressBtn.style.opacity = '1'
+      } else {
+        (realCopyAddressBtn as HTMLButtonElement).disabled = true
+        realCopyAddressBtn.style.opacity = '0.5'
+      }
+    }
+  }
+
+  private copyWithFeedback(text: string, button: HTMLElement, successMessage: string): void {
+    if (!text) return
+
+    navigator.clipboard.writeText(text).then(() => {
+      console.log(`📋 ${successMessage}`, text)
+      
+      // Update button with feedback
+      const copyIcon = button.querySelector('.copy-icon')
+      const copyText = button.querySelector('.copy-text')
+      
+      if (copyIcon && copyText) {
+        copyIcon.textContent = '✅'
+        copyText.textContent = 'Copied!'
+        button.style.background = 'var(--success)'
+        button.style.color = 'white'
+        
+        setTimeout(() => {
+          copyIcon.textContent = '📋'
+          copyText.textContent = 'Copy'
+          button.style.background = ''
+          button.style.color = ''
+        }, 2000)
+      }
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      
+      const copyText = button.querySelector('.copy-text')
+      if (copyText) {
+        copyText.textContent = 'Failed'
+        button.style.background = 'var(--error)'
+        button.style.color = 'white'
+        
+        setTimeout(() => {
+          copyText.textContent = 'Copy'
+          button.style.background = ''
+          button.style.color = ''
+        }, 2000)
+      }
+    })
+  }
+
+
+
+
+  // New compact methods for professional layout
+
+  private copyCompactFeedback(text: string, button: HTMLElement, successMessage: string): void {
+    if (!text) return
+
+    navigator.clipboard.writeText(text).then(() => {
+      console.log(`📋 ${successMessage}`, text)
+      
+      // Update just the icon for compact feedback
+      const copyIcon = button.querySelector('.copy-icon')
+      
+      if (copyIcon) {
+        const originalIcon = copyIcon.textContent
+        copyIcon.textContent = '✅'
+        button.style.background = 'var(--success, #22c55e)'
+        button.style.color = 'white'
+        
+        setTimeout(() => {
+          copyIcon.textContent = originalIcon
+          button.style.background = ''
+          button.style.color = ''
+        }, 1500)
+      }
+    }).catch(err => {
+      console.error('Failed to copy to clipboard:', err)
+      
+      const copyIcon = button.querySelector('.copy-icon')
+      if (copyIcon) {
+        const originalIcon = copyIcon.textContent
+        copyIcon.textContent = '❌'
+        button.style.background = 'var(--error, #ef4444)'
+        button.style.color = 'white'
+        
+        setTimeout(() => {
+          copyIcon.textContent = originalIcon
+          button.style.background = ''
+          button.style.color = ''
+        }, 1500)
+      }
+    })
+  }
+
+  private async calculateValidAmountCompact(): Promise<void> {
+    try {
+      const userAmountInput = document.getElementById('userAmountInput') as HTMLInputElement
+
+      if (!userAmountInput) return
+
+      const userInput = userAmountInput.value.trim()
+
+      if (!userInput || parseFloat(userInput) <= 0) {
+        this.updateCompactDisplay('', '', '', false)
+        return
+      }
+
+      // USD minimum validation ($0.01 minimum)
+      if (this.displayUnit === 'usd' && parseFloat(userInput) < 0.01) {
+        this.updateCompactDisplay('', '', 'Minimum USD amount is $0.01', false)
+        return
+      }
+
+      if (!this.state.referenceId || !this.state.selectedAsset || !this.state.registrationData) {
+        this.updateCompactDisplay('', '', 'Missing reference data', false)
+        return
+      }
+
+      // Convert USD to asset amount if needed
+      let assetAmountInput = userInput
+      if (this.displayUnit === 'usd' && this.state.assetPrice > 0) {
+        assetAmountInput = (parseFloat(userInput) / this.state.assetPrice).toString()
+      }
+
+      console.log('💰 Starting compact amount calculation:', {
+        userInput,
+        displayUnit: this.displayUnit,
+        assetAmountInput,
+        referenceId: this.state.referenceId,
+        selectedAsset: this.state.selectedAsset
+      })
+
+      // Format amount with reference using direct IPC
+      const formatResult = await this.backend.memolessFormatAmountWithReference(
+        assetAmountInput,
+        this.state.referenceId,
+        this.state.assetDecimals
+      )
+
+      if (!formatResult.isValid) {
+        this.updateCompactDisplay('', '', `${formatResult.errors.join(', ')}`, false)
+        return
+      }
+
+      const finalAmount = formatResult.finalAmount
+
+      // Calculate USD equivalent if price is available
+      let usdEquivalent = '0.00'
+      if (this.state.assetPrice > 0) {
+        const usdResult = await this.backend.memolessCalculateUSD(finalAmount, this.state.assetPrice)
+        usdEquivalent = usdResult || '0.00'
+      }
+      
+      // Store the valid amount
+      this.state.validAmount = finalAmount
+
+      // Update all UI elements
+      this.updateCompactDisplay(finalAmount, usdEquivalent, '', true)
+
+      // Generate QR code
+      await this.generateDepositQRCode(finalAmount)
+
+      console.log('✅ Compact amount validation successful:', {
+        userInput: `${userInput} ${this.displayUnit}`,
+        finalAmount: finalAmount,
+        equivalentUSD: usdEquivalent
+      })
+
+    } catch (error) {
+      console.error('❌ Failed to calculate valid amount:', error)
+      this.updateCompactDisplay('', '', `Error: ${(error as Error).message}`, false)
+    }
+  }
+
+  private updateCompactDisplay(finalAmount: string, usdEquivalent: string, errorMessage: string, isValid: boolean): void {
+    // Update amount prefix based on display unit
+    const amountPrefix = document.getElementById('amountPrefix')
+    const unitToggle = document.getElementById('unitToggle') as HTMLSelectElement
+    
+    if (amountPrefix && unitToggle) {
+      const currentUnit = unitToggle.value
+      amountPrefix.textContent = currentUnit === 'usd' ? '$' : (this.state.selectedAsset?.split('.')[1] || '')
+    }
+
+    // Update network and asset display
+    const networkAndAsset = document.getElementById('networkAndAsset')
+    if (networkAndAsset && this.state.selectedAsset) {
+      const parts = this.state.selectedAsset.split('.')
+      networkAndAsset.textContent = `${parts[1]} on ${parts[0]}`
+    }
+
+    // Update reference number display
+    const referenceNumber = document.getElementById('referenceNumber')
+    if (referenceNumber && this.state.referenceId) {
+      referenceNumber.textContent = this.state.referenceId
+    }
+
+    // Update Final Amount emphasized section
+    const finalAmountDisplay = document.getElementById('finalAmountDisplay')
+    const finalAmountUSD = document.getElementById('finalAmountUSD')
+
+    if (finalAmountDisplay) {
+      if (isValid && finalAmount) {
+        // Valid amount - show final amount with asset
+        const formattedAmount = parseFloat(finalAmount).toFixed(8).replace(/\.?0+$/, '')
+        const assetSymbol = this.state.selectedAsset?.split('.')[1] || 'ASSET'
+        finalAmountDisplay.textContent = `${formattedAmount} ${assetSymbol}`
+        finalAmountDisplay.style.color = 'var(--accent-primary, #007bff)' // Blue for valid
+      } else if (errorMessage) {
+        // Error - show error message
+        finalAmountDisplay.textContent = errorMessage
+        finalAmountDisplay.style.color = 'var(--error, #ef4444)' // Red for errors
+      } else {
+        // Empty state
+        finalAmountDisplay.textContent = '-'
+        finalAmountDisplay.style.color = 'var(--text-secondary, #999)'
+      }
+    }
+
+    // USD equivalent - only show if valid
+    if (finalAmountUSD) {
+      if (isValid && finalAmount && usdEquivalent && parseFloat(usdEquivalent) > 0) {
+        finalAmountUSD.textContent = `$${usdEquivalent} USD`
+        finalAmountUSD.style.display = 'block'
+      } else {
+        finalAmountUSD.textContent = ''
+        finalAmountUSD.style.display = 'none'
+      }
+    }
+
+    // Show/hide transaction details container based on valid amount
+    const transactionDetailsContainer = document.getElementById('transactionDetailsContainer')
+    if (transactionDetailsContainer) {
+      if (isValid && finalAmount) {
+        transactionDetailsContainer.style.display = 'block'
+        // Generate QR code when details become visible using the working logic
+        setTimeout(() => this.generateDepositQRCode(finalAmount), 50)
+      } else {
+        transactionDetailsContainer.style.display = 'none'
+      }
+    }
+
+    // Update transaction details section
+    const exactAmount = document.getElementById('exactAmount') as HTMLInputElement
+    const realCopyAmountBtn = document.getElementById('realCopyAmountBtn')
+
+    if (exactAmount) {
+      if (isValid && finalAmount) {
+        const formattedAmount = parseFloat(finalAmount).toFixed(8).replace(/\.?0+$/, '')
+        exactAmount.value = formattedAmount
+      } else {
+        exactAmount.value = '-'
+      }
+    }
+
+    // Enable/disable copy buttons
+    if (realCopyAmountBtn) {
+      if (isValid && finalAmount) {
+        (realCopyAmountBtn as HTMLButtonElement).disabled = false
+        realCopyAmountBtn.style.opacity = '1'
+      } else {
+        (realCopyAmountBtn as HTMLButtonElement).disabled = true
+        realCopyAmountBtn.style.opacity = '0.5'
+      }
+    }
+
+    // Update address display
+    this.updateAddressDisplay()
   }
 }

@@ -263,6 +263,324 @@
 }
 
 /* ==========================================================================
+   Memoless Deposit Step Styles
+   ========================================================================== */
+
+.deposit-step {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  margin: var(--spacing-xl) 0;
+  box-shadow: var(--shadow-lg);
+}
+
+.step-title {
+  background: linear-gradient(135deg, var(--accent-primary), #0056b3);
+  color: white;
+  padding: var(--spacing-xl);
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.step-title h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.step-title p {
+  margin: 0;
+  font-size: 1rem;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.deposit-instructions {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* Registration Status Section */
+.registration-status {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  border: 1px solid #b0d4c1;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  color: #155724;
+}
+
+.success-banner {
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.success-banner h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.reference-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.3);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+}
+
+.reference-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.reference-id-compact {
+  background: #155724;
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+/* Amount Calculator Section */
+.amount-calculator {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.amount-input-group {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.amount-input-group .form-control {
+  flex: 1;
+}
+
+.unit-selector {
+  min-width: 80px;
+}
+
+.exact-amount-section {
+  margin-top: var(--spacing-md);
+}
+
+.exact-amount-box {
+  background: linear-gradient(135deg, var(--bg-tertiary), #4a4a4a);
+  border: 2px solid var(--accent-primary);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.exact-amount-label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+}
+
+.amount-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.amount-text {
+  font-family: 'Courier New', monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--bg-primary);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.copy-btn-inline {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: var(--transition-fast);
+}
+
+.copy-btn-inline:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Section Cards */
+.section-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+}
+
+.section-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.section-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* QR Code Section */
+.qr-code-section {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.qr-placeholder {
+  width: 200px;
+  height: 200px;
+  background: var(--bg-tertiary);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.qr-details {
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Deposit Instructions Section */
+.instructions-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.warning-banner {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border: 1px solid #ffc107;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  text-align: center;
+  color: #856404;
+}
+
+.warning-banner strong {
+  font-weight: 700;
+}
+
+.instruction-list {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  color: var(--text-primary);
+}
+
+.instruction-list li {
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.5;
+}
+
+.instruction-list strong {
+  color: var(--accent-warning);
+  font-weight: 700;
+}
+
+.inline-address {
+  background: var(--bg-tertiary);
+  color: var(--accent-primary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+/* Tracking Section */
+.tracking-section {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--bg-tertiary), #505050);
+  border-radius: var(--border-radius);
+}
+
+.btn-large {
+  padding: var(--spacing-md) var(--spacing-xl);
+  font-size: 1.1rem;
+  font-weight: 600;
+  min-width: 200px;
+}
+
+.tracking-note {
+  margin: var(--spacing-md) 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* ==========================================================================
    Global Styles
    ========================================================================== */
 
@@ -861,6 +1179,237 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+
+
+.result-asset {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.result-usd {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #999);
+  margin-left: 4px;
+}
+
+/* Main Grid - Side by Side */
+.main-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* Left Panel - QR and Transaction */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Right Panel - Instructions */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section Headers */
+.section-header {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-color, #444);
+}
+
+.section-header.warning {
+  color: var(--warning, #ffa500);
+  border-bottom-color: var(--warning, #ffa500);
+}
+
+/* QR Section */
+.qr-section {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.qr-box {
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background: var(--bg-primary, #1a1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-placeholder {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #999);
+  text-align: center;
+}
+
+/* Transaction Info */
+.transaction-info {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.info-row {
+  margin-bottom: 12px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-row label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary, #ccc);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+.input-copy-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-field {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 3px;
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #fff);
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.copy-btn {
+  width: 24px;
+  height: 24px;
+  background: var(--bg-tertiary, #333);
+  border: 1px solid var(--border-color, #555);
+  border-radius: 3px;
+  color: var(--text-secondary, #ccc);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.copy-btn:hover {
+  background: var(--accent-primary, #007acc);
+  color: white;
+}
+
+/* Instructions Section */
+.instructions-section {
+  background: rgba(255, 170, 0, 0.05);
+  border: 1px solid var(--warning, #ffa500);
+  border-radius: 6px;
+  padding: 16px;
+  height: fit-content;
+}
+
+.instructions-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.instruction-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.instruction-row strong {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--warning, #ffa500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.instruction-row span {
+  font-size: 0.75rem;
+  color: var(--text-primary, #fff);
+  line-height: 1.3;
+}
+
+/* Step 4 Actions - Only Reset Button */
+.step4-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 24px;
+}
+
+/* Professional Responsive Design */
+@media (max-width: 768px) {
+  .main-content-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .amount-config-bar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .config-group {
+    justify-content: center;
+  }
+  
+  .result-display {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .pro-deposit-container {
+    padding: 0 12px;
+  }
+  
+  .amount-config-bar {
+    padding: 12px 16px;
+  }
+  
+  .config-group {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .qr-box {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .detail-field {
+    font-size: 0.7rem;
+  }
+}
+
 /* ==========================================================================
    Utility Classes
    ========================================================================== */
@@ -928,5 +1477,325 @@ body {
   
   .modal-content {
     width: 95%;
+  }
+}
+
+/* ==========================================================================
+   NEW Professional Deposit Step Styling - Updated Structure (Higher Specificity)
+   ========================================================================== */
+
+/* Override all old deposit styles with higher specificity */
+.step-content.deposit-step * {
+  /* Reset any existing styles */
+}
+
+/* Amount Input Section */
+.step-content.deposit-step .amount-input-section {
+  margin-bottom: 24px;
+}
+
+.step-content.deposit-step .amount-input-section label {
+  display: block;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.step-content.deposit-step .amount-input-group {
+  display: flex !important;
+  align-items: stretch !important;
+  background: var(--bg-secondary, #2a2a2a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  transition: border-color 0.2s !important;
+}
+
+.amount-input-group:focus-within {
+  border-color: var(--accent-primary, #007bff);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.amount-prefix {
+  background: var(--bg-input, #1a1a1a);
+  color: var(--text-primary, #fff);
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 16px;
+  border-right: 1px solid var(--border-color, #444);
+  display: flex;
+  align-items: center;
+  min-width: 40px;
+  justify-content: center;
+}
+
+.amount-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 16px;
+  color: var(--text-primary, #fff);
+  font-size: 16px;
+  outline: none;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.amount-input::placeholder {
+  color: var(--text-secondary, #999);
+}
+
+.unit-toggle {
+  background: var(--bg-input, #1a1a1a);
+  border: none;
+  border-left: 1px solid var(--border-color, #444);
+  padding: 12px 16px;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  min-width: 80px;
+}
+
+.unit-toggle:hover {
+  background: var(--bg-secondary, #2a2a2a);
+}
+
+/* Final Amount Emphasized Section */
+.final-amount-section {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05));
+  border: 2px solid var(--accent-primary, #007bff);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.final-amount-header {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.final-amount-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.final-amount-primary {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent-primary, #007bff);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  text-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.final-amount-secondary {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-secondary, #ccc);
+  margin-top: 4px;
+}
+
+/* Section Divider */
+.section-divider {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--border-color, #444), transparent);
+  margin: 32px 0;
+}
+
+/* Two Column Layout */
+.two-column-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 300px;
+  width: 300px;
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Allow shrinking */
+}
+
+/* QR Section */
+.qr-section {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.section-header {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-color, #444);
+}
+
+.section-header.warning {
+  color: var(--warning, #ffa500);
+  border-bottom-color: var(--warning, #ffa500);
+}
+
+.qr-box {
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  background: white;
+  border: 2px solid var(--border-color, #444);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  flex-shrink: 0;
+}
+
+.qr-placeholder {
+  color: var(--text-secondary, #666);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+  line-height: 1.4;
+}
+
+/* Transaction Details */
+.transaction-details {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 8px;
+  padding: 20px;
+  height: fit-content;
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.detail-row label {
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.input-copy-group {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.detail-input {
+  flex: 1;
+  background: var(--bg-input, #1a1a1a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text-primary, #fff);
+  font-size: 13px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  transition: border-color 0.2s;
+}
+
+.detail-input:focus {
+  outline: none;
+  border-color: var(--accent-primary, #007bff);
+}
+
+.copy-button {
+  background: var(--accent-secondary, #28a745);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-button:hover {
+  background: var(--accent-secondary-hover, #218838);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Critical Instructions Below Columns */
+.critical-instructions {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--warning, #ffa500);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 32px;
+}
+
+.instructions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.instruction-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  background: rgba(255, 170, 0, 0.05);
+  border: 1px solid rgba(255, 170, 0, 0.2);
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.instruction-item:hover {
+  background: rgba(255, 170, 0, 0.1);
+}
+
+.instruction-item strong {
+  color: var(--warning, #ffa500);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.instruction-item span {
+  color: var(--text-secondary, #ccc);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .two-column-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .final-amount-primary {
+    font-size: 24px;
+  }
+  
+  .qr-box {
+    width: 150px;
+    height: 150px;
   }
 }

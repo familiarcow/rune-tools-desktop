@@ -12,6 +12,7 @@ import { BackendService } from '../services/BackendService'
 import { StateManager } from '../services/StateManager'
 import { UIService } from '../services/UIService'
 import { CryptoUtils } from '../utils/CryptoUtils'
+import { PasswordInput } from '../components/PasswordInput'
 import { WalletGenerator, GeneratedWallet } from '../components/WalletGenerator'
 import { WalletRestoration, RestoredWallet } from '../components/WalletRestoration'
 import { ApplicationController } from './ApplicationController'
@@ -42,6 +43,8 @@ export class WalletSelectionController {
     private walletGenerator: WalletGenerator | null = null
     private walletRestoration: WalletRestoration | null = null
     private appController: ApplicationController | null = null
+    // Reusable password input instances
+    private passwordInputs: Map<string, PasswordInput> = new Map()
 
     constructor(backend: BackendService, state: StateManager, ui: UIService) {
         this.backend = backend
@@ -199,12 +202,20 @@ export class WalletSelectionController {
             walletAddressEl.textContent = address || 'Address not available'
         }
 
+        // Initialize unlock password input
+        this.createPasswordInput('unlockPasswordContainer', {
+            id: 'unlockPassword',
+            label: 'Password',
+            placeholder: 'Enter wallet password',
+            autocomplete: 'current-password'
+        })
+
         // Setup form handler
         const form = document.getElementById('unlock-wallet-form') as HTMLFormElement
         if (form) {
             form.onsubmit = async (e) => {
                 e.preventDefault()
-                const password = (form.querySelector('[name="password"]') as HTMLInputElement).value
+                const password = this.getPasswordValue('unlockPasswordContainer')
                 await this.unlockWallet(wallet.walletId, password)
             }
         }
@@ -390,6 +401,21 @@ export class WalletSelectionController {
     }
 
     private setupWalletCreationForm(): void {
+        // Initialize fallback form password inputs
+        this.createPasswordInput('creationPasswordContainer', {
+            id: 'creationPassword',
+            label: 'Password',
+            placeholder: 'Secure password',
+            autocomplete: 'new-password'
+        })
+
+        this.createPasswordInput('creationConfirmPasswordContainer', {
+            id: 'creationConfirmPassword',
+            label: 'Confirm Password',
+            placeholder: 'Confirm password',
+            autocomplete: 'new-password'
+        })
+
         // Generate new seed phrase button
         const generateSeedBtn = document.getElementById('generate-seed-btn')
         if (generateSeedBtn) {
@@ -413,6 +439,21 @@ export class WalletSelectionController {
     }
 
     private setupWalletImportForm(): void {
+        // Initialize fallback form password inputs
+        this.createPasswordInput('importPasswordContainer', {
+            id: 'importPassword',
+            label: 'Password',
+            placeholder: 'Secure password',
+            autocomplete: 'new-password'
+        })
+
+        this.createPasswordInput('importConfirmPasswordContainer', {
+            id: 'importConfirmPassword',
+            label: 'Confirm Password',
+            placeholder: 'Confirm password',
+            autocomplete: 'new-password'
+        })
+
         const form = document.getElementById('wallet-import-form') as HTMLFormElement
         if (form) {
             form.onsubmit = (e) => {
@@ -455,8 +496,8 @@ export class WalletSelectionController {
             const formData = new FormData(form)
             const data: CreateWalletData = {
                 name: formData.get('name') as string,
-                password: formData.get('password') as string,
-                confirmPassword: formData.get('confirmPassword') as string,
+                password: this.getPasswordValue('creationPasswordContainer'),
+                confirmPassword: this.getPasswordValue('creationConfirmPasswordContainer'),
                 seedPhrase: formData.get('seedPhrase') as string,
                 importMode: false
             }
@@ -532,8 +573,8 @@ export class WalletSelectionController {
             const formData = new FormData(form)
             const data: CreateWalletData = {
                 name: formData.get('name') as string,
-                password: formData.get('password') as string,
-                confirmPassword: formData.get('confirmPassword') as string,
+                password: this.getPasswordValue('importPasswordContainer'),
+                confirmPassword: this.getPasswordValue('importConfirmPasswordContainer'),
                 seedPhrase: formData.get('seedPhrase') as string,
                 importMode: true
             }
@@ -836,26 +877,12 @@ export class WalletSelectionController {
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Password</label>
-                        <input 
-                            type="password" 
-                            id="walletPassword" 
-                            class="form-input" 
-                            placeholder="Choose a secure password" 
-                            required
-                        >
+                        <div id="walletPasswordContainer"></div>
                         <small class="form-help">This password will be required to unlock your wallet.</small>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            id="confirmPassword" 
-                            class="form-input" 
-                            placeholder="Confirm your password" 
-                            required
-                        >
+                        <div id="confirmPasswordContainer"></div>
                     </div>
 
                     <div class="finalization-actions">
@@ -881,11 +908,63 @@ export class WalletSelectionController {
     }
 
     /**
+     * Create and register a password input component
+     */
+    private createPasswordInput(containerId: string, options: {
+        id: string
+        label: string
+        placeholder: string
+        required?: boolean
+        autocomplete?: string
+    }): PasswordInput | null {
+        const container = document.getElementById(containerId)
+        if (!container) return null
+
+        const passwordInput = new PasswordInput(container, {
+            required: true,
+            autocomplete: 'current-password',
+            ...options
+        })
+        
+        this.passwordInputs.set(containerId, passwordInput)
+        return passwordInput
+    }
+
+    /**
+     * Get password value from a password input by container ID
+     */
+    private getPasswordValue(containerId: string): string {
+        return this.passwordInputs.get(containerId)?.getValue() || ''
+    }
+
+    /**
+     * Initialize password input components
+     */
+    private initializePasswordInputs(): void {
+        this.createPasswordInput('walletPasswordContainer', {
+            id: 'walletPassword',
+            label: 'Password',
+            placeholder: 'Choose a secure password',
+            autocomplete: 'new-password'
+        })
+
+        this.createPasswordInput('confirmPasswordContainer', {
+            id: 'confirmPassword',
+            label: 'Confirm Password',
+            placeholder: 'Confirm your password',
+            autocomplete: 'new-password'
+        })
+    }
+
+    /**
      * Setup finalization form event handlers
      */
     private setupFinalizationForm(seedPhrase: string, isImport: boolean): void {
         const form = document.getElementById('finalizationForm') as HTMLFormElement
         const cancelBtn = document.getElementById('finalizationCancelBtn')
+
+        // Initialize password input components
+        this.initializePasswordInputs()
 
         if (form) {
             form.addEventListener('submit', async (e) => {
@@ -936,6 +1015,12 @@ export class WalletSelectionController {
             if (this.walletRestoration) {
                 this.walletRestoration = null
             }
+            
+            // Clear all password inputs
+            for (const [containerId, passwordInput] of this.passwordInputs) {
+                passwordInput.clear()
+            }
+            this.passwordInputs.clear()
             
             // 2. Clear all containers and remove all child elements (only if they exist)
             const containers = [
@@ -998,8 +1083,8 @@ export class WalletSelectionController {
      */
     private async finalizeWallet(seedPhrase: string, isImport: boolean): Promise<void> {
         const walletName = (document.getElementById('walletName') as HTMLInputElement)?.value
-        const password = (document.getElementById('walletPassword') as HTMLInputElement)?.value
-        const confirmPassword = (document.getElementById('confirmPassword') as HTMLInputElement)?.value
+        const password = this.getPasswordValue('walletPasswordContainer')
+        const confirmPassword = this.getPasswordValue('confirmPasswordContainer')
 
         try {
             // Validation

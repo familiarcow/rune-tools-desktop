@@ -7,6 +7,7 @@
 
 import { BackendService } from '../services/BackendService'
 import { CryptoUtils } from '../utils/CryptoUtils'
+import { PasswordInput } from './PasswordInput'
 
 export interface SendTransactionData {
   walletId: string
@@ -56,6 +57,7 @@ export class SendConfirmation {
   private walletData: SendTransactionData | null = null
   private transactionParams: TransactionParams | null = null
   private estimatedFee: TransactionFee | null = null
+  private passwordInput: PasswordInput | null = null
 
   constructor(container: HTMLElement, backend: BackendService) {
     this.container = container
@@ -76,6 +78,9 @@ export class SendConfirmation {
       
       // Render confirmation UI
       this.render()
+      
+      // Initialize password input component
+      this.initializePasswordInput()
       
       // Setup event listeners
       this.setupEventListeners()
@@ -118,52 +123,31 @@ export class SendConfirmation {
     const fee = this.estimatedFee
 
     this.container.innerHTML = `
-      <div class="send-confirmation-content">
-        <!-- Password Input -->
-        <div class="confirmation-section">
-          <div class="password-input-group">
-            <label class="form-label" for="transactionPassword">
-              Wallet Password
-              <span class="required">*</span>
-            </label>
-            <div class="password-field">
-              <input 
-                type="password" 
-                class="form-control" 
-                id="transactionPassword" 
-                placeholder="Enter wallet password"
-                autocomplete="current-password"
-              >
-              <button type="button" class="password-toggle" id="passwordToggle">
-                <span id="toggleIcon">👁️</span>
-              </button>
-            </div>
-            <div class="form-error hidden" id="passwordError"></div>
-          </div>
+      <div class="authorize-transaction-content">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h2 class="page-title">Authorize Transaction</h2>
+        </div>
+
+        <!-- Password Input Section -->
+        <div class="password-section">
+          <div id="passwordInputContainer"></div>
         </div>
 
         <!-- Transaction Details -->
-        <div class="confirmation-section">
-          <h4 class="section-title">Transaction Details</h4>
-          <div class="transaction-details">
+        <div class="transaction-details-section">
+          <div class="section-title-collapsible" id="transactionDetailsToggle">
+            <h4 class="section-title">Transaction Details</h4>
+            <button type="button" class="collapse-toggle" aria-expanded="false" aria-controls="transactionDetailsCard">
+              <span class="collapse-icon">▼</span>
+            </button>
+          </div>
+          <div class="transaction-details-card collapsed" id="transactionDetailsCard">
             <div class="detail-row">
               <span class="detail-label">Type:</span>
-              <span class="detail-value">
+              <span class="detail-value transaction-type">
                 ${params.useMsgDeposit ? 'MsgDeposit' : 'MsgSend'}
-                <span class="detail-description">
-                  ${params.useMsgDeposit ? '(Deposit to THORChain)' : '(Direct Transfer)'}
-                </span>
               </span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">Asset:</span>
-              <span class="detail-value">${params.asset}</span>
-            </div>
-            
-            <div class="detail-row">
-              <span class="detail-label">Amount:</span>
-              <span class="detail-value highlight">${params.amount} ${params.asset}</span>
             </div>
             
             ${params.toAddress ? `
@@ -180,6 +164,11 @@ export class SendConfirmation {
               </div>
             ` : ''}
             
+            <div class="detail-row amount-row">
+              <span class="detail-label">Amount:</span>
+              <span class="detail-value amount-highlight">${params.amount} ${params.asset}</span>
+            </div>
+            
             <div class="detail-row fee-row">
               <span class="detail-label">Network Fee:</span>
               <span class="detail-value fee">
@@ -189,7 +178,7 @@ export class SendConfirmation {
             
             <div class="detail-row total-row">
               <span class="detail-label">Total Cost:</span>
-              <span class="detail-value total">
+              <span class="detail-value total-cost">
                 ${this.calculateTotalCost(params, fee)}
               </span>
             </div>
@@ -199,35 +188,71 @@ export class SendConfirmation {
     `
   }
 
-  private setupEventListeners(): void {
-    // Password field focus handling
-    const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
-    passwordInput?.addEventListener('input', () => {
+  private initializePasswordInput(): void {
+    const passwordContainer = document.getElementById('passwordInputContainer')
+    if (!passwordContainer) return
+
+    const walletName = this.walletData?.name || 'Wallet'
+    this.passwordInput = new PasswordInput(passwordContainer, {
+      id: 'transactionPassword',
+      label: `${walletName} Password`,
+      placeholder: 'Enter wallet password',
+      required: true,
+      autocomplete: 'current-password'
+    })
+
+    // Listen for password input changes
+    this.passwordInput.addEventListener('input', () => {
       this.clearPasswordError()
       this.updateSendButtonState()
     })
-    passwordInput?.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault()
-        // Trigger the confirm button click on Enter key
-        const confirmBtn = document.getElementById('confirmBtn') as HTMLButtonElement
-        if (confirmBtn && !confirmBtn.disabled) {
-          confirmBtn.click()
-        }
+
+    // Listen for Enter key in password field
+    passwordContainer.addEventListener('passwordEnter', () => {
+      const confirmBtn = document.getElementById('confirmBtn') as HTMLButtonElement
+      if (confirmBtn && !confirmBtn.disabled) {
+        confirmBtn.click()
       }
     })
+  }
 
-    // Password visibility toggle
-    const passwordToggle = document.getElementById('passwordToggle')
-    passwordToggle?.addEventListener('click', () => this.togglePasswordVisibility())
+  private setupEventListeners(): void {
+    // Setup collapsible transaction details
+    const detailsToggle = document.getElementById('transactionDetailsToggle')
+    const detailsCard = document.getElementById('transactionDetailsCard')
+    const collapseToggle = detailsToggle?.querySelector('.collapse-toggle') as HTMLButtonElement
+    const collapseIcon = detailsToggle?.querySelector('.collapse-icon') as HTMLSpanElement
+
+    if (detailsToggle && detailsCard && collapseToggle && collapseIcon) {
+      const toggleDetails = () => {
+        const isExpanded = collapseToggle.getAttribute('aria-expanded') === 'true'
+        
+        if (isExpanded) {
+          // Collapse
+          detailsCard.classList.add('collapsed')
+          collapseToggle.setAttribute('aria-expanded', 'false')
+          collapseIcon.textContent = '▼'
+        } else {
+          // Expand
+          detailsCard.classList.remove('collapsed')
+          collapseToggle.setAttribute('aria-expanded', 'true')
+          collapseIcon.textContent = '▲'
+        }
+      }
+
+      detailsToggle.addEventListener('click', toggleDetails)
+      collapseToggle.addEventListener('click', (e) => {
+        e.stopPropagation()
+        toggleDetails()
+      })
+    }
   }
 
   private updateSendButtonState(): void {
     const confirmBtn = document.getElementById('confirmBtn') as HTMLButtonElement
-    const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
     
-    if (confirmBtn && passwordInput) {
-      const hasPassword = passwordInput.value.trim().length > 0
+    if (confirmBtn && this.passwordInput) {
+      const hasPassword = this.passwordInput.getValue().trim().length > 0
       confirmBtn.disabled = !hasPassword
       
       if (hasPassword) {
@@ -235,21 +260,6 @@ export class SendConfirmation {
       } else {
         confirmBtn.classList.add('btn-disabled')
       }
-    }
-  }
-
-  private togglePasswordVisibility(): void {
-    const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
-    const toggleIcon = document.getElementById('toggleIcon')
-    
-    if (!passwordInput || !toggleIcon) return
-
-    if (passwordInput.type === 'password') {
-      passwordInput.type = 'text'
-      toggleIcon.textContent = '🙈'
-    } else {
-      passwordInput.type = 'password'
-      toggleIcon.textContent = '👁️'
     }
   }
 
@@ -423,28 +433,23 @@ export class SendConfirmation {
   }
 
   private showPasswordError(message: string): void {
-    const errorEl = document.getElementById('passwordError')
-    if (errorEl) {
-      errorEl.textContent = message
-      errorEl.classList.remove('hidden')
+    if (this.passwordInput) {
+      this.passwordInput.showError(message)
     }
   }
 
   private clearPasswordError(): void {
-    const errorEl = document.getElementById('passwordError')
-    if (errorEl) {
-      errorEl.textContent = ''
-      errorEl.classList.add('hidden')
+    if (this.passwordInput) {
+      this.passwordInput.clearError()
     }
   }
 
   // Public methods
   getPassword(): string {
-    const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
-    const password = passwordInput?.value || ''
+    const password = this.passwordInput ? this.passwordInput.getValue() : ''
     
     console.log('🔐 DEBUG: Getting password from input:', {
-      inputExists: !!passwordInput,
+      inputExists: !!this.passwordInput,
       passwordLength: password.length,
       passwordValue: password ? '[REDACTED]' : 'EMPTY'
     })
@@ -454,9 +459,8 @@ export class SendConfirmation {
 
   public clearSensitiveData(): void {
     // Clear password input
-    const passwordInput = document.getElementById('transactionPassword') as HTMLInputElement
-    if (passwordInput) {
-      passwordInput.value = ''
+    if (this.passwordInput) {
+      this.passwordInput.clear()
     }
 
     // Clear any cached data

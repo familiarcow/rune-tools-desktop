@@ -1963,13 +1963,11 @@
                 </div>
                 
                 <div class="form-group">
-                  <label class="form-label">Password</label>
-                  <input type="password" name="password" class="form-input" placeholder="Secure password" required>
+                  <div id="creationPasswordContainer"></div>
                 </div>
                 
                 <div class="form-group">
-                  <label class="form-label">Confirm Password</label>
-                  <input type="password" name="confirmPassword" class="form-input" placeholder="Confirm password" required>
+                  <div id="creationConfirmPasswordContainer"></div>
                 </div>
                 
                 <div class="form-group">
@@ -2007,13 +2005,11 @@
                 </div>
                 
                 <div class="form-group">
-                  <label class="form-label">Password</label>
-                  <input type="password" name="password" class="form-input" placeholder="Secure password" required>
+                  <div id="importPasswordContainer"></div>
                 </div>
                 
                 <div class="form-group">
-                  <label class="form-label">Confirm Password</label>
-                  <input type="password" name="confirmPassword" class="form-input" placeholder="Confirm password" required>
+                  <div id="importConfirmPasswordContainer"></div>
                 </div>
                 
                 <div class="form-group">
@@ -2148,8 +2144,7 @@
         
         <form id="unlock-wallet-form">
           <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-input" placeholder="Enter wallet password" required>
+            <div id="unlockPasswordContainer"></div>
           </div>
           
           <div class="form-group">
@@ -2189,6 +2184,9 @@
     <div id="global-overlay-container"></div>
   </div>
 
+  <!-- Deposit step specific styles -->
+  <link rel="stylesheet" href="./styles/deposit-step.css">
+  
   <!-- Vite entry point -->
   <script type="module" src="./main.ts"></script>
 </body>

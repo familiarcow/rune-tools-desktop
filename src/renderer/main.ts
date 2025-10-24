@@ -10,6 +10,9 @@
 import { Buffer } from 'buffer'
 ;(globalThis as any).Buffer = Buffer
 
+// CSS imports
+import './styles/password-input.css'
+
 // Service imports
 import { BackendService } from './services/BackendService'
 import { StateManager } from './services/StateManager'

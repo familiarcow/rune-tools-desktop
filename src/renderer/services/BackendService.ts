@@ -275,6 +275,7 @@ export class BackendService {
         return await this.ipc.invoke('memoless-calculate-usd', amount, priceUSD)
     }
 
+
     // Get memoless service instance from main process (DEPRECATED - causes serialization issues)
     async getMemolessService(): Promise<any> {
         return await this.ipc.invoke('get-memoless-service')
