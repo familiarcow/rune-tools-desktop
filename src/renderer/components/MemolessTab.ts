@@ -11,6 +11,7 @@
 
 import { BackendService } from '../services/BackendService'
 import { SendTransaction, SendTransactionData } from './SendTransaction'
+import { MemoCreationService, MemoType, MemoParams } from '../services/MemoCreationService'
 
 export interface MemolessTabData {
   walletId: string
@@ -22,6 +23,8 @@ export interface MemolessTabData {
 export interface MemolessState {
   currentStep: number
   memoToRegister: string
+  selectedMemoType: MemoType
+  memoParams: MemoParams | null
   selectedAsset: string | null
   assetPrice: number
   assetDecimals: number
@@ -47,12 +50,15 @@ export interface PoolAsset {
 export class MemolessTab {
   private container: HTMLElement
   private backend: BackendService
+  private memoCreationService: MemoCreationService
   private walletData: MemolessTabData | null = null
   private sendTransaction: SendTransaction | null = null
   
   private state: MemolessState = {
     currentStep: 1,
     memoToRegister: '',
+    selectedMemoType: 'custom',
+    memoParams: null,
     selectedAsset: null,
     assetPrice: 0,
     assetDecimals: 8,
@@ -72,6 +78,7 @@ export class MemolessTab {
   constructor(container: HTMLElement, backend: BackendService) {
     this.container = container
     this.backend = backend
+    this.memoCreationService = MemoCreationService.getInstance()
     console.log('🔧 MemolessTab component created')
   }
 
@@ -101,6 +108,8 @@ export class MemolessTab {
     this.state = {
       currentStep: 1,
       memoToRegister: '',
+      selectedMemoType: 'custom',
+      memoParams: null,
       selectedAsset: null,
       assetPrice: 0,
       assetDecimals: 8,
@@ -125,7 +134,7 @@ export class MemolessTab {
         <div class="memoless-header">
           <div class="header-content">
             <h2>🔗 Memoless Transactions</h2>
-            <p>Register a memo once, then send deposits using encoded amounts</p>
+            <p>Register a memo on THORChain, then send deposits from any other chain using encoded amounts</p>
           </div>
           
           <!-- Progress Steps -->
@@ -201,16 +210,167 @@ export class MemolessTab {
     }
   }
 
+  private renderMemoConfiguration(): string {
+    switch (this.state.selectedMemoType) {
+      case 'custom':
+        return this.renderCustomMemoForm()
+      case 'deposit':
+        return this.renderDepositMemoForm()
+      default:
+        return '<div class="form-error">Unknown memo type</div>'
+    }
+  }
+
+  private renderCustomMemoForm(): string {
+    const customParams = this.state.memoParams as any
+    return `
+      <div class="custom-memo-form">
+        <textarea 
+          class="form-control memo-input" 
+          id="customMemoInput" 
+          placeholder="Enter your memo (e.g., =:BTC.BTC:bc1q...)"
+          rows="3"
+        >${customParams?.memo || ''}</textarea>
+        <div class="form-helper">
+          <small>Enter any valid THORChain memo. Examples: =:BTC.BTC:address, +:ETH.ETH, -:BTC.BTC:5000</small>
+        </div>
+      </div>
+    `
+  }
+
+  private renderSwapMemoForm(): string {
+    const swapParams = this.state.memoParams as any || {}
+    return `
+      <div class="swap-memo-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="swapToAsset">Swap To Asset *</label>
+            <select class="form-control" id="swapToAsset">
+              <option value="">Select destination asset...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="swapAssetType">Asset Type</label>
+            <select class="form-control" id="swapAssetType">
+              <option value="native">Native</option>
+              <option value="secured">Secured</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="swapAmount">Amount to Swap *</label>
+            <input type="number" id="swapAmount" class="form-control" 
+                   placeholder="Enter amount" value="${swapParams.amount || ''}" step="0.00000001" min="0">
+            <div class="form-helper">
+              <small>Amount of <span id="swapFromAssetName">selected asset</span> to swap</small>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="swapSlippage">Slippage Tolerance</label>
+            <div class="input-with-suffix">
+              <input type="number" id="swapSlippage" class="form-control" 
+                     value="1" step="0.1" min="0.1" max="50">
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+        </div>
+        <div id="swapQuoteContainer" class="quote-container" style="display: none;">
+          <div class="quote-header">
+            <h4>Swap Quote</h4>
+            <button type="button" id="refreshQuoteBtn" class="btn-refresh" title="Refresh quote">🔄</button>
+          </div>
+          <div class="quote-details">
+            <div class="detail-row">
+              <span>Estimated Output:</span>
+              <span id="estimatedOutput">-</span>
+            </div>
+            <div class="detail-row">
+              <span>Rate:</span>
+              <span id="swapRate">-</span>
+            </div>
+            <div class="detail-row">
+              <span>Network Fee:</span>
+              <span id="networkFee">-</span>
+            </div>
+            <div class="detail-row">
+              <span>Slippage Protection:</span>
+              <span id="slippageProtection">-</span>
+            </div>
+          </div>
+          <div id="quoteError" class="form-error hidden"></div>
+        </div>
+      </div>
+    `
+  }
+
+
+  private renderDepositMemoForm(): string {
+    const walletAddress = this.walletData?.address || ''
+    const depositParams = this.state.memoParams as any || {}
+    return `
+      <div class="deposit-memo-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="depositType">Deposit Type</label>
+            <select class="form-control" id="depositType">
+              <option value="secured" ${depositParams.type === 'secured' ? 'selected' : ''}>Secured</option>
+              <option value="trade" ${depositParams.type === 'trade' ? 'selected' : ''}>Trade</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Account Address</label>
+            <div class="address-display-readonly">
+              <code class="address-code">${walletAddress}</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
   private renderSetupStep(): string {
     return `
       <div class="step-content setup-step">
         <div class="step-title">
           <h3>Step 1: Setup Memoless Transaction</h3>
-          <p>Enter your memo and select the asset for registration</p>
+          <p>Select memo type, configure parameters, and choose deposit asset</p>
         </div>
 
         <div class="setup-form">
-          <!-- Asset Selection (moved to first) -->
+          <!-- Memo Type Selection -->
+          <div class="form-section">
+            <label class="form-label">Memo Type</label>
+            <div class="memo-type-selector">
+              <div class="memo-type-option ${this.state.selectedMemoType === 'custom' ? 'active' : ''}" data-type="custom">
+                <div class="memo-type-header">
+                  <input type="radio" name="memoType" value="custom" ${this.state.selectedMemoType === 'custom' ? 'checked' : ''}>
+                  <span class="memo-type-title">Custom Memo</span>
+                </div>
+                <div class="memo-type-description">Enter your own memo string</div>
+              </div>
+              
+              <div class="memo-type-option ${this.state.selectedMemoType === 'deposit' ? 'active' : ''}" data-type="deposit">
+                <div class="memo-type-header">
+                  <input type="radio" name="memoType" value="deposit" ${this.state.selectedMemoType === 'deposit' ? 'checked' : ''}>
+                  <span class="memo-type-title">Deposit</span>
+                </div>
+                <div class="memo-type-description">Deposit assets to account</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Memo Configuration Section -->
+          <div class="form-section">
+            <label class="form-label">Memo Configuration</label>
+            <div id="memoConfigContainer">
+              ${this.renderMemoConfiguration()}
+            </div>
+            <div class="form-error hidden" id="memoError"></div>
+          </div>
+
+
+          <!-- Asset Selection -->
           <div class="form-section">
             <label class="form-label" for="assetSelector">Deposit Asset</label>
             <select class="form-control" id="assetSelector">
@@ -235,19 +395,6 @@ export class MemolessTab {
                 <span id="selectedAssetPrice">-</span>
               </div>
             </div>
-          </div>
-
-          <!-- Memo Section (moved to second) -->
-          <div class="form-section">
-            <label class="form-label" for="memoInput">Transaction Memo</label>
-            <textarea 
-              class="form-control memo-input" 
-              id="memoInput" 
-              placeholder="Enter your memo (e.g., =:BTC.BTC:bc1q...)"
-              rows="3"
-              value="${this.state.memoToRegister}"
-            ></textarea>
-            <div class="form-error hidden" id="memoError"></div>
           </div>
         </div>
       </div>
@@ -463,12 +610,33 @@ export class MemolessTab {
   }
 
   private setupSetupStepListeners(): void {
-    // Setup memo input listener
-    const memoInput = document.getElementById('memoInput') as HTMLTextAreaElement
-    memoInput?.addEventListener('input', () => {
-      this.state.memoToRegister = memoInput.value.trim()
-      this.updateNavigationState()
+    // Setup memo type selection listeners
+    const memoTypeRadios = document.querySelectorAll('input[name="memoType"]')
+    memoTypeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const target = e.target as HTMLInputElement
+        if (target.checked) {
+          this.onMemoTypeChange(target.value as MemoType)
+        }
+      })
     })
+
+    // Setup memo type option click listeners (for the entire div)
+    const memoTypeOptions = document.querySelectorAll('.memo-type-option')
+    memoTypeOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const type = option.getAttribute('data-type') as MemoType
+        const radio = option.querySelector('input[type="radio"]') as HTMLInputElement
+        if (radio && !radio.checked) {
+          radio.checked = true
+          this.onMemoTypeChange(type)
+        }
+      })
+    })
+
+    // Setup memo parameter input listeners based on current memo type
+    this.setupMemoParameterListeners()
+
 
     // Load assets when step loads
     this.loadAvailableAssets()
@@ -482,6 +650,125 @@ export class MemolessTab {
       }
     })
   }
+
+  private onMemoTypeChange(memoType: MemoType): void {
+    console.log('🔄 Memo type changed to:', memoType)
+    
+    this.state.selectedMemoType = memoType
+    this.state.memoParams = null
+    this.state.memoToRegister = ''
+
+    // Update memo type options visual state
+    document.querySelectorAll('.memo-type-option').forEach(option => {
+      if (option.getAttribute('data-type') === memoType) {
+        option.classList.add('active')
+      } else {
+        option.classList.remove('active')
+      }
+    })
+
+    // Re-render memo configuration section
+    const memoConfigContainer = document.getElementById('memoConfigContainer')
+    if (memoConfigContainer) {
+      memoConfigContainer.innerHTML = this.renderMemoConfiguration()
+    }
+
+
+    // Setup new listeners for the updated form
+    this.setupMemoParameterListeners()
+    this.updateNavigationState()
+  }
+
+  private setupMemoParameterListeners(): void {
+    switch (this.state.selectedMemoType) {
+      case 'custom':
+        this.setupCustomMemoListeners()
+        break
+      case 'deposit':
+        this.setupDepositMemoListeners()
+        break
+    }
+  }
+
+  private setupCustomMemoListeners(): void {
+    const customMemoInput = document.getElementById('customMemoInput') as HTMLTextAreaElement
+    customMemoInput?.addEventListener('input', () => {
+      this.state.memoParams = { memo: customMemoInput.value.trim() }
+      this.updateMemoFromParams()
+    })
+  }
+
+
+  private setupDepositMemoListeners(): void {
+    // Setup deposit type dropdown
+    const depositTypeSelect = document.getElementById('depositType') as HTMLSelectElement
+    depositTypeSelect?.addEventListener('change', () => this.updateDepositMemoFromForm())
+    
+    // Auto-populate with wallet address and generate memo immediately
+    this.updateDepositMemoFromForm()
+  }
+
+
+  private updateDepositMemoFromForm(): void {
+    const depositTypeSelect = document.getElementById('depositType') as HTMLSelectElement
+    const depositType = (depositTypeSelect?.value || 'secured') as 'trade' | 'secured'
+    const walletAddress = this.walletData?.address || ''
+
+    this.state.memoParams = {
+      type: depositType,
+      address: walletAddress
+    }
+
+    this.updateMemoFromParams()
+  }
+
+  private updateMemoFromParams(): void {
+    try {
+      if (!this.state.memoParams) {
+        this.state.memoToRegister = ''
+      } else {
+        // Validate parameters
+        const validation = this.memoCreationService.validateMemoParams(this.state.selectedMemoType, this.state.memoParams)
+        
+        if (validation.isValid || this.state.selectedMemoType === 'custom') {
+          // Generate memo even if validation has warnings (but not errors)
+          this.state.memoToRegister = this.memoCreationService.generateMemo(this.state.selectedMemoType, this.state.memoParams)
+        } else {
+          this.state.memoToRegister = ''
+        }
+
+        // Show/hide validation errors
+        this.showMemoValidation(validation)
+      }
+
+      // Update navigation state
+      this.updateNavigationState()
+
+    } catch (error) {
+      console.error('❌ Error updating memo from params:', error)
+      this.state.memoToRegister = ''
+      this.showMemoValidation({ isValid: false, errors: [(error as Error).message], warnings: [] })
+    }
+  }
+
+  private showMemoValidation(validation: any): void {
+    const memoError = document.getElementById('memoError')
+    if (!memoError) return
+
+    if (validation.errors && validation.errors.length > 0) {
+      memoError.textContent = validation.errors.join(', ')
+      memoError.classList.remove('hidden')
+    } else {
+      memoError.classList.add('hidden')
+    }
+
+    // Could also show warnings in a separate element if needed
+    if (validation.warnings && validation.warnings.length > 0) {
+      console.warn('⚠️ Memo validation warnings:', validation.warnings)
+    }
+  }
+
+
 
   private setupRegistrationStepListeners(): void {
     const registerBtn = document.getElementById('registerMemoBtn')

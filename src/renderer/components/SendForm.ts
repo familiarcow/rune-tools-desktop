@@ -170,10 +170,27 @@ export class SendForm {
 
   private populateAssetSelector(): void {
     const selector = document.getElementById('assetSelector') as HTMLSelectElement
-    if (!selector) return
+    if (!selector) {
+      console.error('❌ Asset selector element not found!')
+      return
+    }
+
+    console.log('📝 Populating asset selector with', this.availableBalances.length, 'balances')
+    console.log('Available balances:', this.availableBalances)
 
     // Clear existing options
     selector.innerHTML = ''
+
+    // Check if we have any balances
+    if (this.availableBalances.length === 0) {
+      const option = document.createElement('option')
+      option.value = ''
+      option.textContent = 'No assets available'
+      option.disabled = true
+      selector.appendChild(option)
+      console.warn('⚠️ No balances available for asset selector')
+      return
+    }
 
     // Add assets from balances
     this.availableBalances.forEach(balance => {
@@ -187,6 +204,8 @@ export class SendForm {
       
       selector.appendChild(option)
     })
+
+    console.log('✅ Asset selector populated with', selector.options.length, 'options')
   }
 
   private onTransactionTypeChange(type: 'send' | 'deposit'): void {
