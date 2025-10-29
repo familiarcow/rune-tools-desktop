@@ -41,7 +41,7 @@ export class SendForm {
     console.log('🔧 SendForm component created')
   }
 
-  async initialize(balances: AssetBalance[]): Promise<void> {
+  async initialize(balances: AssetBalance[], prePopulatedData?: any): Promise<void> {
     try {
       console.log('📝 Initializing send form with', balances.length, 'assets')
       
@@ -53,8 +53,21 @@ export class SendForm {
         this.selectedAsset = this.availableBalances[0].asset
       }
 
+      // Override with pre-populated data if provided
+      if (prePopulatedData) {
+        console.log('📝 Using pre-populated data:', prePopulatedData)
+        if (prePopulatedData.asset) {
+          this.selectedAsset = prePopulatedData.asset
+        }
+      }
+
       this.render()
       this.setupEventListeners()
+
+      // Apply pre-populated data after render
+      if (prePopulatedData) {
+        this.applyPrePopulatedData(prePopulatedData)
+      }
       
     } catch (error) {
       console.error('❌ Failed to initialize SendForm:', error)
@@ -491,5 +504,65 @@ export class SendForm {
 
   getValidationErrors(): string[] {
     return Array.from(this.validationErrors.values())
+  }
+
+  private applyPrePopulatedData(data: any): void {
+    console.log('📝 Applying pre-populated data to form:', data)
+
+    try {
+      // Set transaction type
+      if (data.transactionType === 'deposit') {
+        const depositRadio = document.getElementById('txTypeDeposit') as HTMLInputElement
+        if (depositRadio) {
+          depositRadio.checked = true
+          this.onTransactionTypeChange('deposit')
+        }
+      } else if (data.transactionType === 'send') {
+        const sendRadio = document.getElementById('txTypeSend') as HTMLInputElement
+        if (sendRadio) {
+          sendRadio.checked = true
+          this.onTransactionTypeChange('send')
+        }
+      }
+
+      // Set asset selection
+      if (data.asset) {
+        const assetSelector = document.getElementById('assetSelector') as HTMLSelectElement
+        if (assetSelector) {
+          assetSelector.value = data.asset
+          this.selectedAsset = data.asset
+          this.onAssetChange()
+        }
+      }
+
+      // Set amount
+      if (data.amount) {
+        const amountInput = document.getElementById('amountInput') as HTMLInputElement
+        if (amountInput) {
+          amountInput.value = data.amount
+        }
+      }
+
+      // Set memo (for MsgDeposit withdrawals)
+      if (data.memo) {
+        const memoInput = document.getElementById('memoInput') as HTMLInputElement
+        if (memoInput) {
+          memoInput.value = data.memo
+        }
+      }
+
+      // Set to address (if needed for MsgSend)
+      if (data.toAddress) {
+        const toAddressInput = document.getElementById('toAddressInput') as HTMLInputElement
+        if (toAddressInput) {
+          toAddressInput.value = data.toAddress
+        }
+      }
+
+      console.log('✅ Pre-populated data applied successfully')
+
+    } catch (error) {
+      console.error('❌ Failed to apply pre-populated data:', error)
+    }
   }
 }

@@ -11,6 +11,7 @@
 import { BackendService } from '../services/BackendService'
 import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction'
 import { ReceiveTransaction, ReceiveTransactionData } from './ReceiveTransaction'
+import { WithdrawDialog, WithdrawDialogData, WithdrawFormData } from './WithdrawDialog'
 
 export interface WalletTabData {
     walletId: string
@@ -45,11 +46,18 @@ export class WalletTab {
     private refreshInterval: NodeJS.Timeout | null = null
     private sendTransaction: SendTransaction | null = null
     private receiveTransaction: ReceiveTransaction | null = null
+    private withdrawDialog: WithdrawDialog | null = null
     private collapsedSections: Set<string> = new Set() // Sections start expanded, collapse only if empty
 
     constructor(container: HTMLElement, backend: BackendService) {
         this.container = container
         this.backend = backend
+        
+        // Initialize withdraw dialog
+        const withdrawContainer = document.getElementById('withdraw-dialog-container')
+        if (withdrawContainer) {
+            this.withdrawDialog = new WithdrawDialog(withdrawContainer, this.backend)
+        }
     }
 
     async initialize(wallet: any, network: 'mainnet' | 'stagenet'): Promise<void> {
@@ -216,6 +224,20 @@ export class WalletTab {
         if (tradeCollapseBtn) {
             tradeCollapseBtn.addEventListener('click', () => this.toggleSection('trade'))
         }
+
+        // Withdraw button event delegation (for dynamically added buttons)
+        this.container.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement
+            if (target.classList.contains('btn-withdraw')) {
+                const asset = target.getAttribute('data-asset')
+                const balance = target.getAttribute('data-balance')
+                const tier = target.getAttribute('data-tier') as 'trade' | 'secured'
+                
+                if (asset && balance && tier) {
+                    this.showWithdrawDialog(asset, balance, tier)
+                }
+            }
+        })
     }
 
     private async loadWalletData(): Promise<void> {
@@ -656,6 +678,13 @@ export class WalletTab {
                     <div class="asset-balance">${this.formatBalance(asset.balance)} ${asset.asset}</div>
                     <div class="asset-usd-value">${this.formatUsd(asset.usdValue)}</div>
                 </div>
+                ${tier === 'trade' || tier === 'secured' ? `
+                <div class="asset-actions">
+                    <button class="btn btn-sm btn-withdraw" data-asset="${asset.asset}" data-balance="${asset.balance}" data-tier="${tier}">
+                        📤 Withdraw
+                    </button>
+                </div>
+                ` : ''}
             </div>
         `).join('')
     }
@@ -919,5 +948,96 @@ export class WalletTab {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         })
+    }
+
+    private showWithdrawDialog(asset: string, balance: string, tier: 'trade' | 'secured'): void {
+        if (!this.withdrawDialog || !this.walletData) {
+            console.error('❌ Withdraw dialog or wallet data not available')
+            return
+        }
+
+        console.log('🔄 Showing withdraw dialog for:', { asset, balance, tier })
+
+        const withdrawData: WithdrawDialogData = {
+            asset,
+            balance,
+            tier,
+            walletAddress: this.walletData.address,
+            network: this.walletData.network
+        }
+
+        this.withdrawDialog.show(withdrawData, (formData: WithdrawFormData) => {
+            this.handleWithdrawConfirmed(formData)
+        })
+    }
+
+    private handleWithdrawConfirmed(withdrawData: WithdrawFormData): void {
+        console.log('✅ Withdraw confirmed, opening Send modal with data:', withdrawData)
+
+        // Generate the appropriate memo based on tier
+        const memo = withdrawData.tier === 'trade' 
+            ? `TRADE-:${withdrawData.toAddress}`
+            : `SECURE-:${withdrawData.toAddress}`
+
+        // Open the Send modal with pre-populated data
+        this.openSendModalWithData({
+            transactionType: 'deposit',
+            asset: withdrawData.asset,
+            amount: withdrawData.amount,
+            toAddress: undefined, // MsgDeposit doesn't use toAddress
+            memo: memo
+        })
+    }
+
+    private openSendModalWithData(prePopulatedData: any): void {
+        try {
+            if (!this.walletData) {
+                console.error('❌ No wallet data available')
+                return
+            }
+
+            const dialogContainer = document.getElementById('global-overlay-container')
+            if (!dialogContainer) {
+                console.error('❌ Global overlay container not found')
+                return
+            }
+
+            // Initialize SendTransaction component if not exists
+            if (!this.sendTransaction) {
+                this.sendTransaction = new SendTransaction(dialogContainer, this.backend)
+            }
+
+            // Convert WalletTab balance format to SendTransaction format
+            const sendBalances: SendAssetBalance[] = this.walletData.balances.map(balance => ({
+                asset: balance.asset,
+                balance: balance.balance,
+                usdValue: balance.usdValue.toString()
+            }))
+
+            // Prepare wallet data for send dialog
+            const sendWalletData: SendTransactionData = {
+                walletId: this.walletData.walletId,
+                name: this.walletData.name,
+                currentAddress: this.walletData.address,
+                network: this.walletData.network,
+                availableBalances: sendBalances
+            }
+
+            // Show the send dialog and pre-populate with withdrawal data
+            this.sendTransaction.initialize(sendWalletData, {
+                onSuccess: (result) => {
+                    console.log('📤 Withdrawal transaction completed:', result)
+                    // Refresh wallet data after successful transaction
+                    this.refreshData()
+                },
+                onClose: () => {
+                    console.log('🔄 Withdraw dialog closed')
+                }
+            }, prePopulatedData)
+
+        } catch (error) {
+            console.error('❌ Failed to open send modal:', error)
+            this.showError('Failed to open withdrawal transaction')
+        }
     }
 }

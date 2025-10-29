@@ -66,6 +66,7 @@ export class SendTransaction {
   private transactionResult: TransactionResponse | null = null
   private callbacks: SendTransactionCallback = {}
   private capturedTransactionParams: TransactionParams | null = null // Capture before navigation
+  private prePopulatedData: any = null // Pre-populated form data for withdrawals
 
   constructor(container: HTMLElement, backend: BackendService) {
     this.container = container
@@ -77,11 +78,12 @@ export class SendTransaction {
   /**
    * Initialize the Send dialog with wallet data (non-sensitive only)
    */
-  async initialize(walletData: SendTransactionData, callbacks?: SendTransactionCallback | (() => void)): Promise<void> {
+  async initialize(walletData: SendTransactionData, callbacks?: SendTransactionCallback | (() => void), prePopulatedData?: any): Promise<void> {
     try {
       console.log('💳 Initializing Send dialog for wallet:', walletData.name)
       
       this.transactionData = walletData
+      this.prePopulatedData = prePopulatedData || null
       
       // Handle legacy callback format
       if (typeof callbacks === 'function') {
@@ -90,8 +92,21 @@ export class SendTransaction {
         this.callbacks = callbacks || {}
       }
       
-      // Reset to information page
-      this.currentPage = 1
+      // Set starting page - go to review page if we have pre-populated data
+      if (this.prePopulatedData) {
+        console.log('📋 Pre-populated data detected, starting on review page')
+        this.currentPage = 2
+        // Capture the pre-populated data as transaction params for review
+        this.capturedTransactionParams = {
+          asset: this.prePopulatedData.asset,
+          amount: this.prePopulatedData.amount,
+          toAddress: this.prePopulatedData.toAddress,
+          memo: this.prePopulatedData.memo,
+          useMsgDeposit: this.prePopulatedData.transactionType === 'deposit'
+        }
+      } else {
+        this.currentPage = 1
+      }
       
       // Render the dialog structure
       this.render()
@@ -99,7 +114,7 @@ export class SendTransaction {
       // Wait a tick for DOM to be ready
       await new Promise(resolve => setTimeout(resolve, 0))
       
-      // Initialize the first page
+      // Initialize the current page
       await this.initializeCurrentPage()
       
       // Show the dialog
@@ -274,7 +289,7 @@ export class SendTransaction {
 
     console.log('🔧 Creating SendForm component...')
     this.sendForm = new SendForm(formContainer, this.backend)
-    await this.sendForm.initialize(this.transactionData.availableBalances)
+    await this.sendForm.initialize(this.transactionData.availableBalances, this.prePopulatedData)
     console.log('✅ SendForm initialized successfully')
   }
 
