@@ -36,7 +36,10 @@ export interface RawPool {
   earnings_annual?: string;
   pool_slip_average?: string;
   pool_slip_average_24h?: string;
-  asset_tor_price?: string;
+  asset_tor_price: string;
+  savers_fill_bps: string;
+  savers_capacity_remaining: string;
+  trading_halted: boolean;
 }
 
 // Cleaned Pool interface with normalized numeric values
@@ -75,7 +78,10 @@ export interface Pool {
   earnings_annual?: number;
   pool_slip_average?: number;
   pool_slip_average_24h?: number;
-  asset_price_usd?: number; // Normalized from asset_tor_price / 1e8
+  asset_price_usd: number; // Normalized from asset_tor_price / 1e8
+  savers_fill_bps: number;
+  savers_capacity_remaining: number;
+  trading_halted: boolean;
 }
 
 export interface NetworkInfo {

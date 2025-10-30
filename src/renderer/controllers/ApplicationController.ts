@@ -14,6 +14,7 @@ import { UIService } from '../services/UIService'
 import { WalletTab } from '../components/WalletTab'
 import { MemolessTab } from '../components/MemolessTab'
 import { SwapTab } from '../components/SwapTab'
+import { PoolsTab } from '../components/PoolsTab'
 import { HeaderDisplay } from '../components/HeaderDisplay'
 
 export interface ActiveWallet {
@@ -41,6 +42,7 @@ export class ApplicationController {
     private walletTab: WalletTab | null = null
     private memolessTab: MemolessTab | null = null
     private swapTab: SwapTab | null = null
+    private poolsTab: PoolsTab | null = null
     private headerDisplay: HeaderDisplay | null = null
     private isInitialized: boolean = false
 
@@ -69,6 +71,9 @@ export class ApplicationController {
             
             // Initialize swap tab
             await this.initializeSwapTab()
+            
+            // Initialize pools tab
+            await this.initializePoolsTab()
             
             // Setup tab navigation
             this.setupTabNavigation()
@@ -131,6 +136,18 @@ export class ApplicationController {
         console.log('💱 SwapTab component prepared')
     }
 
+    private async initializePoolsTab(): Promise<void> {
+        const poolsTabContainer = document.getElementById('pools-tab-content')
+        if (!poolsTabContainer) {
+            throw new Error('Pools tab container not found')
+        }
+
+        this.poolsTab = new PoolsTab(poolsTabContainer, this.backend)
+        
+        // Initialize with wallet data when tab is accessed
+        console.log('🏊 PoolsTab component prepared')
+    }
+
     private initializeMemolessTabContent(): void {
         if (!this.memolessTab || !this.activeWallet) return
         
@@ -159,6 +176,26 @@ export class ApplicationController {
             .catch(error => {
                 console.error('❌ Failed to initialize swap tab content:', error)
                 this.ui.showError('Failed to load swap functionality')
+            })
+    }
+
+    private initializePoolsTabContent(): void {
+        if (!this.poolsTab || !this.activeWallet) return
+        
+        // Initialize pools tab with current wallet data
+        const poolsWalletData = {
+            walletId: this.activeWallet.walletId,
+            name: this.activeWallet.name,
+            address: this.currentNetwork === 'mainnet' 
+                ? this.activeWallet.mainnetAddress! 
+                : this.activeWallet.stagenetAddress!,
+            network: this.currentNetwork
+        }
+        
+        this.poolsTab.initialize(poolsWalletData)
+            .catch(error => {
+                console.error('❌ Failed to initialize pools tab content:', error)
+                this.ui.showError('Failed to load pools functionality')
             })
     }
 
@@ -229,6 +266,8 @@ export class ApplicationController {
             this.initializeMemolessTabContent()
         } else if (tabName === 'swap') {
             this.initializeSwapTabContent()
+        } else if (tabName === 'pools') {
+            this.initializePoolsTabContent()
         }
 
         this.currentTab = tabName
@@ -366,6 +405,12 @@ export class ApplicationController {
                 updatePromises.push(this.swapTab.updateNetwork(network))
             }
             
+            // Update pools tab if active
+            if (this.poolsTab && this.activeWallet) {
+                this.poolsTab.updateWalletAddress(this.activeWallet, network)
+                updatePromises.push(this.poolsTab.updateNetwork(network))
+            }
+            
             // Wait for all component updates
             await Promise.all(updatePromises)
             
@@ -421,6 +466,10 @@ export class ApplicationController {
             
             if (this.swapTab) {
                 await this.swapTab.refreshData()
+            }
+            
+            if (this.poolsTab) {
+                await this.poolsTab.refreshData()
             }
             
             console.log('✅ All data refreshed')

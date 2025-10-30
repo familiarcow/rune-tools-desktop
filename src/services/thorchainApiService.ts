@@ -129,6 +129,20 @@ export class ThorchainApiService {
     }
   }
 
+  public async getAllPools(): Promise<Pool[]> {
+    try {
+      const response = await this.api.get('/thorchain/pools');
+      const rawPools: RawPool[] = response.data || [];
+      
+      // Return all pools (Available and Staged) and clean up the data
+      return rawPools
+        .map(pool => this.cleanPoolData(pool));
+    } catch (error) {
+      console.error('Error fetching all pools:', error);
+      throw new Error('Failed to fetch THORChain pools');
+    }
+  }
+
   private normalizeAssetIdentifier(asset: string): string {
     // Convert different asset formats to THORChain native format
     // BTC-BTC, BTC~BTC -> BTC.BTC
@@ -245,7 +259,10 @@ export class ThorchainApiService {
       earnings_annual: rawPool.earnings_annual ? normalizeFromE8(rawPool.earnings_annual) : undefined,
       pool_slip_average: rawPool.pool_slip_average ? parseNumber(rawPool.pool_slip_average) : undefined,
       pool_slip_average_24h: rawPool.pool_slip_average_24h ? parseNumber(rawPool.pool_slip_average_24h) : undefined,
-      asset_price_usd: rawPool.asset_tor_price ? normalizeFromE8(rawPool.asset_tor_price) : undefined, // Asset USD price
+      asset_price_usd: rawPool.asset_tor_price ? normalizeFromE8(rawPool.asset_tor_price) : 0, // Asset USD price
+      savers_fill_bps: parseNumber(rawPool.savers_fill_bps),
+      savers_capacity_remaining: normalizeFromE8(rawPool.savers_capacity_remaining),
+      trading_halted: rawPool.trading_halted || false,
     };
   }
 

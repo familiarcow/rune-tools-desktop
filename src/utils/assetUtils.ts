@@ -158,3 +158,109 @@ export function isDustAmount(amount: string, asset: string): boolean {
   // Consider amounts less than 1 base unit as dust
   return num < (1 / 1e8)
 }
+
+/**
+ * Converts an asset name to its display format
+ * Format: {Chain}.{Asset}-{contract} → {Asset} ({Chain})
+ * 
+ * Examples:
+ * - BTC.BTC → BTC (BTC)
+ * - GAIA.ATOM → ATOM (GAIA)
+ * - BASE.CBBTC-0XCBB7C0000AB88B473B1F5AFD9EF808440EED33BF → CBBTC (BASE)
+ * 
+ * @param asset - The full asset name from the API
+ * @returns The formatted display name
+ */
+export function AssetDisplayName(asset: string): string {
+  if (!asset || typeof asset !== 'string') {
+    return 'Unknown Asset';
+  }
+
+  // Split by the first dot to separate chain and asset
+  const dotIndex = asset.indexOf('.');
+  if (dotIndex === -1) {
+    // No dot found, return as-is
+    return asset;
+  }
+
+  const chain = asset.substring(0, dotIndex);
+  const assetPart = asset.substring(dotIndex + 1);
+
+  // Remove contract address if present (everything after the last dash)
+  const dashIndex = assetPart.lastIndexOf('-');
+  const assetName = dashIndex !== -1 ? assetPart.substring(0, dashIndex) : assetPart;
+
+  return `${assetName} (${chain})`;
+}
+
+/**
+ * Formats a number to a specific number of decimal places
+ * @param value - The number to format
+ * @param decimals - Number of decimal places (default: 2)
+ * @returns Formatted number string
+ */
+export function formatNumber(value: number, decimals: number = 2): string {
+  if (isNaN(value) || value === null || value === undefined) {
+    return '0.00';
+  }
+  return value.toFixed(decimals);
+}
+
+/**
+ * Formats a value from 1e8 format to decimal with specified decimal places
+ * @param value - The value in 1e8 format (as string or number)
+ * @param decimals - Number of decimal places to show (default: 2)
+ * @returns Formatted decimal string
+ */
+export function formatFromE8(value: string | number, decimals: number = 2): string {
+  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(numValue) || numValue === null || numValue === undefined) {
+    return '0.00';
+  }
+  const decimalValue = numValue / 1e8;
+  return formatNumber(decimalValue, decimals);
+}
+
+/**
+ * Formats a USD value with currency symbol
+ * @param value - The USD value
+ * @returns Formatted USD string (e.g., "$1,234.56")
+ */
+export function formatUSD(value: number): string {
+  if (isNaN(value) || value === null || value === undefined) {
+    return '$0.00';
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+/**
+ * Formats large numbers with appropriate suffixes (K, M, B, T)
+ * @param value - The number to format
+ * @param decimals - Number of decimal places (default: 1)
+ * @returns Formatted number string with suffix
+ */
+export function formatLargeNumber(value: number, decimals: number = 1): string {
+  if (isNaN(value) || value === null || value === undefined) {
+    return '0';
+  }
+
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+
+  if (absValue >= 1e12) {
+    return sign + formatNumber(absValue / 1e12, decimals) + 'T';
+  } else if (absValue >= 1e9) {
+    return sign + formatNumber(absValue / 1e9, decimals) + 'B';
+  } else if (absValue >= 1e6) {
+    return sign + formatNumber(absValue / 1e6, decimals) + 'M';
+  } else if (absValue >= 1e3) {
+    return sign + formatNumber(absValue / 1e3, decimals) + 'K';
+  } else {
+    return sign + formatNumber(absValue, decimals);
+  }
+}
