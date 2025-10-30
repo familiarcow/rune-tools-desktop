@@ -57,7 +57,7 @@ export class MemolessTab {
   private state: MemolessState = {
     currentStep: 1,
     memoToRegister: '',
-    selectedMemoType: 'custom',
+    selectedMemoType: 'deposit',
     memoParams: null,
     selectedAsset: null,
     assetPrice: 0,
@@ -108,7 +108,7 @@ export class MemolessTab {
     this.state = {
       currentStep: 1,
       memoToRegister: '',
-      selectedMemoType: 'custom',
+      selectedMemoType: 'deposit',
       memoParams: null,
       selectedAsset: null,
       assetPrice: 0,
@@ -342,14 +342,6 @@ export class MemolessTab {
           <div class="form-section">
             <label class="form-label">Memo Type</label>
             <div class="memo-type-selector">
-              <div class="memo-type-option ${this.state.selectedMemoType === 'custom' ? 'active' : ''}" data-type="custom">
-                <div class="memo-type-header">
-                  <input type="radio" name="memoType" value="custom" ${this.state.selectedMemoType === 'custom' ? 'checked' : ''}>
-                  <span class="memo-type-title">Custom Memo</span>
-                </div>
-                <div class="memo-type-description">Enter your own memo string</div>
-              </div>
-              
               <div class="memo-type-option ${this.state.selectedMemoType === 'deposit' ? 'active' : ''}" data-type="deposit">
                 <div class="memo-type-header">
                   <input type="radio" name="memoType" value="deposit" ${this.state.selectedMemoType === 'deposit' ? 'checked' : ''}>
@@ -357,18 +349,16 @@ export class MemolessTab {
                 </div>
                 <div class="memo-type-description">Deposit assets to account</div>
               </div>
+              
+              <div class="memo-type-option ${this.state.selectedMemoType === 'custom' ? 'active' : ''}" data-type="custom">
+                <div class="memo-type-header">
+                  <input type="radio" name="memoType" value="custom" ${this.state.selectedMemoType === 'custom' ? 'checked' : ''}>
+                  <span class="memo-type-title">Custom Memo</span>
+                </div>
+                <div class="memo-type-description">Enter your own memo string</div>
+              </div>
             </div>
           </div>
-
-          <!-- Memo Configuration Section -->
-          <div class="form-section">
-            <label class="form-label">Memo Configuration</label>
-            <div id="memoConfigContainer">
-              ${this.renderMemoConfiguration()}
-            </div>
-            <div class="form-error hidden" id="memoError"></div>
-          </div>
-
 
           <!-- Asset Selection -->
           <div class="form-section">
@@ -395,6 +385,15 @@ export class MemolessTab {
                 <span id="selectedAssetPrice">-</span>
               </div>
             </div>
+          </div>
+
+          <!-- Memo Configuration Section -->
+          <div class="form-section">
+            <label class="form-label">Memo Configuration</label>
+            <div id="memoConfigContainer">
+              ${this.renderMemoConfiguration()}
+            </div>
+            <div class="form-error hidden" id="memoError"></div>
           </div>
         </div>
       </div>
