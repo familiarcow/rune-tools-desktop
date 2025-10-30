@@ -13,6 +13,7 @@ import { StateManager } from '../services/StateManager'
 import { UIService } from '../services/UIService'
 import { WalletTab } from '../components/WalletTab'
 import { MemolessTab } from '../components/MemolessTab'
+import { SwapTab } from '../components/SwapTab'
 import { HeaderDisplay } from '../components/HeaderDisplay'
 
 export interface ActiveWallet {
@@ -39,6 +40,7 @@ export class ApplicationController {
     private currentTab: string = 'wallet'
     private walletTab: WalletTab | null = null
     private memolessTab: MemolessTab | null = null
+    private swapTab: SwapTab | null = null
     private headerDisplay: HeaderDisplay | null = null
     private isInitialized: boolean = false
 
@@ -64,6 +66,9 @@ export class ApplicationController {
             
             // Initialize memoless tab
             await this.initializeMemolessTab()
+            
+            // Initialize swap tab
+            await this.initializeSwapTab()
             
             // Setup tab navigation
             this.setupTabNavigation()
@@ -114,6 +119,18 @@ export class ApplicationController {
         console.log('🔗 MemolessTab component prepared')
     }
 
+    private async initializeSwapTab(): Promise<void> {
+        const swapTabContainer = document.getElementById('swap-tab-content')
+        if (!swapTabContainer) {
+            throw new Error('Swap tab container not found')
+        }
+
+        this.swapTab = new SwapTab(swapTabContainer, this.backend)
+        
+        // Initialize with wallet data when tab is accessed
+        console.log('💱 SwapTab component prepared')
+    }
+
     private initializeMemolessTabContent(): void {
         if (!this.memolessTab || !this.activeWallet) return
         
@@ -131,6 +148,17 @@ export class ApplicationController {
             .catch(error => {
                 console.error('❌ Failed to initialize memoless tab content:', error)
                 this.ui.showError('Failed to load memoless functionality')
+            })
+    }
+
+    private initializeSwapTabContent(): void {
+        if (!this.swapTab || !this.activeWallet) return
+        
+        // Initialize swap tab with current wallet data (use same format as other tabs)
+        this.swapTab.initialize(this.activeWallet, this.currentNetwork)
+            .catch(error => {
+                console.error('❌ Failed to initialize swap tab content:', error)
+                this.ui.showError('Failed to load swap functionality')
             })
     }
 
@@ -199,6 +227,8 @@ export class ApplicationController {
             this.initializeSettingsTab()
         } else if (tabName === 'memoless') {
             this.initializeMemolessTabContent()
+        } else if (tabName === 'swap') {
+            this.initializeSwapTabContent()
         }
 
         this.currentTab = tabName
@@ -330,6 +360,12 @@ export class ApplicationController {
                 this.initializeMemolessTabContent() // Re-initialize with new network
             }
             
+            // Update swap tab if active
+            if (this.swapTab && this.activeWallet) {
+                this.swapTab.updateWalletAddress(this.activeWallet, network)
+                updatePromises.push(this.swapTab.updateNetwork(network))
+            }
+            
             // Wait for all component updates
             await Promise.all(updatePromises)
             
@@ -381,6 +417,10 @@ export class ApplicationController {
             
             if (this.walletTab) {
                 await this.walletTab.refreshData()
+            }
+            
+            if (this.swapTab) {
+                await this.swapTab.refreshData()
             }
             
             console.log('✅ All data refreshed')
