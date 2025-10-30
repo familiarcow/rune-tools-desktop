@@ -8,6 +8,7 @@
 import { BackendService } from '../services/BackendService'
 import { CryptoUtils } from '../utils/CryptoUtils'
 import { PasswordInput } from './PasswordInput'
+import { AssetService } from '../../services/assetService'
 
 export interface SendTransactionData {
   walletId: string
@@ -70,6 +71,9 @@ export class SendConfirmation {
     try {
       console.log('🔐 Initializing transaction confirmation')
       
+      // Initialize asset logo styles
+      AssetService.initializeStyles()
+      
       this.walletData = walletData
       this.transactionParams = params
       
@@ -78,6 +82,9 @@ export class SendConfirmation {
       
       // Render confirmation UI
       this.render()
+      
+      // Setup image error handling
+      this.setupImageErrorHandling()
       
       // Initialize password input component
       this.initializePasswordInput()
@@ -89,6 +96,16 @@ export class SendConfirmation {
       console.error('❌ Failed to initialize SendConfirmation:', error)
       throw error
     }
+  }
+
+  private setupImageErrorHandling(): void {
+    // Add error handlers to all asset and chain logos in send confirmation
+    const assetLogos = this.container.querySelectorAll('.asset-logo, .chain-logo');
+    assetLogos.forEach(img => {
+      (img as HTMLImageElement).addEventListener('error', () => {
+        AssetService.handleImageError(img as HTMLImageElement);
+      });
+    });
   }
 
   private async estimateFee(): Promise<void> {
@@ -166,7 +183,10 @@ export class SendConfirmation {
             
             <div class="detail-row amount-row">
               <span class="detail-label">Amount:</span>
-              <span class="detail-value amount-highlight">${params.amount} ${params.asset}</span>
+              <div class="detail-value amount-highlight">
+                <span class="amount-text">${params.amount}</span>
+                ${AssetService.GetLogoWithChain(params.asset)}
+              </div>
             </div>
             
             <div class="detail-row fee-row">

@@ -668,6 +668,7 @@ body {
   font-size: 1.1rem;
 }
 
+
 .brand-icon {
   font-size: 1.5rem;
   color: var(--accent-primary);
@@ -695,7 +696,9 @@ body {
   font-size: 0.75rem;
   color: var(--text-muted);
   font-family: monospace;
+  cursor: pointer;
 }
+
 
 .network-indicator {
   display: flex;

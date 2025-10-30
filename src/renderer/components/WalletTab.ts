@@ -12,6 +12,7 @@ import { BackendService } from '../services/BackendService'
 import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction'
 import { ReceiveTransaction, ReceiveTransactionData } from './ReceiveTransaction'
 import { WithdrawDialog, WithdrawDialogData, WithdrawFormData } from './WithdrawDialog'
+import { AssetService } from '../../services/assetService'
 
 export interface WalletTabData {
     walletId: string
@@ -63,6 +64,9 @@ export class WalletTab {
     async initialize(wallet: any, network: 'mainnet' | 'stagenet'): Promise<void> {
         try {
             console.log('🏦 Initializing WalletTab...', { wallet: wallet.name, network })
+            
+            // Initialize asset logo styles
+            AssetService.initializeStyles()
             
             // Initialize wallet data structure
             this.walletData = {
@@ -670,6 +674,9 @@ export class WalletTab {
 
         container.innerHTML = assets.map(asset => `
             <div class="asset-item">
+                <div class="asset-logo-section">
+                    ${AssetService.GetLogoWithChain(asset.asset)}
+                </div>
                 <div class="asset-info">
                     <div class="asset-symbol">${asset.asset} - ${this.formatPrice(asset.price)}</div>
                     <div class="asset-chain">${asset.chain}</div>
@@ -687,6 +694,19 @@ export class WalletTab {
                 ` : ''}
             </div>
         `).join('')
+
+        // Setup image error handling for wallet assets
+        this.setupImageErrorHandling()
+    }
+
+    private setupImageErrorHandling(): void {
+        // Add error handlers to all asset and chain logos in wallet tab
+        const assetLogos = this.container.querySelectorAll('.asset-logo, .chain-logo');
+        assetLogos.forEach(img => {
+            (img as HTMLImageElement).addEventListener('error', () => {
+                AssetService.handleImageError(img as HTMLImageElement);
+            });
+        });
     }
 
     private updateLastUpdated(): void {

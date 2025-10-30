@@ -12,6 +12,7 @@
 import { BackendService } from '../services/BackendService';
 import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction';
 import { SwapService, SwapAsset, ToAsset, AssetType, SwapParams, SwapQuoteDisplay } from '../../services/swapService';
+import { AssetService } from '../../services/assetService';
 
 export interface SwapTabData {
     walletId: string;
@@ -44,6 +45,9 @@ export class SwapTab {
     async initialize(wallet: any, network: 'mainnet' | 'stagenet'): Promise<void> {
         try {
             console.log('🔄 Initializing SwapTab...', { wallet: wallet.name, network });
+            
+            // Initialize asset logo styles
+            AssetService.initializeStyles();
             
             // Set the network in SwapService
             this.swapService.setNetwork(network);
@@ -550,13 +554,28 @@ export class SwapTab {
         quoteDetails.innerHTML = `
             <div class="quote-main-row">
                 <div class="quote-input">
-                    <span class="quote-label">Input</span>
-                    <span class="quote-value">${quote.inputAmount} ${this.selectedFromAsset}</span>
+                    <div class="quote-asset-section">
+                        ${AssetService.GetLogoWithChain(this.selectedFromAsset)}
+                        <div class="quote-asset-info">
+                            <span class="quote-label">You're sending</span>
+                            <span class="quote-value">${quote.inputAmount} ${this.selectedFromAsset}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="quote-arrow">→</div>
+                <div class="quote-arrow">
+                    <div class="arrow-container">
+                        <span class="arrow-icon">⇄</span>
+                        <span class="arrow-text">Swap</span>
+                    </div>
+                </div>
                 <div class="quote-output">
-                    <span class="quote-label">You will receive</span>
-                    <span class="quote-value-large">${quote.outputAmount} ${quote.outputAsset}</span>
+                    <div class="quote-asset-section">
+                        ${AssetService.GetLogoWithChain(quote.outputAsset)}
+                        <div class="quote-asset-info">
+                            <span class="quote-label">You will receive</span>
+                            <span class="quote-value-large">${quote.outputAmount} ${quote.outputAsset}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="quote-details-row">
@@ -575,7 +594,20 @@ export class SwapTab {
             </div>
         `;
 
+        // Setup image error handling for swap quote
+        this.setupImageErrorHandling();
+
         quoteSection.style.display = 'block';
+    }
+
+    private setupImageErrorHandling(): void {
+        // Add error handlers to all asset and chain logos in swap quote
+        const assetLogos = this.container.querySelectorAll('.asset-logo, .chain-logo');
+        assetLogos.forEach(img => {
+            (img as HTMLImageElement).addEventListener('error', () => {
+                AssetService.handleImageError(img as HTMLImageElement);
+            });
+        });
     }
 
     private async continueToTransaction(): Promise<void> {

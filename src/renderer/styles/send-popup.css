@@ -769,6 +769,13 @@
   padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid var(--accent-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amount-text {
+  flex: 1;
 }
 
 .fee-row {

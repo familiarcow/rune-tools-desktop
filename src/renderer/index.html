@@ -638,15 +638,23 @@
       align-items: center;
       padding: var(--spacing-md) 0;
       border-bottom: 1px solid var(--border-color);
+      gap: var(--spacing-md);
     }
 
     .asset-item:last-child {
       border-bottom: none;
     }
 
+    .asset-logo-section {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
     .asset-info {
       display: flex;
       flex-direction: column;
+      flex: 1;
     }
 
     .asset-symbol {
@@ -2341,26 +2349,59 @@
     }
 
     .quote-input, .quote-output {
+      flex: 1;
+    }
+
+    .quote-asset-section {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .quote-asset-info {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .quote-input {
-      flex: 1;
+    .quote-input .quote-asset-info {
       text-align: left;
     }
 
-    .quote-output {
-      flex: 1;
+    .quote-output .quote-asset-info {
       text-align: right;
     }
 
+    .quote-output .quote-asset-section {
+      flex-direction: row-reverse;
+    }
+
     .quote-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      margin: 0 var(--spacing-md);
+    }
+
+    .arrow-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .arrow-icon {
       color: var(--accent-primary);
       font-size: 24px;
       font-weight: bold;
-      margin: 0 var(--spacing-md);
+    }
+
+    .arrow-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .quote-label {

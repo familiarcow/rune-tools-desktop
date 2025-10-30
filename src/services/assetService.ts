@@ -38,7 +38,7 @@ export class AssetService {
 
   /**
    * Parse an asset string to extract chain and asset name
-   * @param asset Full asset string (e.g., "ETH.USDC-0x1234")
+   * @param asset Full asset string (e.g., "ETH.USDC-0x1234", "ETH-ETH", "BTC~BTC")
    * @returns Object with chain and assetName
    */
   private static parseAsset(asset: string): { chain: string; assetName: string } {
@@ -46,22 +46,42 @@ export class AssetService {
       return { chain: 'THOR', assetName: 'RUNE' };
     }
 
-    const dotIndex = asset.indexOf('.');
-    if (dotIndex === -1) {
-      // No chain specified, assume it's a native asset
-      return { chain: asset.toUpperCase(), assetName: asset.toUpperCase() };
+    const assetUpper = asset.toUpperCase();
+
+    // Handle trade assets: BTC~BTC
+    if (assetUpper.includes('~')) {
+      const parts = assetUpper.split('~');
+      const chain = parts[0];
+      const assetPart = parts[1] || parts[0];
+      // Remove contract address if present (everything after the last dash)
+      const dashIndex = assetPart.lastIndexOf('-');
+      const assetName = dashIndex !== -1 ? assetPart.substring(0, dashIndex) : assetPart;
+      return { chain, assetName };
     }
 
-    const chain = asset.substring(0, dotIndex).toUpperCase();
-    const assetPart = asset.substring(dotIndex + 1);
-    
-    // Remove contract address if present (everything after the last dash)
-    const dashIndex = assetPart.lastIndexOf('-');
-    const assetName = dashIndex !== -1 
-      ? assetPart.substring(0, dashIndex).toUpperCase()
-      : assetPart.toUpperCase();
+    // Handle native assets: ETH.USDC-0x1234
+    if (assetUpper.includes('.')) {
+      const parts = assetUpper.split('.');
+      const chain = parts[0];
+      const assetPart = parts[1] || parts[0];
+      // Remove contract address if present (everything after the last dash)
+      const dashIndex = assetPart.lastIndexOf('-');
+      const assetName = dashIndex !== -1 ? assetPart.substring(0, dashIndex) : assetPart;
+      return { chain, assetName };
+    }
 
-    return { chain, assetName };
+    // Handle secured assets: ETH-ETH, BTC-BTC-0x1234
+    if (assetUpper.includes('-')) {
+      const parts = assetUpper.split('-');
+      const chain = parts[0];
+      const assetName = parts[1] || parts[0];
+      // Note: For secured assets, we only take the first two parts (chain-asset)
+      // Additional dashes are considered part of contract addresses
+      return { chain, assetName };
+    }
+
+    // Single word assets (RUNE, TCY) - assume THOR chain
+    return { chain: 'THOR', assetName: assetUpper };
   }
 
   /**
