@@ -65,7 +65,7 @@ function createWindow(): void {
     width: 1200,
     height: 800,
     title: 'Rune.Tools (beta)',
-    icon: path.join(__dirname, '../../images/odin.png'),
+    icon: path.join(__dirname, '../../images/logos/odin.png'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -95,7 +95,7 @@ app.whenReady().then(() => {
   // Set dock icon for macOS
   if (process.platform === 'darwin' && app.dock) {
     // Use absolute path from project root
-    const iconPath = path.resolve(process.cwd(), 'images', 'odin.png');
+    const iconPath = path.resolve(process.cwd(), 'images', 'logos', 'odin.png');
     console.log('Trying to load icon from:', iconPath);
     try {
       app.dock.setIcon(iconPath);

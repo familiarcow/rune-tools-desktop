@@ -13,6 +13,7 @@ import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance 
 import { ReceiveTransaction, ReceiveTransactionData } from './ReceiveTransaction'
 import { WithdrawDialog, WithdrawDialogData, WithdrawFormData } from './WithdrawDialog'
 import { AssetService } from '../../services/assetService'
+import { IdenticonService } from '../../services/IdenticonService'
 
 export interface WalletTabData {
     walletId: string
@@ -101,33 +102,31 @@ export class WalletTab {
 
         this.container.innerHTML = `
             <div class="wallet-tab">
-                <!-- Portfolio Summary -->
-                <div class="portfolio-summary">
-                    <div class="portfolio-header">
-                        <div class="wallet-info">
-                            <h3>💰 ${this.walletData.name}</h3>
-                            <div class="wallet-address">
-                                <span class="address-text">${this.formatAddress(this.walletData.address)}</span>
-                                <button class="btn-icon" id="copy-address-btn" title="Copy Address">
-                                    📋
-                                </button>
+                <!-- Compact Portfolio Header -->
+                <div class="wallet-portfolio-compact">
+                    <div class="wallet-portfolio-info">
+                        <div class="wallet-portfolio-info-row">
+                            <div class="wallet-portfolio-identicon">
+                                <div id="portfolio-wallet-identicon" class="identicon-placeholder">
+                                    ${this.walletData.name.charAt(0).toUpperCase()}
+                                </div>
+                            </div>
+                            <div class="wallet-portfolio-details">
+                                <span class="wallet-portfolio-name">${this.walletData.name}</span>
+                                <div class="wallet-portfolio-address-row">
+                                    <span class="wallet-portfolio-address">${this.walletData.address}</span>
+                                    <button class="btn-icon wallet-portfolio-copy-btn" id="copy-address-btn" title="Copy Address">📋</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="quick-actions">
-                            <button class="btn btn-primary" id="receive-btn">
-                                📥 Receive
-                            </button>
-                            <button class="btn btn-secondary" id="send-btn">
-                                📤 Send
-                            </button>
-                        </div>
                     </div>
-                    
-                    <div class="portfolio-value">
-                        <div class="total-value">
-                            <span class="value-label">Total Portfolio Value</span>
-                            <span class="value-amount" id="total-usd-value">$0.00</span>
-                        </div>
+                    <div class="wallet-portfolio-value">
+                        <div class="wallet-portfolio-value-label">Portfolio</div>
+                        <div class="wallet-portfolio-value-amount" id="total-usd-value">$0.00</div>
+                    </div>
+                    <div class="wallet-portfolio-actions">
+                        <button class="btn btn-primary" id="receive-btn">📥 Receive</button>
+                        <button class="btn btn-secondary" id="send-btn">📤 Send</button>
                     </div>
                 </div>
 
@@ -192,6 +191,23 @@ export class WalletTab {
         `
 
         this.setupEventListeners()
+        this.generatePortfolioIdenticon()
+    }
+
+    private generatePortfolioIdenticon(): void {
+        if (!this.walletData) return
+
+        // Use setTimeout to ensure DOM elements are fully rendered
+        setTimeout(() => {
+            try {
+                // Use the wallet address as the identicon seed for consistency with header
+                const identiconValue = this.walletData!.address;
+                IdenticonService.renderToElement('portfolio-wallet-identicon', identiconValue, 40);
+            } catch (error) {
+                console.warn('Failed to generate portfolio identicon:', error);
+                // Fallback: keep the text placeholder
+            }
+        }, 10);
     }
 
     private setupEventListeners(): void {
@@ -232,7 +248,7 @@ export class WalletTab {
         // Withdraw button event delegation (for dynamically added buttons)
         this.container.addEventListener('click', (e) => {
             const target = e.target as HTMLElement
-            if (target.classList.contains('btn-withdraw')) {
+            if (target.classList.contains('wallet-asset-withdraw-btn')) {
                 const asset = target.getAttribute('data-asset')
                 const balance = target.getAttribute('data-balance')
                 const tier = target.getAttribute('data-tier') as 'trade' | 'secured'
@@ -672,28 +688,36 @@ export class WalletTab {
             return
         }
 
-        container.innerHTML = assets.map(asset => `
-            <div class="asset-item">
-                <div class="asset-logo-section">
-                    ${AssetService.GetLogoWithChain(asset.asset)}
+        container.innerHTML = assets.map(asset => {
+            // Use AssetService to parse asset name properly
+            const parsed = AssetService.parseAsset(asset.asset)
+            const assetName = parsed.assetName
+            
+            return `
+            <div class="wallet-asset-item">
+                <div class="wallet-asset-logo-section">
+                    ${AssetService.GetLogoWithChain(asset.asset, 40)}
                 </div>
-                <div class="asset-info">
-                    <div class="asset-symbol">${asset.asset} - ${this.formatPrice(asset.price)}</div>
-                    <div class="asset-chain">${asset.chain}</div>
+                <div class="wallet-asset-info">
+                    <div class="wallet-asset-name-row">
+                        <div class="wallet-asset-name">${assetName}</div>
+                        <div class="wallet-asset-price-value">${this.formatPrice(asset.price)}</div>
+                    </div>
+                    <div class="wallet-asset-chain">${asset.chain}</div>
                 </div>
-                <div class="asset-amounts">
-                    <div class="asset-balance">${this.formatBalance(asset.balance)} ${asset.asset}</div>
-                    <div class="asset-usd-value">${this.formatUsd(asset.usdValue)}</div>
+                <div class="wallet-asset-amounts">
+                    <div class="wallet-asset-balance">${this.formatBalance(asset.balance)} ${assetName}</div>
+                    <div class="wallet-asset-usd-value">${this.formatUsd(asset.usdValue)}</div>
                 </div>
                 ${tier === 'trade' || tier === 'secured' ? `
-                <div class="asset-actions">
-                    <button class="btn btn-sm btn-withdraw" data-asset="${asset.asset}" data-balance="${asset.balance}" data-tier="${tier}">
-                        📤 Withdraw
+                <div class="wallet-asset-actions">
+                    <button class="wallet-asset-withdraw-btn" data-asset="${asset.asset}" data-balance="${asset.balance}" data-tier="${tier}">
+                        <span class="wallet-asset-withdraw-icon">📤</span><span class="wallet-asset-withdraw-text">Withdraw</span>
                     </button>
                 </div>
                 ` : ''}
             </div>
-        `).join('')
+        `}).join('')
 
         // Setup image error handling for wallet assets
         this.setupImageErrorHandling()
@@ -969,6 +993,7 @@ export class WalletTab {
             maximumFractionDigits: 2
         })
     }
+
 
     private showWithdrawDialog(asset: string, balance: string, tier: 'trade' | 'secured'): void {
         if (!this.withdrawDialog || !this.walletData) {

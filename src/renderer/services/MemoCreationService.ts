@@ -217,7 +217,7 @@ export class MemoCreationService {
       case 'custom':
         return 'Enter your own memo string'
       case 'deposit':
-        return 'Deposit assets to account'
+        return 'Deposit native assets to account'
       default:
         return ''
     }

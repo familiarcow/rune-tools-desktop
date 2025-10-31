@@ -9,6 +9,7 @@
  */
 
 import { BackendService } from '../services/BackendService'
+import { IdenticonService } from '../../services/IdenticonService'
 
 export interface HeaderData {
     walletName: string
@@ -85,14 +86,49 @@ export class HeaderDisplay {
                             ${this.formatAddress(this.headerData.walletAddress)}
                         </div>
                     </div>
-                    <button class="btn-icon" id="header-wallet-menu" title="Wallet Options">
-                        ⚙️
+                    <button class="header-wallet-identicon-btn" id="header-wallet-menu" title="Wallet Options">
+                        <div id="header-wallet-identicon" class="header-identicon-placeholder loading">
+                            ${this.headerData.walletName.charAt(0).toUpperCase()}
+                        </div>
                     </button>
                 </div>
             </div>
         `
 
         this.setupEventListeners()
+        this.generateHeaderIdenticon()
+    }
+
+    private generateHeaderIdenticon(): void {
+        if (!this.headerData) return
+
+        // Generate identicon immediately to prevent visual jumps
+        requestAnimationFrame(() => {
+            try {
+                const element = document.getElementById('header-wallet-identicon');
+                if (!element) return;
+
+                // Add smooth loading transition
+                element.style.opacity = '0.7';
+                
+                // Use the wallet address as the identicon seed for consistency
+                const identiconValue = this.headerData!.walletAddress;
+                IdenticonService.renderToElement('header-wallet-identicon', identiconValue, 32);
+                
+                // Remove loading state and fade in
+                element.classList.remove('loading');
+                element.style.opacity = '1';
+                
+            } catch (error) {
+                console.warn('Failed to generate header identicon:', error);
+                // Fallback: remove loading state but keep text placeholder
+                const element = document.getElementById('header-wallet-identicon');
+                if (element) {
+                    element.classList.remove('loading');
+                    element.style.opacity = '1';
+                }
+            }
+        });
     }
 
     private setupEventListeners(): void {

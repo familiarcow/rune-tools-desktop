@@ -12,26 +12,32 @@ export class AssetService {
   /**
    * Get the logo with chain overlay for a given asset
    * @param asset The full asset name (e.g., "ETH.USDC-0x1234" or "BTC.BTC")
+   * @param size The size in pixels for the main asset logo (default: 24)
    * @returns HTML string with the logo and chain overlay
    */
-  public static GetLogoWithChain(asset: string): string {
+  public static GetLogoWithChain(asset: string, size: number = 24): string {
     const { chain, assetName } = this.parseAsset(asset);
     const assetType = this.getAssetType(asset);
     const shadowColor = this.getShadowColor(assetType);
+    
+    // Calculate sizes
+    const chainSize = Math.ceil(size * 0.5); // Chain logo is 50% of main logo
+    const padding = Math.ceil(size * 0.04); // Padding scales with size
+    const chainOffset = Math.ceil(size * -0.08); // Chain positioning scales with size
     
     // Generate unique IDs for this logo instance to avoid conflicts
     const containerId = `logo-${this.generateId()}`;
     
     return `
-      <div class="asset-logo-container" id="${containerId}">
+      <div class="asset-logo-container" id="${containerId}" style="position: relative; display: inline-block; width: ${size}px; height: ${size}px; flex-shrink: 0;">
         <img class="asset-logo asset-type-${assetType}" 
              src="${this.getAssetImagePath(assetName)}" 
              alt="${assetName}"
-             style="filter: drop-shadow(0 0 2px ${shadowColor}) drop-shadow(0 0 1px ${shadowColor});" />
+             style="width: ${size}px; height: ${size}px; object-fit: contain; padding: ${padding}px; filter: drop-shadow(0 0 2px #000000) drop-shadow(0 0 1px #000000);" />
         <img class="chain-logo" 
              src="${this.getChainImagePath(chain)}" 
              alt="${chain}"
-             style="filter: drop-shadow(0 0 2px ${shadowColor}) drop-shadow(0 0 1px ${shadowColor});" />
+             style="position: absolute; bottom: ${chainOffset}px; right: ${chainOffset}px; width: ${chainSize}px; height: ${chainSize}px; object-fit: contain; padding: ${padding}px; filter: drop-shadow(0 0 2px ${shadowColor}) drop-shadow(0 0 1px ${shadowColor});" />
       </div>
     `;
   }
@@ -41,7 +47,7 @@ export class AssetService {
    * @param asset Full asset string (e.g., "ETH.USDC-0x1234", "ETH-ETH", "BTC~BTC")
    * @returns Object with chain and assetName
    */
-  private static parseAsset(asset: string): { chain: string; assetName: string } {
+  public static parseAsset(asset: string): { chain: string; assetName: string } {
     if (!asset || typeof asset !== 'string') {
       return { chain: 'THOR', assetName: 'RUNE' };
     }
@@ -173,29 +179,13 @@ export class AssetService {
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
-      .asset-logo-container {
-        position: relative;
-        display: inline-block;
-        width: 24px;
-        height: 24px;
-        flex-shrink: 0;
-      }
-
+      /* Global styles for asset logos (fallback only) */
       .asset-logo {
-        width: 24px;
-        height: 24px;
         object-fit: contain;
-        padding: 1px;
       }
 
       .chain-logo {
-        position: absolute;
-        bottom: -2px;
-        right: -2px;
-        width: 12px;
-        height: 12px;
         object-fit: contain;
-        padding: 1px;
       }
 
       /* Handle image loading errors */

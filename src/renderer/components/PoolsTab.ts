@@ -68,56 +68,56 @@ export class PoolsTab {
     if (!this.walletData) return;
 
     this.container.innerHTML = `
-      <div class="pools-tab">
+      <div class="pools-tab-container" style="padding: 24px; background: var(--bg-primary, #0a0a0a); color: var(--text-primary, #fff);">
         <!-- Pools Header -->
-        <div class="pools-header">
-          <div class="pools-title">
-            <h3>🏊 THORChain Pools</h3>
-            <p class="pools-description">View all liquidity pools on ${this.walletData.network === 'mainnet' ? 'Mainnet' : 'Stagenet'}</p>
+        <div class="pools-tab-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color, #333);">
+          <div class="pools-tab-title">
+            <h3 class="pools-tab-title-text">🏊 THORChain Pools</h3>
+            <p class="pools-tab-description">View all liquidity pools on ${this.walletData.network === 'mainnet' ? 'Mainnet' : 'Stagenet'}</p>
           </div>
-          <button class="btn btn-secondary refresh-btn" id="refreshBtn" type="button">
-            <span class="refresh-icon">🔄</span>
+          <button class="pools-tab-refresh-btn" id="refreshBtn" type="button">
+            <span class="pools-tab-refresh-icon">🔄</span>
             Refresh
           </button>
         </div>
 
         <!-- Pool Statistics -->
-        <div class="pools-stats" id="poolsStats" style="display: none;">
-          <div class="stat-item">
-            <span class="stat-value" id="totalPoolsCount">-</span>
-            <span class="stat-label">Total Pools</span>
+        <div class="pools-tab-stats" id="poolsStats" style="display: none;">
+          <div class="pools-tab-stat-item">
+            <span class="pools-tab-stat-value" id="totalPoolsCount">-</span>
+            <span class="pools-tab-stat-label">Total Pools</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-value" id="availablePoolsCount">-</span>
-            <span class="stat-label">Available</span>
+          <div class="pools-tab-stat-item">
+            <span class="pools-tab-stat-value" id="availablePoolsCount">-</span>
+            <span class="pools-tab-stat-label">Available</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-value" id="stagedPoolsCount">-</span>
-            <span class="stat-label">Staged</span>
+          <div class="pools-tab-stat-item">
+            <span class="pools-tab-stat-value" id="stagedPoolsCount">-</span>
+            <span class="pools-tab-stat-label">Staged</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-value" id="totalDepthUSD">-</span>
-            <span class="stat-label">Total Depth (USD)</span>
+          <div class="pools-tab-stat-item">
+            <span class="pools-tab-stat-value" id="totalDepthUSD">-</span>
+            <span class="pools-tab-stat-label">Total Depth (USD)</span>
           </div>
         </div>
 
         <!-- Search and Filters -->
-        <div class="pools-controls">
-          <div class="search-input-container">
-            <input type="text" class="search-input" id="searchInput" placeholder="Search pools by asset name...">
-            <span class="search-icon">🔍</span>
+        <div class="pools-tab-controls">
+          <div class="pools-tab-search-container">
+            <input type="text" class="pools-tab-search-input" id="searchInput" placeholder="Search pools by asset name...">
+            <span class="pools-tab-search-icon">🔍</span>
           </div>
           
-          <div class="filter-group">
-            <label class="filter-label">
-              <input type="checkbox" id="showStagedCheckbox" checked>
-              <span class="checkbox-text">Show Staged Pools</span>
+          <div class="pools-tab-filter-group">
+            <label class="pools-tab-filter-label">
+              <input type="checkbox" class="pools-tab-checkbox" id="showStagedCheckbox" checked>
+              <span class="pools-tab-checkbox-text">Show Staged Pools</span>
             </label>
           </div>
           
-          <div class="filter-group">
-            <label class="filter-label">Sort by:</label>
-            <select class="filter-select" id="sortSelect">
+          <div class="pools-tab-filter-group">
+            <label class="pools-tab-filter-label">Sort by:</label>
+            <select class="pools-tab-filter-select" id="sortSelect">
               <option value="depth">Pool Depth</option>
               <option value="volume">24h Volume</option>
               <option value="asset">Asset Name</option>
@@ -127,62 +127,62 @@ export class PoolsTab {
         </div>
 
         <!-- Pools Table -->
-        <div class="pools-table-container">
-          <table class="pools-table" id="poolsTable">
-            <thead>
-              <tr>
-                <th class="sortable" data-sort="asset">
+        <div class="pools-tab-table-container">
+          <table class="pools-tab-table" id="poolsTable">
+            <thead class="pools-tab-table-head">
+              <tr class="pools-tab-table-row">
+                <th class="pools-tab-table-header pools-tab-sortable" data-sort="asset">
                   Asset
-                  <span class="sort-indicator"></span>
+                  <span class="pools-tab-sort-indicator"></span>
                 </th>
-                <th class="sortable" data-sort="price">
+                <th class="pools-tab-table-header pools-tab-sortable" data-sort="price">
                   Price (USD)
-                  <span class="sort-indicator"></span>
+                  <span class="pools-tab-sort-indicator"></span>
                 </th>
-                <th class="sortable" data-sort="volume">
+                <th class="pools-tab-table-header pools-tab-sortable" data-sort="volume">
                   24h Volume (USD)
-                  <span class="sort-indicator"></span>
+                  <span class="pools-tab-sort-indicator"></span>
                 </th>
-                <th class="sortable" data-sort="depth">
+                <th class="pools-tab-table-header pools-tab-sortable" data-sort="depth">
                   Pool Depth (USD)
-                  <span class="sort-indicator"></span>
+                  <span class="pools-tab-sort-indicator"></span>
                 </th>
               </tr>
             </thead>
-            <tbody id="poolsTableBody">
+            <tbody class="pools-tab-table-body" id="poolsTableBody">
               <!-- Pool rows will be populated here -->
             </tbody>
           </table>
         </div>
 
         <!-- Loading State -->
-        <div class="loading-section" id="loadingSection" style="display: none;">
-          <div class="loading-message">
-            <span class="loading-spinner">🔄</span>
-            <span id="loadingText">Loading pools...</span>
+        <div class="pools-tab-loading-section" id="loadingSection" style="display: none;">
+          <div class="pools-tab-loading-message">
+            <span class="pools-tab-loading-spinner">🔄</span>
+            <span class="pools-tab-loading-text" id="loadingText">Loading pools...</span>
           </div>
         </div>
 
         <!-- Error State -->
-        <div class="error-section" id="errorSection" style="display: none;">
-          <div class="error-message" id="errorMessage"></div>
-          <button class="btn btn-primary" id="retryBtn" type="button">
+        <div class="pools-tab-error-section" id="errorSection" style="display: none;">
+          <div class="pools-tab-error-message" id="errorMessage"></div>
+          <button class="pools-tab-retry-btn" id="retryBtn" type="button">
             Retry
           </button>
         </div>
 
         <!-- Empty State -->
-        <div class="empty-section" id="emptySection" style="display: none;">
-          <div class="empty-message">
-            <span class="empty-icon">🔍</span>
-            <h4>No pools found</h4>
-            <p>Try adjusting your search or filters</p>
+        <div class="pools-tab-empty-section" id="emptySection" style="display: none;">
+          <div class="pools-tab-empty-message">
+            <span class="pools-tab-empty-icon">🔍</span>
+            <h4 class="pools-tab-empty-title">No pools found</h4>
+            <p class="pools-tab-empty-subtitle">Try adjusting your search or filters</p>
           </div>
         </div>
       </div>
 
       <!-- Pool Detail Popup Container -->
-      <div class="pool-detail-popup-container" id="poolDetailContainer" style="display: none;"></div>
+      <div class="pools-tab-popup-container" id="poolDetailContainer" style="display: none;"></div>
     `;
 
     this.setupEventListeners();
@@ -229,7 +229,7 @@ export class PoolsTab {
     }
 
     // Table header sorting
-    const sortableHeaders = this.container.querySelectorAll('.sortable');
+    const sortableHeaders = this.container.querySelectorAll('.pools-tab-sortable');
     sortableHeaders.forEach(header => {
       header.addEventListener('click', () => {
         const sortBy = header.getAttribute('data-sort');
@@ -315,21 +315,21 @@ export class PoolsTab {
       const logoHtml = AssetService.GetLogoWithChain(pool.asset);
 
       return `
-        <tr class="pool-row ${statusClass}" data-asset="${pool.asset}">
-          <td class="asset-cell">
-            <div class="asset-info-with-logo">
+        <tr class="pools-tab-pool-row pools-tab-pool-${statusClass}" data-asset="${pool.asset}">
+          <td class="pools-tab-asset-cell">
+            <div class="pools-tab-asset-info">
               ${logoHtml}
-              <span class="asset-name">${statusText}</span>
+              <span class="pools-tab-asset-name">${statusText}</span>
             </div>
           </td>
-          <td class="price-cell">
-            <span class="price-value">$${priceFormatted}</span>
+          <td class="pools-tab-price-cell">
+            <span class="pools-tab-price-value">$${priceFormatted}</span>
           </td>
-          <td class="volume-cell">
-            <span class="volume-value">${volumeFormatted}</span>
+          <td class="pools-tab-volume-cell">
+            <span class="pools-tab-volume-value">${volumeFormatted}</span>
           </td>
-          <td class="depth-cell">
-            <span class="depth-value">${depthFormatted}</span>
+          <td class="pools-tab-depth-cell">
+            <span class="pools-tab-depth-value">${depthFormatted}</span>
           </td>
         </tr>
       `;
@@ -338,7 +338,7 @@ export class PoolsTab {
     tableBody.innerHTML = rows;
 
     // Add click listeners to rows
-    const poolRows = tableBody.querySelectorAll('.pool-row');
+    const poolRows = tableBody.querySelectorAll('.pools-tab-pool-row');
     poolRows.forEach(row => {
       row.addEventListener('click', () => {
         const asset = row.getAttribute('data-asset');
@@ -399,17 +399,17 @@ export class PoolsTab {
 
   private updateSortIndicators(): void {
     // Clear all indicators
-    const indicators = this.container.querySelectorAll('.sort-indicator');
+    const indicators = this.container.querySelectorAll('.pools-tab-sort-indicator');
     indicators.forEach(indicator => {
       indicator.textContent = '';
-      indicator.className = 'sort-indicator';
+      indicator.className = 'pools-tab-sort-indicator';
     });
 
     // Set active indicator
-    const activeHeader = this.container.querySelector(`[data-sort="${this.currentFilters.sortBy}"] .sort-indicator`);
+    const activeHeader = this.container.querySelector(`[data-sort="${this.currentFilters.sortBy}"] .pools-tab-sort-indicator`);
     if (activeHeader) {
       activeHeader.textContent = this.currentFilters.sortDirection === 'desc' ? '↓' : '↑';
-      activeHeader.classList.add('active');
+      activeHeader.classList.add('pools-tab-active');
     }
   }
 
@@ -429,7 +429,7 @@ export class PoolsTab {
     }
 
     // Hide other sections
-    const tableContainer = this.container.querySelector('.pools-table-container') as HTMLElement;
+    const tableContainer = this.container.querySelector('.pools-tab-table-container') as HTMLElement;
     if (tableContainer) tableContainer.style.display = 'none';
   }
 
@@ -440,7 +440,7 @@ export class PoolsTab {
     }
 
     // Show table
-    const tableContainer = this.container.querySelector('.pools-table-container') as HTMLElement;
+    const tableContainer = this.container.querySelector('.pools-tab-table-container') as HTMLElement;
     if (tableContainer) tableContainer.style.display = 'block';
   }
 
@@ -454,7 +454,7 @@ export class PoolsTab {
     }
 
     // Hide other sections
-    const tableContainer = this.container.querySelector('.pools-table-container') as HTMLElement;
+    const tableContainer = this.container.querySelector('.pools-tab-table-container') as HTMLElement;
     if (tableContainer) tableContainer.style.display = 'none';
     this.hideStats();
   }
@@ -505,7 +505,7 @@ export class PoolsTab {
     this.walletData.network = network;
     
     // Update header description
-    const description = this.container.querySelector('.pools-description');
+    const description = this.container.querySelector('.pools-tab-description');
     if (description) {
       description.textContent = `View all liquidity pools on ${network === 'mainnet' ? 'Mainnet' : 'Stagenet'}`;
     }

@@ -128,29 +128,29 @@ export class SendTransaction {
 
   private render(): void {
     this.container.innerHTML = `
-      <div class="send-popup-overlay" id="sendPopupOverlay">
-        <div class="send-popup">
+      <div class="send-modal-overlay" id="sendPopupOverlay">
+        <div class="send-modal-container">
           <!-- Header with progress indicators -->
-          <div class="send-popup-header">
-            <div class="progress-steps">
-              <div class="step ${this.currentPage >= 1 ? 'active' : ''}" data-step="1">
-                <div class="step-number">1</div>
-                <div class="step-label">Information</div>
+          <div class="send-modal-header">
+            <div class="send-modal-progress-steps">
+              <div class="send-modal-step ${this.currentPage >= 1 ? 'active' : ''}" data-step="1">
+                <div class="send-modal-step-number">1</div>
+                <div class="send-modal-step-label">Information</div>
               </div>
-              <div class="step ${this.currentPage >= 2 ? 'active' : ''}" data-step="2">
-                <div class="step-number">2</div>
-                <div class="step-label">Authorize</div>
+              <div class="send-modal-step ${this.currentPage >= 2 ? 'active' : ''}" data-step="2">
+                <div class="send-modal-step-number">2</div>
+                <div class="send-modal-step-label">Authorize</div>
               </div>
-              <div class="step ${this.currentPage >= 3 ? 'active' : ''}" data-step="3">
-                <div class="step-number">3</div>
-                <div class="step-label">Sending</div>
+              <div class="send-modal-step ${this.currentPage >= 3 ? 'active' : ''}" data-step="3">
+                <div class="send-modal-step-number">3</div>
+                <div class="send-modal-step-label">Sending</div>
               </div>
-              <div class="step ${this.currentPage >= 4 ? 'active' : ''}" data-step="4">
-                <div class="step-number">4</div>
-                <div class="step-label">Complete</div>
+              <div class="send-modal-step ${this.currentPage >= 4 ? 'active' : ''}" data-step="4">
+                <div class="send-modal-step-number">4</div>
+                <div class="send-modal-step-label">Complete</div>
               </div>
             </div>
-            <button class="close-btn" id="closeBtn">
+            <button class="send-modal-close-btn" id="closeBtn">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -159,46 +159,67 @@ export class SendTransaction {
           </div>
           
           <!-- Page Content -->
-          <div class="send-popup-content">
+          <div class="send-modal-content">
             <!-- Page 1: Information -->
-            <div class="send-page ${this.currentPage === 1 ? 'active' : ''}" id="sendPageInformation">
-              <div class="page-title">
-                <h2>Send Transaction</h2>
+            <div class="send-modal-page ${this.currentPage === 1 ? 'active' : ''}" id="sendPageInformation">
+              <div class="send-modal-page-title">
+                <h2>
+                  <span class="send-modal-page-icon">📤</span>
+                  Send Transaction
+                </h2>
+                <p class="send-modal-page-subtitle">Enter transaction details</p>
               </div>
-              <div class="page-content" id="sendFormContainer"></div>
+              <div id="sendFormContainer"></div>
             </div>
             
             <!-- Page 2: Authorize -->
-            <div class="send-page ${this.currentPage === 2 ? 'active' : ''}" id="sendPageReview">
-              <div class="page-content" id="sendConfirmationContainer"></div>
+            <div class="send-modal-page ${this.currentPage === 2 ? 'active' : ''}" id="sendPageReview">
+              <div id="sendConfirmationContainer"></div>
             </div>
             
             <!-- Page 3: Sending -->
-            <div class="send-page ${this.currentPage === 3 ? 'active' : ''}" id="sendPageSending">
-              <div class="page-content" id="sendProgressContainer"></div>
+            <div class="send-modal-page ${this.currentPage === 3 ? 'active' : ''}" id="sendPageSending">
+              <div id="sendProgressContainer"></div>
             </div>
             
             <!-- Page 4: Details -->
-            <div class="send-page ${this.currentPage === 4 ? 'active' : ''}" id="sendPageDetails">
-              <div class="page-content" id="sendDetailsContainer"></div>
+            <div class="send-modal-page ${this.currentPage === 4 ? 'active' : ''}" id="sendPageDetails">
+              <div id="sendDetailsContainer"></div>
             </div>
           </div>
           
           <!-- Footer Actions -->
-          <div class="send-popup-actions">
+          <div class="send-modal-actions">
             ${this.currentPage === 4 ? `
               <!-- Page 4: Complete - Done button on right -->
-              <div class="spacer"></div>
-              <div class="action-buttons">
-                <button class="btn btn-primary" id="doneBtn">Done</button>
+              <div class="send-modal-spacer"></div>
+              <div class="send-modal-actions-right">
+                <button class="send-modal-btn send-modal-btn-primary" id="doneBtn">
+                  <span class="send-modal-btn-icon">✓</span>
+                  Done
+                </button>
               </div>
             ` : `
               <!-- Other pages - normal layout -->
-              <button class="btn btn-secondary" id="backBtn" ${this.currentPage <= 1 ? 'style="display: none;"' : ''}>Back</button>
-              <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
-              <div class="action-buttons">
-                <button class="btn btn-primary" id="nextBtn" ${this.currentPage >= 2 ? 'style="display: none;"' : ''}>Continue</button>
-                <button class="btn btn-primary" id="confirmBtn" ${this.currentPage !== 2 ? 'style="display: none;"' : ''} disabled>Send Transaction</button>
+              <div class="send-modal-actions-left">
+                <button class="send-modal-btn send-modal-btn-secondary" id="backBtn" ${this.currentPage <= 1 ? 'style="display: none;"' : ''}>
+                  <span class="send-modal-btn-icon">←</span>
+                  Back
+                </button>
+                <button class="send-modal-btn send-modal-btn-secondary" id="cancelBtn">
+                  <span class="send-modal-btn-icon">×</span>
+                  Cancel
+                </button>
+              </div>
+              <div class="send-modal-actions-right">
+                <button class="send-modal-btn send-modal-btn-primary" id="nextBtn" ${this.currentPage >= 2 ? 'style="display: none;"' : ''}>
+                  Continue
+                  <span class="send-modal-btn-icon">→</span>
+                </button>
+                <button class="send-modal-btn send-modal-btn-primary" id="confirmBtn" ${this.currentPage !== 2 ? 'style="display: none;"' : ''} disabled>
+                  <span class="send-modal-btn-icon">📤</span>
+                  Send Transaction
+                </button>
               </div>
             `}
           </div>
@@ -243,6 +264,9 @@ export class SendTransaction {
     console.log(`📱 Navigating to page ${page}`)
     this.currentPage = page
     this.render() // Re-render with updated page state
+    
+    // Ensure modal is shown with active class after re-render
+    this.show()
     
     // Initialize components for the new page
     this.initializeCurrentPage()
@@ -333,9 +357,9 @@ export class SendTransaction {
 
     // Create transaction details view
     detailsContainer.innerHTML = `
-      <div class="transaction-success">
-        <div class="success-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <div class="send-modal-success">
+        <div class="send-modal-success-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <path d="m9 12 2 2 4-4"></path>
             <circle cx="12" cy="12" r="10"></circle>
           </svg>
@@ -343,18 +367,18 @@ export class SendTransaction {
         
         <h3>Transaction Successful!</h3>
         
-        <div class="transaction-info">
-          <div class="info-row">
-            <label>Transaction Hash:</label>
-            <div class="hash-container">
-              <code class="transaction-hash">${this.truncateHash(this.transactionResult.transactionHash)}</code>
-              <button class="copy-btn" onclick="navigator.clipboard.writeText('${this.transactionResult.transactionHash}')" title="Copy full hash">
+        <div class="send-modal-transaction-info">
+          <div class="send-modal-info-row">
+            <span class="send-modal-info-label">Transaction Hash:</span>
+            <div class="send-modal-hash-container">
+              <code class="send-modal-transaction-hash">${this.truncateHash(this.transactionResult.transactionHash)}</code>
+              <button class="send-modal-copy-btn" onclick="navigator.clipboard.writeText('${this.transactionResult.transactionHash}')" title="Copy full hash">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
                   <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
                 </svg>
               </button>
-              <button class="explorer-btn" onclick="window.open('https://thorchain.net/tx/${this.transactionResult.transactionHash}', '_blank')" title="View on Explorer">
+              <button class="send-modal-explorer-btn" onclick="window.open('https://thorchain.net/tx/${this.transactionResult.transactionHash}', '_blank')" title="View on Explorer">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                   <polyline points="15,3 21,3 21,9"></polyline>
@@ -364,14 +388,14 @@ export class SendTransaction {
             </div>
           </div>
           
-          <div class="info-row">
-            <label>Status:</label>
-            <span class="status-success">Confirmed</span>
+          <div class="send-modal-info-row">
+            <span class="send-modal-info-label">Status:</span>
+            <span class="send-modal-status-success">Confirmed</span>
           </div>
           
-          <div class="info-row">
-            <label>Network:</label>
-            <span>${this.transactionData?.network || 'mainnet'}</span>
+          <div class="send-modal-info-row">
+            <span class="send-modal-info-label">Network:</span>
+            <span class="send-modal-info-value">${this.transactionData?.network || 'mainnet'}</span>
           </div>
         </div>
         
@@ -490,7 +514,14 @@ export class SendTransaction {
   private show(): void {
     const overlay = document.getElementById('sendPopupOverlay')
     if (overlay) {
-      overlay.style.display = 'flex'
+      // If already displayed, just ensure active class is present
+      if (overlay.style.display === 'flex') {
+        overlay.classList.add('active')
+      } else {
+        overlay.style.display = 'flex'
+        // Add active class for CSS animation after display is set
+        setTimeout(() => overlay.classList.add('active'), 10)
+      }
     }
   }
 

@@ -264,12 +264,15 @@ export class SwapService {
     private formatQuoteForDisplay(quote: SwapQuote, params: SwapParams, destination: string): SwapQuoteDisplay {
         const outputAmount = (parseFloat(quote.expected_amount_out) / 1e8).toString();
         const totalFeesPercent = ((quote.fees?.total_bps || 0) / 100).toFixed(2);
+        
+        // Use the same formatted asset that was submitted to the API
+        const formattedToAsset = this.formatAssetForQuote(params.toAsset, params.assetType);
 
         return {
             quote,
             inputAmount: params.amount,
             outputAmount,
-            outputAsset: params.toAsset,
+            outputAsset: formattedToAsset,
             toAddress: destination,
             swapTimeSeconds: quote.total_swap_seconds || 0,
             totalFeesPercent

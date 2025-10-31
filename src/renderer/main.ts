@@ -12,6 +12,8 @@ import { Buffer } from 'buffer'
 
 // CSS imports
 import './styles/password-input.css'
+import './styles/pools-tab.css'
+import './styles/wallet-selection-improved.css'
 
 // Service imports
 import { BackendService } from './services/BackendService'
@@ -97,6 +99,7 @@ class RuneToolsApplication {
 
             // Make controller globally available
             ;(window as any).walletController = this.walletController
+            console.log('✅ walletController exposed globally:', !!((window as any).walletController))
 
             await this.walletController.initialize()
 

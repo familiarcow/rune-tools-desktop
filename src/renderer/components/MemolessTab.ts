@@ -228,12 +228,9 @@ export class MemolessTab {
         <textarea 
           class="form-control memo-input" 
           id="customMemoInput" 
-          placeholder="Enter your memo (e.g., =:BTC.BTC:bc1q...)"
+          placeholder="Enter your valid custommemo"
           rows="3"
         >${customParams?.memo || ''}</textarea>
-        <div class="form-helper">
-          <small>Enter any valid THORChain memo. Examples: =:BTC.BTC:address, +:ETH.ETH, -:BTC.BTC:5000</small>
-        </div>
       </div>
     `
   }
@@ -347,7 +344,7 @@ export class MemolessTab {
                   <input type="radio" name="memoType" value="deposit" ${this.state.selectedMemoType === 'deposit' ? 'checked' : ''}>
                   <span class="memo-type-title">Deposit</span>
                 </div>
-                <div class="memo-type-description">Deposit assets to account</div>
+                <div class="memo-type-description">Deposit native assets to account</div>
               </div>
               
               <div class="memo-type-option ${this.state.selectedMemoType === 'custom' ? 'active' : ''}" data-type="custom">

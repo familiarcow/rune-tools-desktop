@@ -161,14 +161,15 @@ export function isDustAmount(amount: string, asset: string): boolean {
 
 /**
  * Converts an asset name to its display format
- * Format: {Chain}.{Asset}-{contract} → {Asset} ({Chain})
+ * Format: {Chain}.{Asset}-{contract} or {Chain}-{Asset}-{contract} → {Asset} ({Chain})
  * 
  * Examples:
  * - BTC.BTC → BTC (BTC)
  * - GAIA.ATOM → ATOM (GAIA)
  * - BASE.CBBTC-0XCBB7C0000AB88B473B1F5AFD9EF808440EED33BF → CBBTC (BASE)
+ * - BASE-CBBTC-0XCBB7C0000AB88B473B1F5AFD9EF808440EED33BF → CBBTC (BASE)
  * 
- * @param asset - The full asset name from the API
+ * @param asset - The full asset name from the API (dot or dash format)
  * @returns The formatted display name
  */
 export function AssetDisplayName(asset: string): string {
@@ -176,21 +177,30 @@ export function AssetDisplayName(asset: string): string {
     return 'Unknown Asset';
   }
 
-  // Split by the first dot to separate chain and asset
+  // Handle dot format: {Chain}.{Asset}-{contract}
   const dotIndex = asset.indexOf('.');
-  if (dotIndex === -1) {
-    // No dot found, return as-is
-    return asset;
+  if (dotIndex !== -1) {
+    const chain = asset.substring(0, dotIndex);
+    const assetPart = asset.substring(dotIndex + 1);
+
+    // Remove contract address if present (everything after the last dash)
+    const dashIndex = assetPart.lastIndexOf('-');
+    const assetName = dashIndex !== -1 ? assetPart.substring(0, dashIndex) : assetPart;
+
+    return `${assetName} (${chain})`;
   }
 
-  const chain = asset.substring(0, dotIndex);
-  const assetPart = asset.substring(dotIndex + 1);
+  // Handle dash format: {Chain}-{Asset}-{contract}
+  // Split by dashes and assume first part is chain, second is asset, rest is contract
+  const parts = asset.split('-');
+  if (parts.length >= 2) {
+    const chain = parts[0];
+    const assetName = parts[1];
+    return `${assetName} (${chain})`;
+  }
 
-  // Remove contract address if present (everything after the last dash)
-  const dashIndex = assetPart.lastIndexOf('-');
-  const assetName = dashIndex !== -1 ? assetPart.substring(0, dashIndex) : assetPart;
-
-  return `${assetName} (${chain})`;
+  // No separator found, return as-is
+  return asset;
 }
 
 /**

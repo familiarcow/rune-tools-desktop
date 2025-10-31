@@ -13,6 +13,7 @@ import { BackendService } from '../services/BackendService';
 import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction';
 import { SwapService, SwapAsset, ToAsset, AssetType, SwapParams, SwapQuoteDisplay } from '../../services/swapService';
 import { AssetService } from '../../services/assetService';
+import { AssetDisplayName } from '../../utils/assetUtils';
 
 export interface SwapTabData {
     walletId: string;
@@ -555,10 +556,10 @@ export class SwapTab {
             <div class="quote-main-row">
                 <div class="quote-input">
                     <div class="quote-asset-section">
-                        ${AssetService.GetLogoWithChain(this.selectedFromAsset)}
+                        ${AssetService.GetLogoWithChain(this.selectedFromAsset, 40)}
                         <div class="quote-asset-info">
                             <span class="quote-label">You're sending</span>
-                            <span class="quote-value">${quote.inputAmount} ${this.selectedFromAsset}</span>
+                            <span class="quote-value">${quote.inputAmount} ${AssetDisplayName(this.selectedFromAsset)}</span>
                         </div>
                     </div>
                 </div>
@@ -570,10 +571,10 @@ export class SwapTab {
                 </div>
                 <div class="quote-output">
                     <div class="quote-asset-section">
-                        ${AssetService.GetLogoWithChain(quote.outputAsset)}
+                        ${AssetService.GetLogoWithChain(quote.outputAsset, 40)}
                         <div class="quote-asset-info">
                             <span class="quote-label">You will receive</span>
-                            <span class="quote-value-large">${quote.outputAmount} ${quote.outputAsset}</span>
+                            <span class="quote-value-large">${quote.outputAmount} ${AssetDisplayName(quote.outputAsset)}</span>
                         </div>
                     </div>
                 </div>

@@ -16,6 +16,7 @@ import { PasswordInput } from '../components/PasswordInput'
 import { WalletGenerator, GeneratedWallet } from '../components/WalletGenerator'
 import { WalletRestoration, RestoredWallet } from '../components/WalletRestoration'
 import { ApplicationController } from './ApplicationController'
+import { IdenticonService } from '../../services/IdenticonService'
 
 export interface WalletInfo {
     walletId: string
@@ -140,35 +141,107 @@ export class WalletSelectionController {
 
         if (!this.availableWallets || this.availableWallets.length === 0) {
             walletList.innerHTML = `
-                <div class="no-wallets">
-                    <p>No wallets found</p>
-                    <p>Create or import a wallet to get started</p>
+                <div class="wallet-selection-list-empty">
+                    <div class="wallet-selection-list-empty-icon">👛</div>
+                    <div class="wallet-selection-list-empty-title">No wallets found</div>
+                    <div class="wallet-selection-list-empty-subtitle">Create or import a wallet to get started</div>
                 </div>
             `
             return
         }
 
-        walletList.innerHTML = (this.availableWallets || []).map(wallet => `
-            <div class="wallet-item" data-wallet-id="${wallet.walletId}">
-                <div class="wallet-info">
-                    <div class="wallet-name">${wallet.name}</div>
-                    <div class="wallet-address">
-                        ...${(this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress)?.slice(-4) || 'N/A'}
+        walletList.innerHTML = (this.availableWallets || []).map((wallet, index) => {
+            const currentAddress = this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress;
+            const shortAddress = IdenticonService.shortenAddress(currentAddress || '');
+            const avatarId = `wallet-avatar-${wallet.walletId}`;
+            
+            return `
+            <div class="wallet-selection-item" data-wallet-id="${wallet.walletId}">
+                <div class="wallet-selection-item-avatar">
+                    <div id="${avatarId}" class="identicon-placeholder loading">
+                        ${wallet.name.charAt(0).toUpperCase()}
                     </div>
-                    ${wallet.lastUsed ? `<div class="wallet-last-used">Last used: ${wallet.lastUsed.toLocaleDateString()}</div>` : ''}
                 </div>
-                <div class="wallet-actions">
-                    <button class="btn btn-primary" onclick="walletController.selectWallet('${wallet.walletId}')">
-                        Unlock
+                <div class="wallet-selection-item-info">
+                    <div class="wallet-selection-item-name">${wallet.name}</div>
+                    <div class="wallet-selection-item-address">${shortAddress}</div>
+                    ${wallet.lastUsed ? `<div class="wallet-selection-item-last-used">Last used: ${wallet.lastUsed.toLocaleDateString()}</div>` : ''}
+                </div>
+                <div class="wallet-selection-item-actions">
+                    <button class="wallet-selection-item-delete-btn" onclick="walletController.showDeleteWalletDialog('${wallet.walletId}')" title="Delete wallet permanently">
+                        <span class="wallet-selection-item-icon">🗑️</span>
+                        <span class="wallet-selection-item-text">Delete</span>
                     </button>
-                    <button class="btn btn-danger" onclick="walletController.showDeleteWalletDialog('${wallet.walletId}')" title="Delete wallet permanently">
-                        🗑️
+                    <button class="wallet-selection-item-unlock-btn" onclick="walletController.selectWallet('${wallet.walletId}')">
+                        <span class="wallet-selection-item-icon">🔓</span>
+                        <span class="wallet-selection-item-text">Unlock</span>
                     </button>
                 </div>
             </div>
-        `).join('')
+        `;
+        }).join('');
+
+        // Generate identicons immediately to prevent visual jumps
+        this.generateWalletIdenticonsImmediate()
     }
 
+    private generateWalletIdenticonsImmediate(): void {
+        if (!this.availableWallets) return;
+
+        // Generate identicons immediately after DOM insertion to prevent visual jumps
+        requestAnimationFrame(() => {
+            this.availableWallets.forEach(wallet => {
+                const currentAddress = this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress;
+                const avatarId = `wallet-avatar-${wallet.walletId}`;
+                const element = document.getElementById(avatarId);
+                
+                if (!element) return;
+                
+                // Use the wallet address or walletId as the identicon seed for consistency
+                const identiconValue = currentAddress || wallet.walletId;
+                
+                try {
+                    // Add smooth loading transition
+                    element.style.opacity = '0.7';
+                    
+                    // Generate and render identicon
+                    IdenticonService.renderToElement(avatarId, identiconValue, 48);
+                    
+                    // Remove loading state and fade in
+                    element.classList.remove('loading');
+                    element.style.opacity = '1';
+                    
+                } catch (error) {
+                    console.warn(`Failed to generate identicon for wallet ${wallet.name}:`, error);
+                    // Fallback: remove loading state but keep text placeholder
+                    element.classList.remove('loading');
+                    element.style.opacity = '1';
+                }
+            });
+        });
+    }
+
+    private generateWalletIdenticons(): void {
+        if (!this.availableWallets) return;
+
+        // Legacy method for backwards compatibility
+        setTimeout(() => {
+            this.availableWallets.forEach(wallet => {
+                const currentAddress = this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress;
+                const avatarId = `wallet-avatar-${wallet.walletId}`;
+                
+                // Use the wallet address or walletId as the identicon seed for consistency
+                const identiconValue = currentAddress || wallet.walletId;
+                
+                try {
+                    IdenticonService.renderToElement(avatarId, identiconValue, 48);
+                } catch (error) {
+                    console.warn(`Failed to generate identicon for wallet ${wallet.name}:`, error);
+                    // Fallback: keep the text placeholder
+                }
+            });
+        }, 10);
+    }
 
     async selectWallet(walletId: string): Promise<void> {
         try {
@@ -199,8 +272,24 @@ export class WalletSelectionController {
             const address = this.currentNetwork === 'mainnet' 
                 ? wallet.mainnetAddress 
                 : wallet.stagenetAddress
-            walletAddressEl.textContent = address || 'Address not available'
+            walletAddressEl.textContent = IdenticonService.shortenAddress(address || '')
         }
+
+        // Generate identicon for unlock dialog
+        const currentAddress = this.currentNetwork === 'mainnet' ? wallet.mainnetAddress : wallet.stagenetAddress;
+        const identiconValue = currentAddress || wallet.walletId;
+        
+        setTimeout(() => {
+            try {
+                IdenticonService.renderToElement('unlock-wallet-avatar', identiconValue, 56);
+            } catch (error) {
+                console.warn('Failed to generate identicon for unlock dialog:', error);
+            }
+        }, 10);
+
+        // Clear any previous error state
+        const errorEl = document.getElementById('unlock-wallet-error')
+        if (errorEl) errorEl.classList.remove('active')
 
         // Initialize unlock password input
         this.createPasswordInput('unlockPasswordContainer', {
@@ -225,11 +314,25 @@ export class WalletSelectionController {
     }
 
     async unlockWallet(walletId: string, password: string): Promise<void> {
+        const loadingEl = document.getElementById('unlock-wallet-loading')
+        const errorEl = document.getElementById('unlock-wallet-error')
+        const errorMessageEl = document.getElementById('unlock-wallet-error-message')
+        const submitBtn = document.querySelector('.wallet-unlock-btn-primary') as HTMLButtonElement
+
         try {
             console.log('Unlocking wallet:', walletId)
             
+            // Show loading state
+            if (loadingEl) loadingEl.classList.add('active')
+            if (errorEl) errorEl.classList.remove('active')
+            if (submitBtn) submitBtn.disabled = true
+
             // Unlock wallet via backend
             const unlockedWallet = await this.backend.unlockWallet(walletId, password)
+            
+            // Hide loading state
+            if (loadingEl) loadingEl.classList.remove('active')
+            if (submitBtn) submitBtn.disabled = false
             
             // Hide unlock dialog
             const dialog = document.getElementById('unlock-wallet-dialog')
@@ -240,7 +343,27 @@ export class WalletSelectionController {
             
         } catch (error) {
             console.error('❌ Failed to unlock wallet:', error)
-            this.ui.showError('Failed to unlock wallet: ' + (error as Error).message)
+            
+            // Hide loading state
+            if (loadingEl) loadingEl.classList.remove('active')
+            if (submitBtn) submitBtn.disabled = false
+            
+            // Show error state
+            if (errorEl) errorEl.classList.add('active')
+            if (errorMessageEl) {
+                const errorMessage = (error as Error).message
+                if (errorMessage.toLowerCase().includes('password') || errorMessage.toLowerCase().includes('incorrect') || errorMessage.toLowerCase().includes('wrong')) {
+                    errorMessageEl.textContent = 'Incorrect password. Please try again.'
+                } else {
+                    errorMessageEl.textContent = 'Failed to unlock wallet: ' + errorMessage
+                }
+            }
+            
+            // Clear the password input for security
+            const passwordInput = this.passwordInputs.get('unlockPasswordContainer')
+            if (passwordInput) {
+                passwordInput.clear()
+            }
         }
     }
 

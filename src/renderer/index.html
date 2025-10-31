@@ -282,6 +282,45 @@
       align-items: center;
       gap: var(--spacing-md);
     }
+    
+    /* Header Identicon Styles */
+    .header-wallet-identicon-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      border-radius: 50%;
+      padding: 4px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .header-wallet-identicon-btn:hover {
+      background: var(--bg-tertiary, #2d2d2d);
+      transform: scale(1.05);
+    }
+    
+    .header-identicon-placeholder {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--accent-primary, #00d4ff), #0099cc);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--bg-primary, #000);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .header-identicon-placeholder svg {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
 
     /* Tab Navigation */
     .tab-navigation {
@@ -3087,23 +3126,29 @@
     <!-- Phase 1: Wallet Selection -->
     <div id="wallet-selection-phase">
       <div class="wallet-selection-container">
-        <div class="app-header">
-          <h1>🔱 Rune Tools</h1>
-          <p>THORChain Desktop Application</p>
+        <div class="wallet-selection-header">
+          <div class="wallet-selection-logo">
+            <img src="images/logos/runetools-logo.svg" alt="Rune Tools">
+          </div>
         </div>
 
-        <div class="card">
+        <div class="wallet-selection-card">
           <div id="wallet-selection-content">
-            <div class="wallet-actions">
-              <button id="create-wallet-btn" class="btn btn-primary">Create New Wallet</button>
-              <button id="import-wallet-btn" class="btn btn-secondary">Import Wallet</button>
+            <div class="wallet-selection-actions">
+              <button id="create-wallet-btn" class="wallet-selection-btn wallet-selection-btn-primary">
+                ✨ Create New Wallet
+              </button>
+              <button id="import-wallet-btn" class="wallet-selection-btn wallet-selection-btn-secondary">
+                📥 Import Wallet
+              </button>
             </div>
 
-            <div class="wallet-list">
+            <div class="wallet-selection-list">
               <div id="wallet-list">
-                <div class="no-wallets">
-                  <p>No wallets found</p>
-                  <p>Create or import a wallet to get started</p>
+                <div class="wallet-selection-list-empty">
+                  <div class="wallet-selection-list-empty-icon">👛</div>
+                  <div class="wallet-selection-list-empty-title">No wallets found</div>
+                  <div class="wallet-selection-list-empty-subtitle">Create or import a wallet to get started</div>
                 </div>
               </div>
             </div>
@@ -3207,7 +3252,7 @@
         <!-- Header with wallet/network status -->
         <div class="main-app-header">
           <div class="header-left">
-            <h2>🔱 Rune Tools</h2>
+            <h2><img src="images/logos/runetools-logo.svg" alt="Rune Tools" style="height: 48px; width: auto; object-fit: contain; vertical-align: middle;"></h2>
           </div>
           <div id="main-app-header-content" class="header-right">
             <!-- HeaderDisplay component will be mounted here -->
@@ -3271,34 +3316,57 @@
           
           <!-- Settings Tab -->
           <div id="settings-tab-content" class="tab-content hidden">
-            <div class="card">
-              <h3>⚙️ Settings</h3>
-              <div class="settings-section">
-                <div class="form-group">
-                  <label class="form-label">Network</label>
-                  <div class="network-selector-wrapper">
-                    <select id="network-selector" class="form-input">
-                      <option value="mainnet">Mainnet</option>
-                      <option value="stagenet">Stagenet</option>
-                    </select>
-                    <div class="network-description">
-                      <small id="network-description-text">
-                        Select the THORChain network for all operations
-                      </small>
+            <div class="settings-tab-container">
+              <div class="settings-tab-header">
+                <h3 class="settings-tab-title">
+                  <span class="settings-tab-icon">⚙️</span>
+                  Settings
+                </h3>
+                <p class="settings-tab-subtitle">Configure your wallet and network preferences</p>
+              </div>
+
+              <div class="settings-tab-card">
+                <div class="settings-tab-section">
+                  <h4 class="settings-tab-section-title">
+                    🌐 Network Configuration
+                  </h4>
+                  <div class="settings-tab-form-group">
+                    <label class="settings-tab-form-label">Network</label>
+                    <div class="settings-tab-network-selector-wrapper">
+                      <select id="network-selector" class="settings-tab-network-selector">
+                        <option value="mainnet">Mainnet</option>
+                        <option value="stagenet">Stagenet</option>
+                      </select>
+                      <div class="settings-tab-network-description">
+                        <small id="network-description-text">
+                          Select the THORChain network for all operations
+                        </small>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div class="form-group">
-                  <button id="refresh-all-btn" class="btn btn-secondary">🔄 Refresh All Data</button>
-                </div>
-                <div class="settings-info">
-                  <div class="info-item">
-                    <span class="info-label">Current Wallet Address:</span>
-                    <span id="settings-current-address" class="info-value">Loading...</span>
+                  <div class="settings-tab-form-group">
+                    <button id="refresh-all-btn" class="settings-tab-refresh-btn">
+                      🔄 Refresh All Data
+                    </button>
                   </div>
-                  <div class="info-item">
-                    <span class="info-label">Network Status:</span>
-                    <span id="settings-network-status" class="info-value">Checking...</span>
+                </div>
+
+                <div class="settings-tab-section">
+                  <h4 class="settings-tab-section-title">
+                    📊 Wallet Information
+                  </h4>
+                  <div class="settings-tab-info-section">
+                    <div class="settings-tab-info-item">
+                      <span class="settings-tab-info-label">Current Wallet Address:</span>
+                      <div class="settings-tab-info-value" id="settings-current-address">Loading...</div>
+                    </div>
+                    <div class="settings-tab-info-item">
+                      <span class="settings-tab-info-label">Network Status:</span>
+                      <div class="settings-tab-network-status">
+                        <span class="settings-tab-status-indicator connecting" id="settings-status-indicator"></span>
+                        <span class="settings-tab-info-value" id="settings-network-status">Checking...</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3309,22 +3377,56 @@
     </div>
 
     <!-- Unlock Wallet Dialog -->
-    <div id="unlock-wallet-dialog" class="modal">
-      <div class="modal-content">
-        <h3>Unlock Wallet</h3>
-        <div class="form-group">
-          <p><strong>Wallet:</strong> <span id="unlock-wallet-name"></span></p>
-          <p><strong>Address:</strong> <span id="unlock-wallet-address"></span></p>
+    <div id="unlock-wallet-dialog" class="wallet-unlock-modal">
+      <div class="wallet-unlock-content">
+        <div class="wallet-unlock-header">
+          <h3 class="wallet-unlock-title">
+            <span class="wallet-unlock-icon">🔓</span>
+            Unlock Wallet
+          </h3>
+          <p class="wallet-unlock-subtitle">Enter your password to access your wallet</p>
+        </div>
+
+        <div class="wallet-unlock-wallet-info">
+          <div class="wallet-unlock-wallet-display">
+            <div class="wallet-unlock-wallet-avatar">
+              <div id="unlock-wallet-avatar" class="identicon-placeholder">W</div>
+            </div>
+            <div class="wallet-unlock-wallet-details">
+              <div class="wallet-unlock-wallet-name" id="unlock-wallet-name">Loading...</div>
+              <div class="wallet-unlock-wallet-address" id="unlock-wallet-address">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wallet-unlock-error" id="unlock-wallet-error">
+          <span class="wallet-unlock-error-icon">⚠️</span>
+          <div class="wallet-unlock-error-text" id="unlock-wallet-error-message">
+            Incorrect password. Please try again.
+          </div>
         </div>
         
-        <form id="unlock-wallet-form">
-          <div class="form-group">
-            <div id="unlockPasswordContainer"></div>
+        <form id="unlock-wallet-form" class="wallet-unlock-form">
+          <div class="wallet-unlock-form-group">
+            <div class="wallet-unlock-password-container">
+              <div id="unlockPasswordContainer"></div>
+            </div>
+          </div>
+
+          <div class="wallet-unlock-loading" id="unlock-wallet-loading">
+            <div class="wallet-unlock-loading-spinner"></div>
+            <span class="wallet-unlock-loading-text">Unlocking wallet...</span>
           </div>
           
-          <div class="form-group">
-            <button type="submit" class="btn btn-primary">Unlock</button>
-            <button type="button" class="btn btn-secondary" onclick="document.getElementById('unlock-wallet-dialog').classList.remove('active')">Cancel</button>
+          <div class="wallet-unlock-actions">
+            <button type="button" class="wallet-unlock-btn wallet-unlock-btn-secondary" onclick="document.getElementById('unlock-wallet-dialog').classList.remove('active')">
+              <span class="wallet-unlock-btn-icon">✕</span>
+              Cancel
+            </button>
+            <button type="submit" class="wallet-unlock-btn wallet-unlock-btn-primary">
+              <span class="wallet-unlock-btn-icon">🔓</span>
+              Unlock
+            </button>
           </div>
         </form>
       </div>
@@ -3371,6 +3473,24 @@
   
   <!-- Withdraw dialog styles -->
   <link rel="stylesheet" href="./styles/withdraw-dialog.css">
+  
+  <!-- Wallet portfolio styles -->
+  <link rel="stylesheet" href="./styles/wallet-portfolio.css">
+  
+  <!-- Wallet assets styles -->
+  <link rel="stylesheet" href="./styles/wallet-assets.css">
+  
+  <!-- Wallet selection styles -->
+  <link rel="stylesheet" href="./styles/wallet-selection-improved.css">
+  
+  <!-- Wallet unlock styles -->
+  <link rel="stylesheet" href="./styles/wallet-unlock.css">
+  
+  <!-- Settings tab styles -->
+  <link rel="stylesheet" href="./styles/settings-tab.css">
+  
+  <!-- Send modal styles -->
+  <link rel="stylesheet" href="./styles/send-modal.css">
   
   <!-- Vite entry point -->
   <script type="module" src="./main.ts"></script>
