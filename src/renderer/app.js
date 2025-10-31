@@ -393,8 +393,8 @@ class RuneToolsApplication {
         try {
             // Update header display
             if (this.controllers.headerDisplay) {
-                await this.controllers.headerDisplay.updateWalletDisplay(wallet);
-                await this.controllers.headerDisplay.updateNetworkDisplay(network);
+                await this.controllers.headerDisplay.updateWallet(wallet, network);
+                await this.controllers.headerDisplay.updateNetwork(network);
             }
             
             // Update settings manager
@@ -405,7 +405,7 @@ class RuneToolsApplication {
             
             // Update application controller (propagates to all tabs)
             if (this.controllers.application) {
-                await this.controllers.application.updateContext(wallet, network);
+                await this.controllers.application.switchNetwork(network);
             }
             
         } catch (error) {

@@ -310,14 +310,18 @@ class SettingsManager {
         });
 
         // Network switching
-        this.container.querySelectorAll('.network-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                const network = e.currentTarget.dataset.network;
+        const networkSelector = this.container.querySelector('#network-selector');
+        if (networkSelector) {
+            // Set the current network value
+            networkSelector.value = this.currentNetwork;
+            
+            networkSelector.addEventListener('change', (e) => {
+                const network = e.target.value;
                 if (network !== this.currentNetwork) {
                     this.handleNetworkSwitch(network);
                 }
             });
-        });
+        }
 
         // Wallet management
         this.container.querySelectorAll('.delete-wallet-btn').forEach(btn => {

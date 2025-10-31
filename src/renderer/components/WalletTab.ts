@@ -890,9 +890,9 @@ export class WalletTab {
         this.walletData.network = network
 
         // Update address display in the UI
-        const addressEl = this.container.querySelector('.address-text')
+        const addressEl = this.container.querySelector('.wallet-portfolio-address')
         if (addressEl && newAddress) {
-            addressEl.textContent = this.formatAddress(newAddress)
+            addressEl.textContent = newAddress
         }
 
         console.log(`WalletTab address updated for ${network}:`, newAddress)

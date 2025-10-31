@@ -384,7 +384,8 @@ export class ApplicationController {
             // Update all components with new network
             const updatePromises: Promise<any>[] = []
             
-            if (this.headerDisplay) {
+            if (this.headerDisplay && this.activeWallet) {
+                updatePromises.push(this.headerDisplay.updateWallet(this.activeWallet, network))
                 updatePromises.push(this.headerDisplay.updateNetwork(network))
             }
             
