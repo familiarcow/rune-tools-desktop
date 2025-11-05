@@ -15,6 +15,7 @@ import { WalletTab } from '../components/WalletTab'
 import { MemolessTab } from '../components/MemolessTab'
 import { SwapTab } from '../components/SwapTab'
 import { PoolsTab } from '../components/PoolsTab'
+import { WebsiteTab } from '../components/WebsiteTab'
 import { HeaderDisplay } from '../components/HeaderDisplay'
 
 export interface ActiveWallet {
@@ -43,6 +44,7 @@ export class ApplicationController {
     private memolessTab: MemolessTab | null = null
     private swapTab: SwapTab | null = null
     private poolsTab: PoolsTab | null = null
+    private websiteTab: WebsiteTab | null = null
     private headerDisplay: HeaderDisplay | null = null
     private isInitialized: boolean = false
 
@@ -74,6 +76,9 @@ export class ApplicationController {
             
             // Initialize pools tab
             await this.initializePoolsTab()
+            
+            // Initialize website tab
+            await this.initializeWebsiteTab()
             
             // Setup tab navigation
             this.setupTabNavigation()
@@ -148,6 +153,18 @@ export class ApplicationController {
         console.log('🏊 PoolsTab component prepared')
     }
 
+    private async initializeWebsiteTab(): Promise<void> {
+        const websiteTabContainer = document.getElementById('website-tab-content')
+        if (!websiteTabContainer) {
+            throw new Error('Website tab container not found')
+        }
+
+        this.websiteTab = new WebsiteTab(websiteTabContainer, this.backend)
+        
+        // Initialize with wallet data when tab is accessed
+        console.log('🛠️ ToolsTab component prepared')
+    }
+
     private initializeMemolessTabContent(): void {
         if (!this.memolessTab || !this.activeWallet) return
         
@@ -196,6 +213,17 @@ export class ApplicationController {
             .catch(error => {
                 console.error('❌ Failed to initialize pools tab content:', error)
                 this.ui.showError('Failed to load pools functionality')
+            })
+    }
+
+    private initializeWebsiteTabContent(): void {
+        if (!this.websiteTab || !this.activeWallet) return
+        
+        // Initialize website tab with current wallet data
+        this.websiteTab.initialize(this.activeWallet, this.currentNetwork)
+            .catch(error => {
+                console.error('❌ Failed to initialize tools tab content:', error)
+                this.ui.showError('Failed to load tools functionality')
             })
     }
 
@@ -268,6 +296,8 @@ export class ApplicationController {
             this.initializeSwapTabContent()
         } else if (tabName === 'pools') {
             this.initializePoolsTabContent()
+        } else if (tabName === 'website') {
+            this.initializeWebsiteTabContent()
         }
 
         this.currentTab = tabName
@@ -412,6 +442,11 @@ export class ApplicationController {
                 updatePromises.push(this.poolsTab.updateNetwork(network))
             }
             
+            // Update tools tab if active
+            if (this.websiteTab && this.activeWallet) {
+                updatePromises.push(this.websiteTab.updateNetwork(network, this.activeWallet))
+            }
+            
             // Wait for all component updates
             await Promise.all(updatePromises)
             
@@ -471,6 +506,10 @@ export class ApplicationController {
             
             if (this.poolsTab) {
                 await this.poolsTab.refreshData()
+            }
+            
+            if (this.websiteTab) {
+                await this.websiteTab.refresh()
             }
             
             console.log('✅ All data refreshed')
