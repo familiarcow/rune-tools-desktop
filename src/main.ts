@@ -70,7 +70,43 @@ function createWindow(): void {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true, // Keep web security enabled by default
     },
+  });
+
+  // Selective CORS bypass for rune.tools referrer
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    const referrer = details.requestHeaders['Referer'] || details.requestHeaders['referer'] || '';
+    const isRuneToolsReferrer = referrer.includes('rune.tools') || referrer.includes('localhost') || referrer.includes('127.0.0.1');
+    
+    // Only bypass CORS for requests from rune.tools or local development
+    if (isRuneToolsReferrer) {
+      console.log(`🌐 Allowing CORS for request to: ${details.url} (referrer: ${referrer})`);
+      details.requestHeaders['Access-Control-Allow-Origin'] = '*';
+      details.requestHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+      details.requestHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    }
+    
+    callback({ requestHeaders: details.requestHeaders });
+  });
+
+  // Handle CORS preflight responses
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const referrer = details.responseHeaders?.['referer'] || '';
+    const isRuneToolsReferrer = referrer.includes('rune.tools') || details.url.includes('localhost') || details.url.includes('127.0.0.1');
+    
+    if (isRuneToolsReferrer) {
+      const responseHeaders = {
+        ...details.responseHeaders,
+        'Access-Control-Allow-Origin': ['*'],
+        'Access-Control-Allow-Methods': ['GET, POST, PUT, DELETE, OPTIONS'],
+        'Access-Control-Allow-Headers': ['Content-Type, Authorization'],
+        'Access-Control-Max-Age': ['86400']
+      };
+      callback({ responseHeaders });
+    } else {
+      callback({});
+    }
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
