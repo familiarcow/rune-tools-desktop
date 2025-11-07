@@ -74,7 +74,17 @@
 }
 
 .asset-display {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.asset-display .asset-logo-section {
+  flex-shrink: 0;
+}
+
+.asset-display .asset-details {
+  flex: 1;
 }
 
 .asset-display .asset-name {

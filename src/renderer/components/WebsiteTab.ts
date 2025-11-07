@@ -46,7 +46,7 @@ export class WebsiteTab {
                     <iframe 
                         id="websiteIframe"
                         class="website-tab-iframe"
-                        src="https://rune.tools"
+                        src="https://rune.tools?source=desktop-app"
                         title="Rune Tools"
                         frameborder="0"
                         allowfullscreen>

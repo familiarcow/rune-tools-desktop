@@ -16,6 +16,7 @@ import { MemolessTab } from '../components/MemolessTab'
 import { SwapTab } from '../components/SwapTab'
 import { PoolsTab } from '../components/PoolsTab'
 import { WebsiteTab } from '../components/WebsiteTab'
+import { BondTab } from '../components/BondTab'
 import { HeaderDisplay } from '../components/HeaderDisplay'
 
 export interface ActiveWallet {
@@ -45,6 +46,7 @@ export class ApplicationController {
     private swapTab: SwapTab | null = null
     private poolsTab: PoolsTab | null = null
     private websiteTab: WebsiteTab | null = null
+    private bondTab: BondTab | null = null
     private headerDisplay: HeaderDisplay | null = null
     private isInitialized: boolean = false
 
@@ -79,6 +81,9 @@ export class ApplicationController {
             
             // Initialize website tab
             await this.initializeWebsiteTab()
+            
+            // Initialize bond tab
+            await this.initializeBondTab()
             
             // Setup tab navigation
             this.setupTabNavigation()
@@ -165,6 +170,18 @@ export class ApplicationController {
         console.log('🛠️ ToolsTab component prepared')
     }
 
+    private async initializeBondTab(): Promise<void> {
+        const bondTabContainer = document.getElementById('bond-tab-content')
+        if (!bondTabContainer) {
+            throw new Error('Bond tab container not found')
+        }
+
+        this.bondTab = new BondTab(bondTabContainer, this.backend)
+        
+        // Initialize with wallet data when tab is accessed
+        console.log('🏦 BondTab component prepared')
+    }
+
     private initializeMemolessTabContent(): void {
         if (!this.memolessTab || !this.activeWallet) return
         
@@ -224,6 +241,17 @@ export class ApplicationController {
             .catch(error => {
                 console.error('❌ Failed to initialize tools tab content:', error)
                 this.ui.showError('Failed to load tools functionality')
+            })
+    }
+
+    private initializeBondTabContent(): void {
+        if (!this.bondTab || !this.activeWallet) return
+        
+        // Initialize bond tab with current wallet data
+        this.bondTab.initialize(this.activeWallet, this.currentNetwork)
+            .catch(error => {
+                console.error('❌ Failed to initialize bond tab content:', error)
+                this.ui.showError('Failed to load bond functionality')
             })
     }
 
@@ -298,6 +326,8 @@ export class ApplicationController {
             this.initializePoolsTabContent()
         } else if (tabName === 'website') {
             this.initializeWebsiteTabContent()
+        } else if (tabName === 'bond') {
+            this.initializeBondTabContent()
         }
 
         this.currentTab = tabName
@@ -445,6 +475,11 @@ export class ApplicationController {
             // Update tools tab if active
             if (this.websiteTab && this.activeWallet) {
                 updatePromises.push(this.websiteTab.updateNetwork(network, this.activeWallet))
+            }
+            
+            // Update bond tab if active
+            if (this.bondTab && this.activeWallet) {
+                updatePromises.push(this.bondTab.updateNetwork(network, this.activeWallet))
             }
             
             // Wait for all component updates

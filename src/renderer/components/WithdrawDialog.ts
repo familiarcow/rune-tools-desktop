@@ -6,6 +6,7 @@
  */
 
 import { BackendService } from '../services/BackendService'
+import { AssetService } from '../../services/assetService'
 
 export interface WithdrawDialogData {
   asset: string
@@ -48,6 +49,7 @@ export class WithdrawDialog {
     
     this.render()
     this.setupEventListeners()
+    this.setupImageErrorHandling()
     
     // Show the dialog
     this.container.style.display = 'flex'
@@ -78,8 +80,13 @@ export class WithdrawDialog {
           <div class="dialog-body">
             <div class="withdraw-asset-info">
               <div class="asset-display">
-                <div class="asset-name">${this.withdrawData.asset}</div>
-                <div class="asset-balance">Available: ${this.withdrawData.balance}</div>
+                <div class="asset-logo-section">
+                  ${AssetService.GetLogoWithChain(this.withdrawData.asset, 48)}
+                </div>
+                <div class="asset-details">
+                  <div class="asset-name">${this.withdrawData.asset}</div>
+                  <div class="asset-balance">Available: ${this.withdrawData.balance}</div>
+                </div>
               </div>
             </div>
 
@@ -113,7 +120,7 @@ export class WithdrawDialog {
           <div class="dialog-footer">
             <button class="btn btn-secondary" id="cancelWithdrawBtn">Cancel</button>
             <button class="btn btn-primary" id="confirmWithdrawBtn" disabled>
-              Continue to Send
+              Continue to Withdraw
             </button>
           </div>
         </div>
@@ -280,5 +287,15 @@ export class WithdrawDialog {
     
     // Hide the dialog
     this.hide()
+  }
+
+  private setupImageErrorHandling(): void {
+    // Add error handlers to all asset and chain logos in withdraw dialog
+    const assetLogos = this.container.querySelectorAll('.asset-logo, .chain-logo');
+    assetLogos.forEach(img => {
+      (img as HTMLImageElement).addEventListener('error', () => {
+        AssetService.handleImageError(img as HTMLImageElement);
+      });
+    });
   }
 }

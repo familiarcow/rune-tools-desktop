@@ -14,6 +14,7 @@ import { ReceiveTransaction, ReceiveTransactionData } from './ReceiveTransaction
 import { WithdrawDialog, WithdrawDialogData, WithdrawFormData } from './WithdrawDialog'
 import { AssetService } from '../../services/assetService'
 import { IdenticonService } from '../../services/IdenticonService'
+import { BondService, UserBondData } from '../../services/bondService'
 
 export interface WalletTabData {
     walletId: string
@@ -34,7 +35,9 @@ export interface AssetBalance {
 }
 
 export interface PortfolioSummary {
-    totalUsdValue: number
+    walletUsdValue: number  // Renamed from totalUsdValue
+    bondUsdValue: number    // New: Total bond value in USD
+    totalUsdValue: number   // New: Combined wallet + bond value
     thorNativeValue: number
     securedValue: number
     tradeValue: number
@@ -44,6 +47,7 @@ export interface PortfolioSummary {
 export class WalletTab {
     private container: HTMLElement
     private backend: BackendService
+    private bondService: BondService
     private walletData: WalletTabData | null = null
     private refreshInterval: NodeJS.Timeout | null = null
     private sendTransaction: SendTransaction | null = null
@@ -54,6 +58,7 @@ export class WalletTab {
     constructor(container: HTMLElement, backend: BackendService) {
         this.container = container
         this.backend = backend
+        this.bondService = new BondService('mainnet') // Will be updated based on network
         
         // Initialize withdraw dialog
         const withdrawContainer = document.getElementById('withdraw-dialog-container')
@@ -66,6 +71,9 @@ export class WalletTab {
         try {
             console.log('🏦 Initializing WalletTab...', { wallet: wallet.name, network })
             
+            // Set network for bond service
+            this.bondService.setNetwork(network)
+            
             // Initialize asset logo styles
             AssetService.initializeStyles()
             
@@ -77,6 +85,8 @@ export class WalletTab {
                 network,
                 balances: [],
                 portfolioSummary: {
+                    walletUsdValue: 0,
+                    bondUsdValue: 0,
                     totalUsdValue: 0,
                     thorNativeValue: 0,
                     securedValue: 0,
@@ -120,9 +130,19 @@ export class WalletTab {
                             </div>
                         </div>
                     </div>
-                    <div class="wallet-portfolio-value">
+                    <div class="wallet-portfolio-total">
                         <div class="wallet-portfolio-value-label">Portfolio</div>
                         <div class="wallet-portfolio-value-amount" id="total-usd-value">$0.00</div>
+                    </div>
+                    <div class="wallet-portfolio-breakdown">
+                        <div class="portfolio-item">
+                            <span class="portfolio-item-label">Wallet:</span>
+                            <span class="portfolio-item-value" id="wallet-usd-value">$0.00</span>
+                        </div>
+                        <div class="portfolio-item">
+                            <span class="portfolio-item-label">Bond:</span>
+                            <span class="portfolio-item-value" id="bond-usd-value">$0.00</span>
+                        </div>
                     </div>
                     <div class="wallet-portfolio-actions">
                         <button class="btn btn-primary" id="receive-btn">📥 Receive</button>
@@ -248,10 +268,23 @@ export class WalletTab {
         // Withdraw button event delegation (for dynamically added buttons)
         this.container.addEventListener('click', (e) => {
             const target = e.target as HTMLElement
+            
             if (target.classList.contains('wallet-asset-withdraw-btn')) {
                 const asset = target.getAttribute('data-asset')
                 const balance = target.getAttribute('data-balance')
                 const tier = target.getAttribute('data-tier') as 'trade' | 'secured'
+                
+                if (asset && balance && tier) {
+                    this.showWithdrawDialog(asset, balance, tier)
+                }
+            }
+            
+            // Also check for clicks on child elements (icon/text spans)
+            const parentBtn = target.closest('.wallet-asset-withdraw-btn')
+            if (parentBtn && !target.classList.contains('wallet-asset-withdraw-btn')) {
+                const asset = parentBtn.getAttribute('data-asset')
+                const balance = parentBtn.getAttribute('data-balance')
+                const tier = parentBtn.getAttribute('data-tier') as 'trade' | 'secured'
                 
                 if (asset && balance && tier) {
                     this.showWithdrawDialog(asset, balance, tier)
@@ -266,15 +299,19 @@ export class WalletTab {
 
             console.log('🔄 Loading wallet data for', this.walletData.address)
 
-            // Load balances from multiple sources
-            const [balances, normalizedBalances, tradeAccount] = await Promise.allSettled([
+            // Load balances from multiple sources including bonds
+            const [balances, normalizedBalances, tradeAccount, bondData] = await Promise.allSettled([
                 this.backend.getBalances(this.walletData.address),
                 this.backend.getNormalizedBalances(this.walletData.address),
-                this.backend.getTradeAccount(this.walletData.address)
+                this.backend.getTradeAccount(this.walletData.address),
+                this.bondService.fetchUserBonds(this.walletData.address)
             ])
 
             // Process and categorize assets
             await this.processBalanceData(balances, normalizedBalances, tradeAccount)
+            
+            // Process bond data
+            await this.processBondData(bondData)
             
             // Update UI
             this.updatePortfolioSummary()
@@ -346,8 +383,60 @@ export class WalletTab {
         }
 
         this.walletData.balances = processedBalances
-        this.walletData.portfolioSummary.totalUsdValue = totalUsd
+        this.walletData.portfolioSummary.walletUsdValue = totalUsd
         this.calculateTierValues()
+    }
+
+    private async processBondData(bondResult: PromiseSettledResult<UserBondData | null>): Promise<void> {
+        if (!this.walletData) return
+
+        let bondUsdValue = 0
+
+        if (bondResult.status === 'fulfilled' && bondResult.value) {
+            const bondData = bondResult.value
+            console.log('💎 Processing bond data:', bondData)
+
+            // Convert total bond from base units to RUNE
+            const totalBondRune = bondData.totalBond / 1e8
+
+            // Get RUNE price to calculate USD value
+            const runePrice = await this.getRunePrice()
+            bondUsdValue = totalBondRune * runePrice
+
+            console.log('💰 Bond value calculation:', {
+                totalBondBaseUnits: bondData.totalBond,
+                totalBondRune,
+                runePrice,
+                bondUsdValue
+            })
+        } else if (bondResult.status === 'rejected') {
+            console.warn('⚠️ Bond data failed to load:', bondResult.reason)
+        } else {
+            console.log('ℹ️ No bond data available (user not bonded)')
+        }
+
+        this.walletData.portfolioSummary.bondUsdValue = bondUsdValue
+        this.walletData.portfolioSummary.totalUsdValue = 
+            this.walletData.portfolioSummary.walletUsdValue + bondUsdValue
+    }
+
+    private async getRunePrice(): Promise<number> {
+        try {
+            // Get RUNE price from /network endpoint via backend
+            const network = await this.backend.getThorchainNetwork()
+            if (network && network.rune_price_in_tor) {
+                // Convert from tor units to USD (rune_price_in_tor/1e8)
+                const price = parseFloat(network.rune_price_in_tor) / 100000000 // 1e8
+                console.log('💎 RUNE price from network:', price)
+                return price
+            } else {
+                console.warn('⚠️ RUNE price not found in network data, using fallback')
+                return 5.50 // Fallback price
+            }
+        } catch (error) {
+            console.error('❌ Failed to get RUNE price:', error)
+            return 5.50 // Fallback price
+        }
     }
 
     private async createAssetBalance(rawBalance: any, tier: AssetBalance['tier']): Promise<AssetBalance> {
@@ -630,6 +719,19 @@ export class WalletTab {
     private updatePortfolioSummary(): void {
         if (!this.walletData) return
 
+        // Update wallet value
+        const walletValueEl = this.container.querySelector('#wallet-usd-value')
+        if (walletValueEl) {
+            walletValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.walletUsdValue)
+        }
+
+        // Update bond value
+        const bondValueEl = this.container.querySelector('#bond-usd-value')
+        if (bondValueEl) {
+            bondValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.bondUsdValue)
+        }
+
+        // Update total portfolio value
         const totalValueEl = this.container.querySelector('#total-usd-value')
         if (totalValueEl) {
             totalValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.totalUsdValue)
@@ -857,6 +959,9 @@ export class WalletTab {
         const oldNetwork = this.walletData.network
         this.walletData.network = network
         
+        // Update bond service network
+        this.bondService.setNetwork(network)
+        
         // We need to update the address based on the new network
         // Since we don't have the full wallet object here, we'll need to get it from the ApplicationController
         // For now, we'll just refresh the data which should use the current network
@@ -865,6 +970,8 @@ export class WalletTab {
         // Clear current balances to show loading state
         this.walletData.balances = []
         this.walletData.portfolioSummary = {
+            walletUsdValue: 0,
+            bondUsdValue: 0,
             totalUsdValue: 0,
             thorNativeValue: 0,
             securedValue: 0,
@@ -1000,8 +1107,6 @@ export class WalletTab {
             console.error('❌ Withdraw dialog or wallet data not available')
             return
         }
-
-        console.log('🔄 Showing withdraw dialog for:', { asset, balance, tier })
 
         const withdrawData: WithdrawDialogData = {
             asset,

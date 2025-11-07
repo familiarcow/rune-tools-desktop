@@ -57,7 +57,7 @@
     font-size: 0.7rem;
 }
 
-.wallet-portfolio-value {
+.wallet-portfolio-total {
     text-align: center;
     margin: 0 20px;
 }
@@ -74,9 +74,36 @@
     color: var(--accent-primary, #00d4ff);
 }
 
+.wallet-portfolio-breakdown {
+    text-align: right;
+    min-width: 120px;
+}
+
+.portfolio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    gap: 8px;
+}
+
+.portfolio-item-label {
+    font-size: 0.65rem;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+}
+
+.portfolio-item-value {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary, #ccc);
+}
+
 .wallet-portfolio-actions {
     display: flex;
     gap: 8px;
+    margin-left: 12px;
+}
 }
 
 .wallet-portfolio-actions .btn {
