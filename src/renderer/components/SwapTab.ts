@@ -14,6 +14,7 @@ import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance 
 import { SwapService, SwapAsset, ToAsset, AssetType, SwapParams, SwapQuoteDisplay } from '../../services/swapService';
 import { AssetService } from '../../services/assetService';
 import { AssetDisplayName } from '../../utils/assetUtils';
+import { AssetSelector, AssetSelectorOption } from './AssetSelector';
 
 export interface SwapTabData {
     walletId: string;
@@ -36,6 +37,10 @@ export class SwapTab {
     private selectedToAsset: string = '';
     private currentQuote: SwapQuoteDisplay | null = null;
     private advancedOptionsExpanded: boolean = false;
+
+    // AssetSelector instances
+    private fromAssetSelector: AssetSelector | null = null;
+    private toAssetSelector: AssetSelector | null = null;
 
     constructor(container: HTMLElement, backend: BackendService) {
         this.container = container;
@@ -89,9 +94,7 @@ export class SwapTab {
                             <div class="from-asset-column">
                                 <label class="swap-label">From Asset</label>
                                 <div class="asset-selector-container">
-                                    <select class="asset-selector" id="from-asset-selector">
-                                        <option value="">Select asset to swap</option>
-                                    </select>
+                                    <div id="from-asset-selector-component"></div>
                                     <div class="asset-balance" id="from-asset-balance">
                                         Balance: -
                                     </div>
@@ -119,9 +122,7 @@ export class SwapTab {
                     <div class="swap-section">
                         <label class="swap-label">To Asset</label>
                         <div class="asset-selector-container">
-                            <select class="asset-selector" id="to-asset-selector">
-                                <option value="">Select destination asset</option>
-                            </select>
+                            <div id="to-asset-selector-component"></div>
                         </div>
                     </div>
 
@@ -212,17 +213,7 @@ export class SwapTab {
     }
 
     private setupEventListeners(): void {
-        // From asset selector
-        const fromSelector = this.container.querySelector('#from-asset-selector') as HTMLSelectElement;
-        if (fromSelector) {
-            fromSelector.addEventListener('change', (e) => this.onFromAssetChange((e.target as HTMLSelectElement).value));
-        }
-
-        // To asset selector
-        const toSelector = this.container.querySelector('#to-asset-selector') as HTMLSelectElement;
-        if (toSelector) {
-            toSelector.addEventListener('change', (e) => this.onToAssetChange((e.target as HTMLSelectElement).value));
-        }
+        // Asset selectors are now handled by AssetSelector components with callbacks
 
         // Amount input
         const amountInput = this.container.querySelector('#amount-input') as HTMLInputElement;
@@ -279,8 +270,8 @@ export class SwapTab {
             this.fromAssets = fromAssets;
             this.toAssets = toAssets;
 
-            this.populateFromAssetSelector();
-            this.populateToAssetSelector();
+            await this.initializeFromAssetSelector();
+            await this.initializeToAssetSelector();
 
             this.hideLoading();
             
@@ -290,40 +281,72 @@ export class SwapTab {
         }
     }
 
-    private populateFromAssetSelector(): void {
-        const selector = this.container.querySelector('#from-asset-selector') as HTMLSelectElement;
-        if (!selector) return;
+    private async initializeFromAssetSelector(): Promise<void> {
+        const container = this.container.querySelector('#from-asset-selector-component');
+        if (!container) return;
 
-        // Clear existing options except first
-        selector.innerHTML = '<option value="">Select asset to swap</option>';
-
-        // Add assets ordered by USD value
-        this.fromAssets.forEach(asset => {
-            const option = document.createElement('option');
-            option.value = asset.asset;
-            option.textContent = `${asset.asset} (${this.formatBalance(asset.balance)} - ${this.formatUsd(asset.usdValue)})`;
-            selector.appendChild(option);
+        // Prepare from asset options with user balances
+        const fromOptions: AssetSelectorOption[] = this.fromAssets.map(asset => {
+            const balance = parseFloat(asset.balance);
+            const assetPrice = balance > 0 ? asset.usdValue / balance : 0;
+            
+            return {
+                asset: asset.asset,
+                balance: asset.balance,
+                usdValue: asset.usdValue,
+                assetPrice: assetPrice
+            };
         });
+
+        // Initialize from asset selector
+        this.fromAssetSelector = new AssetSelector(container as HTMLElement, {
+            id: 'from-asset-selector-component',
+            placeholder: 'Select asset to swap',
+            displayMode: 'user-balances',
+            searchable: true,
+            onSelectionChange: (asset) => this.onFromAssetChange(asset || '')
+        });
+
+        await this.fromAssetSelector.initialize(fromOptions);
+        console.log('✅ From AssetSelector initialized with', fromOptions.length, 'options');
     }
 
-    private populateToAssetSelector(): void {
-        const selector = this.container.querySelector('#to-asset-selector') as HTMLSelectElement;
-        if (!selector) return;
+    private async initializeToAssetSelector(): Promise<void> {
+        const container = this.container.querySelector('#to-asset-selector-component');
+        if (!container) return;
 
-        // Get current asset type
-        const assetTypeSelector = this.container.querySelector('#asset-type-selector') as HTMLSelectElement;
-        const assetType = assetTypeSelector?.value as AssetType || 'secured';
+        // Prepare to asset options with real-time pricing
+        const toOptions: AssetSelectorOption[] = await Promise.all(
+            this.toAssets.map(async asset => {
+                try {
+                    // Get real prices from SwapService
+                    const { price } = await this.swapService.getAssetPricing(asset.asset, 1);
+                    
+                    return {
+                        asset: asset.asset,
+                        assetPrice: price
+                    };
+                } catch (error) {
+                    console.warn(`Failed to get price for ${asset.asset}:`, error);
+                    return {
+                        asset: asset.asset,
+                        assetPrice: 0
+                    };
+                }
+            })
+        );
 
-        // Clear existing options except first
-        selector.innerHTML = '<option value="">Select destination asset</option>';
-
-        // Add assets ordered by balance_rune, formatted for the selected asset type
-        this.toAssets.forEach(asset => {
-            const option = document.createElement('option');
-            option.value = asset.asset;
-            option.textContent = this.formatToAssetDisplay(asset.asset, assetType);
-            selector.appendChild(option);
+        // Initialize to asset selector
+        this.toAssetSelector = new AssetSelector(container as HTMLElement, {
+            id: 'to-asset-selector-component',
+            placeholder: 'Select destination asset',
+            displayMode: 'asset-prices',
+            searchable: true,
+            onSelectionChange: (asset) => this.onToAssetChange(asset || '')
         });
+
+        await this.toAssetSelector.initialize(toOptions);
+        console.log('✅ To AssetSelector initialized with', toOptions.length, 'options');
     }
 
     private formatToAssetDisplay(asset: string, assetType: AssetType): string {
@@ -386,16 +409,13 @@ export class SwapTab {
         this.hideQuote();
     }
 
-    private onAssetTypeChange(assetType: AssetType): void {
+    private async onAssetTypeChange(assetType: AssetType): Promise<void> {
         this.updateRecipientAddressField(assetType);
         // Refresh the to_asset selector to show assets in the new format
-        this.populateToAssetSelector();
+        await this.initializeToAssetSelector();
         // Preserve the current selection if possible
-        if (this.selectedToAsset) {
-            const selector = this.container.querySelector('#to-asset-selector') as HTMLSelectElement;
-            if (selector) {
-                selector.value = this.selectedToAsset;
-            }
+        if (this.selectedToAsset && this.toAssetSelector) {
+            this.toAssetSelector.setSelectedAsset(this.selectedToAsset);
         }
         this.hideQuote();
     }
@@ -735,6 +755,21 @@ export class SwapTab {
     // Public methods
     async refreshData(): Promise<void> {
         await this.loadSwapData();
+    }
+
+    /**
+     * Cleanup method to destroy AssetSelector instances
+     */
+    destroy(): void {
+        if (this.fromAssetSelector) {
+            this.fromAssetSelector.destroy();
+            this.fromAssetSelector = null;
+        }
+        if (this.toAssetSelector) {
+            this.toAssetSelector.destroy();
+            this.toAssetSelector = null;
+        }
+        console.log('🧹 SwapTab: AssetSelector instances destroyed');
     }
 
     async updateNetwork(network: 'mainnet' | 'stagenet'): Promise<void> {

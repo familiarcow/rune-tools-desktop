@@ -309,7 +309,7 @@ export class SwapService {
 
     // Helper methods for asset pricing (still needed for trade assets)
 
-    private async getAssetPricing(asset: string, normalizedAmount: number): Promise<{ price: number, usdValue: number }> {
+    public async getAssetPricing(asset: string, normalizedAmount: number): Promise<{ price: number, usdValue: number }> {
         try {
             // Normalize asset for pool lookup
             const poolAssetId = this.normalizeAssetForPoolLookup(asset);
