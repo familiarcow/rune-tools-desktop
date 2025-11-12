@@ -15,6 +15,9 @@ import './styles/password-input.css'
 import './styles/pools-tab.css'
 import './styles/wallet-selection-improved.css'
 
+// Component imports
+import { splashScreen } from './components/SplashScreen'
+
 // Service imports
 import { BackendService } from './services/BackendService'
 import { StateManager } from './services/StateManager'
@@ -82,6 +85,10 @@ class RuneToolsApplication {
         } catch (error) {
             console.error('❌ Failed to initialize application:', error)
             console.error('Error details:', error)
+            
+            // Hide splash screen on error
+            await splashScreen.hide()
+            
             this.showFatalError(error as Error)
         }
     }
@@ -104,9 +111,20 @@ class RuneToolsApplication {
             await this.walletController.initialize()
 
             console.log('✅ Wallet selection phase ready')
+            
+            // Automatically hide splash screen after wallet selection is ready
+            console.log('⏳ Auto-transitioning to wallet selection...')
+            setTimeout(async () => {
+                await splashScreen.hide()
+                console.log('✅ Splash screen hidden')
+            }, 1500) // 1.5 second delay to show the loaded state
 
         } catch (error) {
             console.error('❌ Failed to start wallet selection:', error)
+            
+            // Hide splash screen on error
+            await splashScreen.hide()
+            
             this.showFatalError(error as Error)
         }
     }
@@ -160,6 +178,8 @@ class RuneToolsApplication {
 
 // Application initialization
 console.log('🚀 Starting Rune Tools Application...')
+
+// Splash screen is already visible in HTML - no need to show it manually
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {

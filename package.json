@@ -44,6 +44,7 @@
     "bip39": "^3.1.0",
     "buffer": "^6.0.3",
     "jdenticon": "^3.3.0",
+    "particles.js": "^2.0.0",
     "protobufjs": "^7.5.4",
     "qrcode": "^1.5.4",
     "secp256k1": "^5.0.1"
