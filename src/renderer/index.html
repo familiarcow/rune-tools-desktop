@@ -2114,7 +2114,7 @@
     .from-amount-row {
       display: flex;
       gap: var(--spacing-md);
-      align-items: flex-start;
+      align-items: stretch;
     }
 
     .from-asset-column {
@@ -2125,6 +2125,8 @@
     .amount-column {
       flex: 1;
       min-width: 200px;
+      display: flex;
+      flex-direction: column;
     }
 
     .swap-label {
@@ -2168,28 +2170,40 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
+      height: 100%;
     }
 
     .amount-input-wrapper {
       position: relative;
       display: flex;
       align-items: center;
+      flex: 1;
     }
 
     .amount-input {
       width: 100%;
-      padding: 16px 60px 16px 16px;
+      height: 100%;
+      padding: var(--spacing-sm) 60px var(--spacing-sm) var(--spacing-md);
       background: var(--bg-input);
       border: 1px solid var(--border-color);
       border-radius: var(--border-radius);
       color: var(--text-primary);
       font-family: inherit;
-      font-size: 18px;
+      font-size: 14px;
+      min-height: 48px;
+      box-sizing: border-box;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .amount-input:hover {
+      background: #444444;
+      border-color: var(--accent-primary);
     }
 
     .amount-input:focus {
       outline: none;
       border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
     }
 
     .max-btn {
@@ -3360,6 +3374,43 @@
       .asset-selector-options {
         max-height: 200px;
       }
+    }
+
+    /* Deposit Form Layout - Optimize space distribution */
+    .deposit-memo-form .form-row {
+      display: flex;
+      gap: var(--spacing-md);
+      align-items: flex-end;
+    }
+
+    .deposit-memo-form .form-group:first-child {
+      flex: 0 0 auto;
+      min-width: 120px;
+      max-width: 150px;
+    }
+
+    .deposit-memo-form .form-group:last-child {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .address-display-readonly {
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .address-code {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--text-primary);
+      background: none;
+      word-break: break-all;
+      line-height: 1.4;
     }
 
   </style>

@@ -111,7 +111,7 @@ export class AssetSelector {
   private renderSearchInput(): string {
     return `
       <div class="asset-selector-search">
-        <input type="text" placeholder="Search assets..." value="${this.searchTerm}" />
+        <input type="text" placeholder="Search by asset or chain..." value="${this.searchTerm}" />
       </div>
     `;
   }

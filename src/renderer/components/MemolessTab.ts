@@ -12,6 +12,7 @@
 import { BackendService } from '../services/BackendService'
 import { SendTransaction, SendTransactionData } from './SendTransaction'
 import { MemoCreationService, MemoType, MemoParams } from '../services/MemoCreationService'
+import { AssetSelector, AssetSelectorOption } from './AssetSelector'
 
 export interface MemolessTabData {
   walletId: string
@@ -53,6 +54,7 @@ export class MemolessTab {
   private memoCreationService: MemoCreationService
   private walletData: MemolessTabData | null = null
   private sendTransaction: SendTransaction | null = null
+  private assetSelector: AssetSelector | null = null
   
   private state: MemolessState = {
     currentStep: 1,
@@ -228,7 +230,7 @@ export class MemolessTab {
         <textarea 
           class="form-control memo-input" 
           id="customMemoInput" 
-          placeholder="Enter your valid custommemo"
+          placeholder="Enter your custom memo"
           rows="3"
         >${customParams?.memo || ''}</textarea>
       </div>
@@ -359,10 +361,8 @@ export class MemolessTab {
 
           <!-- Asset Selection -->
           <div class="form-section">
-            <label class="form-label" for="assetSelector">Deposit Asset</label>
-            <select class="form-control" id="assetSelector">
-              <option value="">Loading available assets...</option>
-            </select>
+            <label class="form-label">Deposit Asset</label>
+            <div id="deposit-asset-selector-component"></div>
             <div class="form-helper">
               <small>Choose which asset you would like to deposit. Only gas assets are available, no tokens.</small>
             </div>
@@ -637,14 +637,7 @@ export class MemolessTab {
     // Load assets when step loads
     this.loadAvailableAssets()
 
-    // Setup asset selection listener
-    const assetSelector = document.getElementById('assetSelector') as HTMLSelectElement
-    assetSelector?.addEventListener('change', () => {
-      const selectedAsset = assetSelector.value
-      if (selectedAsset) {
-        this.selectAsset(selectedAsset)
-      }
-    })
+    // AssetSelector is now handled via callback in loadAvailableAssets
   }
 
   private onMemoTypeChange(memoType: MemoType): void {
@@ -864,15 +857,11 @@ export class MemolessTab {
 
   // Implementation stubs for step logic
   private async loadAvailableAssets(): Promise<void> {
-    const assetSelector = document.getElementById('assetSelector') as HTMLSelectElement
-    if (!assetSelector) return
+    const container = document.getElementById('deposit-asset-selector-component');
+    if (!container) return
 
     try {
       console.log('🔄 Loading available assets from pools...')
-      
-      // Show loading state
-      assetSelector.innerHTML = '<option value="">Loading available assets...</option>'
-      assetSelector.disabled = true
 
       // Fetch pools and valid assets
       const [pools, validAssets] = await Promise.all([
@@ -893,28 +882,38 @@ export class MemolessTab {
       console.log('🔍 Filtered memoless-compatible assets:', memolessAssets.length)
 
       if (memolessAssets.length === 0) {
-        assetSelector.innerHTML = '<option value="">No compatible assets found</option>'
-        assetSelector.disabled = true
+        // Show error state
+        const assetError = document.getElementById('assetError')
+        if (assetError) {
+          assetError.textContent = 'No compatible assets found'
+          assetError.classList.remove('hidden')
+        }
         return
       }
 
-      // Populate selector with available assets (no prices in dropdown)
-      assetSelector.innerHTML = '<option value="">Select an asset...</option>'
-      
-      memolessAssets.forEach((asset: PoolAsset) => {
-        const option = document.createElement('option')
-        option.value = asset.asset
-        option.textContent = asset.asset
-        assetSelector.appendChild(option)
-      })
+      // Prepare asset options (name-only for deposit selection)
+      const assetOptions: AssetSelectorOption[] = memolessAssets.map((asset: PoolAsset) => ({
+        asset: asset.asset
+      }));
 
-      assetSelector.disabled = false
-      console.log('✅ Asset selector populated with', memolessAssets.length, 'assets')
+      // Initialize AssetSelector
+      this.assetSelector = new AssetSelector(container as HTMLElement, {
+        id: 'deposit-asset-selector',
+        placeholder: 'Select asset to deposit',
+        displayMode: 'name-only',
+        searchable: false,  // Simple selection for deposits
+        onSelectionChange: (asset) => {
+          if (asset) {
+            this.selectAsset(asset);
+          }
+        }
+      });
+
+      await this.assetSelector.initialize(assetOptions);
+      console.log('✅ Asset selector initialized with', assetOptions.length, 'assets')
 
     } catch (error) {
       console.error('❌ Failed to load available assets:', error)
-      assetSelector.innerHTML = '<option value="">Failed to load assets</option>'
-      assetSelector.disabled = true
       
       const assetError = document.getElementById('assetError')
       if (assetError) {
@@ -2521,5 +2520,17 @@ export class MemolessTab {
       this.validationRefreshInterval = null
       console.log('⏹️ Stopped validation refresh timer')
     }
+  }
+
+  /**
+   * Cleanup method to destroy AssetSelector instance
+   */
+  destroy(): void {
+    if (this.assetSelector) {
+      this.assetSelector.destroy();
+      this.assetSelector = null;
+    }
+    this.stopValidationRefresh();
+    console.log('🧹 MemolessTab: AssetSelector instance destroyed');
   }
 }

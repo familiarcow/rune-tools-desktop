@@ -7,6 +7,7 @@
 
 import { BackendService } from '../services/BackendService'
 import { formatAmount, isValidAmount, isDustAmount } from '../../utils/assetUtils'
+import { AssetSelector, AssetSelectorOption } from './AssetSelector'
 
 export interface AssetBalance {
   asset: string
@@ -33,6 +34,7 @@ export class SendForm {
   private availableBalances: AssetBalance[] = []
   private selectedAsset: string = ''
   private validationErrors: Map<string, string> = new Map()
+  private assetSelector: AssetSelector | null = null
 
   constructor(container: HTMLElement, backend: BackendService) {
     this.container = container
@@ -103,13 +105,11 @@ export class SendForm {
         <div class="form-section">
           <div class="asset-amount-row">
             <div class="asset-column">
-              <label class="form-label" for="assetSelector">
+              <label class="form-label">
                 Asset
                 <span class="required-asterisk hidden" id="assetAsterisk">*</span>
               </label>
-              <select class="form-control" id="assetSelector">
-                <!-- Populated dynamically -->
-              </select>
+              <div id="asset-selector-component"></div>
             </div>
             
             <div class="amount-column">
@@ -146,7 +146,7 @@ export class SendForm {
       </div>
     `
 
-    this.populateAssetSelector()
+    this.initializeAssetSelector()
     this.updateBalanceInfo()
   }
 
@@ -158,9 +158,7 @@ export class SendForm {
     txTypeSend?.addEventListener('change', () => this.onTransactionTypeChange('send'))
     txTypeDeposit?.addEventListener('change', () => this.onTransactionTypeChange('deposit'))
 
-    // Asset selection change
-    const assetSelector = document.getElementById('assetSelector') as HTMLSelectElement
-    assetSelector?.addEventListener('change', () => this.onAssetChange())
+    // AssetSelector is now handled via callback in initializeAssetSelector
 
     // Amount input
     const amountInput = document.getElementById('amountInput') as HTMLInputElement
@@ -181,44 +179,42 @@ export class SendForm {
     memoInput?.addEventListener('input', () => this.onMemoChange())
   }
 
-  private populateAssetSelector(): void {
-    const selector = document.getElementById('assetSelector') as HTMLSelectElement
-    if (!selector) {
-      console.error('❌ Asset selector element not found!')
+  private initializeAssetSelector(): void {
+    const container = document.getElementById('asset-selector-component');
+    if (!container) {
+      console.error('❌ Asset selector container not found!')
       return
     }
 
-    console.log('📝 Populating asset selector with', this.availableBalances.length, 'balances')
-    console.log('Available balances:', this.availableBalances)
+    console.log('📝 Initializing asset selector with', this.availableBalances.length, 'balances')
 
-    // Clear existing options
-    selector.innerHTML = ''
+    // Prepare asset options with user balances
+    const assetOptions: AssetSelectorOption[] = this.availableBalances.map(balance => ({
+      asset: balance.asset,
+      balance: balance.balance,
+      usdValue: balance.usdValue ? parseFloat(balance.usdValue) : 0
+    }));
 
-    // Check if we have any balances
-    if (this.availableBalances.length === 0) {
-      const option = document.createElement('option')
-      option.value = ''
-      option.textContent = 'No assets available'
-      option.disabled = true
-      selector.appendChild(option)
-      console.warn('⚠️ No balances available for asset selector')
-      return
-    }
-
-    // Add assets from balances
-    this.availableBalances.forEach(balance => {
-      const option = document.createElement('option')
-      option.value = balance.asset
-      option.textContent = `${balance.asset} (${this.formatBalance(balance.balance)})`
-      
-      if (balance.asset === this.selectedAsset) {
-        option.selected = true
+    // Initialize AssetSelector
+    this.assetSelector = new AssetSelector(container as HTMLElement, {
+      id: 'send-asset-selector',
+      placeholder: 'Select asset to send',
+      displayMode: 'user-balances',
+      searchable: true,
+      onSelectionChange: (asset) => {
+        this.selectedAsset = asset || '';
+        this.onAssetChange();
       }
-      
-      selector.appendChild(option)
-    })
+    });
 
-    console.log('✅ Asset selector populated with', selector.options.length, 'options')
+    this.assetSelector.initialize(assetOptions);
+    
+    // Set initial selection if we have one
+    if (this.selectedAsset) {
+      this.assetSelector.setSelectedAsset(this.selectedAsset);
+    }
+
+    console.log('✅ Asset selector initialized with', assetOptions.length, 'options')
   }
 
   private onTransactionTypeChange(type: 'send' | 'deposit'): void {
@@ -247,10 +243,6 @@ export class SendForm {
   }
 
   private onAssetChange(): void {
-    const selector = document.getElementById('assetSelector') as HTMLSelectElement
-    if (!selector) return
-
-    this.selectedAsset = selector.value
     console.log('💰 Asset changed to:', this.selectedAsset)
 
     this.updateBalanceInfo()
@@ -527,12 +519,11 @@ export class SendForm {
 
       // Set asset selection
       if (data.asset) {
-        const assetSelector = document.getElementById('assetSelector') as HTMLSelectElement
-        if (assetSelector) {
-          assetSelector.value = data.asset
-          this.selectedAsset = data.asset
-          this.onAssetChange()
+        this.selectedAsset = data.asset
+        if (this.assetSelector) {
+          this.assetSelector.setSelectedAsset(data.asset)
         }
+        this.onAssetChange()
       }
 
       // Set amount
@@ -564,5 +555,16 @@ export class SendForm {
     } catch (error) {
       console.error('❌ Failed to apply pre-populated data:', error)
     }
+  }
+
+  /**
+   * Cleanup method to destroy AssetSelector instance
+   */
+  destroy(): void {
+    if (this.assetSelector) {
+      this.assetSelector.destroy();
+      this.assetSelector = null;
+    }
+    console.log('🧹 SendForm: AssetSelector instance destroyed');
   }
 }
