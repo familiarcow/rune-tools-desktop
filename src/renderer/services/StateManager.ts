@@ -116,6 +116,18 @@ export class StateManager {
         return this.state.settings[key]
     }
 
+    // Generic data clearer
+    clearData(key: string): void {
+        if (key in this.state) {
+            this.setState({ [key]: undefined } as Partial<AppState>)
+        } else {
+            // Remove from settings
+            const newSettings = { ...this.state.settings }
+            delete newSettings[key]
+            this.setState({ settings: newSettings })
+        }
+    }
+
     // Event listeners
     addListener(key: keyof AppState, listener: Function): void {
         if (!this.listeners.has(key)) {

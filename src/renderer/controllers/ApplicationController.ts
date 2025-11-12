@@ -288,6 +288,14 @@ export class ApplicationController {
                 this.refreshAllData()
             })
         }
+
+        // Change wallets button
+        const changeWalletsBtn = document.getElementById('change-wallets-btn')
+        if (changeWalletsBtn) {
+            changeWalletsBtn.addEventListener('click', () => {
+                this.changeWallets()
+            })
+        }
     }
 
     private showTab(tabName: string): void {
@@ -420,6 +428,104 @@ export class ApplicationController {
     }
 
     // Public methods for external control
+    async changeWallets(): Promise<void> {
+        try {
+            console.log('🔄 Changing wallets - cleaning up current session...')
+            
+            // Show confirmation dialog
+            const confirmed = confirm(
+                'Are you sure you want to change wallets?\n\n' +
+                'This will log you out of your current wallet and return to the wallet selection screen.'
+            )
+            
+            if (!confirmed) {
+                console.log('❌ User cancelled wallet change')
+                return
+            }
+            
+            // Clear current wallet session
+            await this.cleanupWalletSession()
+            
+            // Hide main application phase
+            this.ui.hideElement('main-application-phase')
+            
+            // Show wallet selection phase
+            this.ui.showElement('wallet-selection-phase')
+            
+            // Reinitialize wallet selection controller if available
+            const globalWalletController = (window as any).walletController
+            if (globalWalletController && globalWalletController.refreshWalletList) {
+                await globalWalletController.refreshWalletList()
+                console.log('✅ Wallet selection controller refreshed')
+            }
+            
+            console.log('✅ Successfully returned to wallet selection')
+            
+        } catch (error) {
+            console.error('❌ Failed to change wallets:', error)
+            this.ui.showError('Failed to change wallets: ' + (error as Error).message)
+        }
+    }
+
+    private async cleanupWalletSession(): Promise<void> {
+        try {
+            console.log('🧹 Cleaning up wallet session...')
+            
+            // Clear active wallet data
+            this.activeWallet = null
+            
+            // Clear state manager data
+            this.state.clearData('activeWallet')
+            this.state.clearData('currentSession')
+            
+            // Reset components to prevent memory leaks
+            if (this.walletTab) {
+                // No specific cleanup needed for wallet tab currently
+                this.walletTab = null
+            }
+            
+            if (this.memolessTab) {
+                // Reset memoless tab state
+                this.memolessTab = null
+            }
+            
+            if (this.swapTab) {
+                // Reset swap tab state
+                this.swapTab = null
+            }
+            
+            if (this.poolsTab) {
+                // Reset pools tab state  
+                this.poolsTab = null
+            }
+            
+            if (this.websiteTab) {
+                // Reset website tab state
+                this.websiteTab = null
+            }
+            
+            if (this.bondTab) {
+                // Reset bond tab state
+                this.bondTab = null
+            }
+            
+            if (this.headerDisplay) {
+                // Reset header display
+                this.headerDisplay = null
+            }
+            
+            // Reset application state
+            this.isInitialized = false
+            this.currentTab = 'wallet'
+            
+            console.log('✅ Wallet session cleanup completed')
+            
+        } catch (error) {
+            console.error('❌ Error during wallet session cleanup:', error)
+            // Don't re-throw, just log and continue
+        }
+    }
+
     async switchNetwork(network: 'mainnet' | 'stagenet'): Promise<void> {
         try {
             console.log(`🔄 Switching to ${network}...`)
