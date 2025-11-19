@@ -123,6 +123,8 @@ export function getAssetSymbol(asset: string): string {
 export function getAssetDenom(asset: string): string {
   if (asset === 'THOR.RUNE' || asset === 'RUNE') {
     return 'rune'
+  } else if (asset === 'THOR.TCY' || asset === 'TCY') {
+    return 'tcy'
   } else if (asset.startsWith('THOR.')) {
     return asset.toLowerCase().replace('.', '/')
   } else {

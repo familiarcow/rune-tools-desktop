@@ -3413,6 +3413,660 @@
       line-height: 1.4;
     }
 
+    /* === TCY TAB STYLES === */
+    .tcy-tab {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: var(--spacing-lg);
+    }
+
+    /* Header */
+    .tcy-header {
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-header h3 {
+      margin: 0 0 var(--spacing-sm) 0;
+      font-size: 28px;
+      color: var(--accent-primary);
+    }
+
+    .tcy-description {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    /* Loading & Error States */
+    .tcy-loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .tcy-loading-spinner {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 20px;
+      border: 3px solid var(--border-color);
+      border-top: 3px solid var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .tcy-error {
+      text-align: center;
+      padding: 40px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--error);
+      border-radius: var(--border-radius);
+      margin: var(--spacing-md) 0;
+    }
+
+    .tcy-error-content h4 {
+      color: var(--error);
+      margin: 0 0 var(--spacing-md) 0;
+    }
+
+    .tcy-error-content p {
+      color: var(--text-secondary);
+      margin: 0 0 var(--spacing-md) 0;
+    }
+
+    /* Alerts */
+    .tcy-alerts {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-alert {
+      background: rgba(255, 170, 0, 0.1);
+      border: 1px solid var(--warning);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+      color: var(--warning);
+      font-size: 14px;
+    }
+
+    /* Sections */
+    .tcy-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-section-title {
+      margin: 0 0 var(--spacing-lg) 0;
+      font-size: 20px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: var(--spacing-md);
+    }
+
+    /* Market Section */
+    .tcy-market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-market-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      text-align: center;
+    }
+
+    .tcy-market-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tcy-market-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Supply Breakdown */
+    .tcy-breakdown-title {
+      margin: 0 0 var(--spacing-md) 0;
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .tcy-supply-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-md);
+    }
+
+    .tcy-supply-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--bg-input);
+      border-radius: var(--border-radius);
+    }
+
+    .tcy-supply-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .tcy-supply-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Balance Section */
+    .tcy-balances-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-balance-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+    }
+
+    .tcy-balance-header {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .tcy-balance-icon {
+      flex-shrink: 0;
+    }
+
+    .tcy-balance-info {
+      flex: 1;
+    }
+
+    .tcy-balance-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tcy-balance-amount {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .tcy-balance-usd {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Action Buttons */
+    .tcy-actions-row {
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: center;
+    }
+
+    .tcy-action-btn {
+      min-width: 140px;
+      font-weight: 500;
+    }
+
+    /* Rewards Section */
+    .tcy-rewards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-reward-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      text-align: center;
+    }
+
+    .tcy-reward-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: var(--spacing-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tcy-reward-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent-primary);
+      margin-bottom: 2px;
+    }
+
+    .tcy-reward-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Distribution History */
+    .tcy-history-section {
+      margin-top: var(--spacing-lg);
+    }
+
+    .tcy-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .tcy-history-header h5 {
+      margin: 0;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+
+    .tcy-history-table {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+    }
+
+    .tcy-history-table .tcy-history-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: var(--bg-secondary);
+      padding: var(--spacing-md);
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tcy-history-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+
+    .tcy-history-col {
+      color: var(--text-primary);
+    }
+
+    .tcy-no-data {
+      text-align: center;
+      padding: var(--spacing-lg);
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* TCY Dialog Styles */
+    .tcy-dialog-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      backdrop-filter: blur(4px);
+    }
+
+    .tcy-dialog-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .tcy-dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tcy-dialog-header h3 {
+      margin: 0;
+      font-size: 20px;
+      color: var(--text-primary);
+    }
+
+    .tcy-dialog-close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .tcy-dialog-close-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tcy-dialog-body {
+      padding: var(--spacing-lg);
+    }
+
+    .tcy-dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--spacing-md);
+      padding: var(--spacing-lg);
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Asset Display */
+    .tcy-asset-info {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-asset-display {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+    }
+
+    .tcy-asset-logo-section {
+      flex-shrink: 0;
+    }
+
+    .tcy-asset-details {
+      flex: 1;
+    }
+
+    .tcy-asset-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .tcy-asset-balance {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* Form Elements */
+    .tcy-form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tcy-form-label {
+      display: block;
+      font-size: 14px;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+      font-weight: 500;
+    }
+
+    .tcy-form-control {
+      width: 100%;
+      padding: var(--spacing-md);
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      color: var(--text-primary);
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+
+    .tcy-form-control:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .tcy-form-control.error {
+      border-color: var(--error);
+    }
+
+    .tcy-amount-input-group {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .tcy-amount-display {
+      display: flex;
+      align-items: baseline;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md);
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+    }
+
+    .tcy-amount-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .tcy-amount-asset {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Slider */
+    .tcy-slider-group {
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .tcy-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-input);
+      outline: none;
+      appearance: none;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .tcy-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .tcy-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .tcy-slider-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .tcy-slider-value {
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    /* Transaction Preview */
+    .tcy-transaction-preview {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+    }
+
+    .tcy-preview-title {
+      margin: 0 0 var(--spacing-md) 0;
+      font-size: 14px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .tcy-preview-details {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .tcy-preview-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tcy-preview-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .tcy-preview-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      font-family: monospace;
+    }
+
+    /* Field Errors */
+    .tcy-field-error {
+      color: var(--error);
+      font-size: 12px;
+      margin-top: var(--spacing-sm);
+    }
+
+    /* Button Styles */
+    .tcy-btn {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+    }
+
+    .tcy-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tcy-btn-primary {
+      background: var(--accent-primary);
+      color: var(--text-primary);
+    }
+
+    .tcy-btn-primary:hover:not(:disabled) {
+      background: #00b8e6;
+    }
+
+    .tcy-btn-secondary {
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .tcy-btn-secondary:hover:not(:disabled) {
+      background: var(--bg-card);
+    }
+
+    .tcy-btn-text {
+      background: none;
+      color: var(--accent-primary);
+      border: none;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    .tcy-btn-text:hover:not(:disabled) {
+      color: #00b8e6;
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .tcy-tab {
+        padding: var(--spacing-md);
+      }
+
+      .tcy-market-grid,
+      .tcy-balances-grid,
+      .tcy-rewards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tcy-supply-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tcy-actions-row {
+        flex-direction: column;
+      }
+
+      .tcy-dialog-content {
+        width: 95%;
+      }
+
+      .tcy-history-table .tcy-history-header,
+      .tcy-history-row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -3838,7 +4492,7 @@
               const opacity = (1 - distance / maxDistance) * 0.35;
               
               if (opacity > 0.05) {
-                ctx.strokeStyle = \`rgba(255,255,255,\${opacity})\`;
+                ctx.strokeStyle = `rgba(255,255,255,${opacity})`; // eslint-disable-line no-template-curly-in-string
                 ctx.lineWidth = Math.max(0.5, opacity * 2);
                 ctx.beginPath();
                 ctx.moveTo(p1.x, p1.y);
@@ -4023,19 +4677,22 @@
         <!-- Tab Navigation -->
         <div class="tab-navigation">
           <button class="tab-button active" data-tab="wallet">
-            💰 Wallet
+            💼 Wallet
           </button>
           <button class="tab-button" data-tab="memoless">
-            📦 Deposit
+            📥 Deposit
           </button>
           <button class="tab-button" data-tab="swap">
-            💱 Swap
+            🔄 Swap
           </button>
           <button class="tab-button" data-tab="pools">
             💧 Pools
           </button>
           <button class="tab-button" data-tab="bond">
             🏦 Bond
+          </button>
+          <button class="tab-button" data-tab="tcy">
+            🏦 TCY
           </button>
           <button class="tab-button" data-tab="website">
             🛠️ Tools
@@ -4073,6 +4730,11 @@
           <!-- Bond Tab -->
           <div id="bond-tab-content" class="tab-content hidden">
             <!-- BondTab component will be mounted here -->
+          </div>
+          
+          <!-- TCY Tab -->
+          <div id="tcy-tab-content" class="tab-content hidden">
+            <!-- TcyTab component will be mounted here -->
           </div>
           
           <!-- Tools Tab -->
@@ -4235,6 +4897,13 @@
     
     <!-- Withdraw Dialog Container -->
     <div id="withdraw-dialog-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center;">
+    </div>
+
+    <!-- TCY Dialog Containers -->
+    <div id="stake-dialog-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center;">
+    </div>
+    
+    <div id="unstake-dialog-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center;">
     </div>
   </div>
 

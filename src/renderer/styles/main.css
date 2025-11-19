@@ -1797,19 +1797,12 @@ body {
   line-height: 1.4;
 }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .two-column-layout {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .final-amount-primary {
-    font-size: 24px;
-  }
-  
-  .qr-box {
-    width: 150px;
-    height: 150px;
-  }
+/* Tab Icon Styling */
+.tab-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: text-bottom;
+  display: inline-block;
+  flex-shrink: 0;
 }

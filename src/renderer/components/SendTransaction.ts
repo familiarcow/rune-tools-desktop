@@ -512,16 +512,36 @@ export class SendTransaction {
   }
 
   private show(): void {
+    console.log('👁️ SendTransaction show() called')
     const overlay = document.getElementById('sendPopupOverlay')
+    console.log('👁️ Overlay element found:', !!overlay)
     if (overlay) {
+      console.log('👁️ Overlay current style.display:', overlay.style.display)
+      console.log('👁️ Overlay current classes:', overlay.className)
+      
       // If already displayed, just ensure active class is present
       if (overlay.style.display === 'flex') {
         overlay.classList.add('active')
+        console.log('👁️ Added active class to existing flex overlay')
       } else {
         overlay.style.display = 'flex'
+        console.log('👁️ Set overlay display to flex')
         // Add active class for CSS animation after display is set
-        setTimeout(() => overlay.classList.add('active'), 10)
+        setTimeout(() => {
+          overlay.classList.add('active')
+          console.log('👁️ Added active class after timeout')
+          console.log('👁️ Final overlay computed styles:', {
+            display: window.getComputedStyle(overlay).display,
+            opacity: window.getComputedStyle(overlay).opacity,
+            zIndex: window.getComputedStyle(overlay).zIndex,
+            position: window.getComputedStyle(overlay).position,
+            visibility: window.getComputedStyle(overlay).visibility
+          })
+          console.log('👁️ Overlay bounding rect:', overlay.getBoundingClientRect())
+        }, 10)
       }
+    } else {
+      console.error('❌ sendPopupOverlay element not found!')
     }
   }
 

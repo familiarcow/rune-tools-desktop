@@ -17,6 +17,7 @@ import { SwapTab } from '../components/SwapTab'
 import { PoolsTab } from '../components/PoolsTab'
 import { WebsiteTab } from '../components/WebsiteTab'
 import { BondTab } from '../components/BondTab'
+import { TcyTab } from '../components/TcyTab'
 import { HeaderDisplay } from '../components/HeaderDisplay'
 
 export interface ActiveWallet {
@@ -47,6 +48,7 @@ export class ApplicationController {
     private poolsTab: PoolsTab | null = null
     private websiteTab: WebsiteTab | null = null
     private bondTab: BondTab | null = null
+    private tcyTab: TcyTab | null = null
     private headerDisplay: HeaderDisplay | null = null
     private isInitialized: boolean = false
 
@@ -84,6 +86,9 @@ export class ApplicationController {
             
             // Initialize bond tab
             await this.initializeBondTab()
+            
+            // Initialize TCY tab
+            await this.initializeTcyTab()
             
             // Setup tab navigation
             this.setupTabNavigation()
@@ -255,6 +260,27 @@ export class ApplicationController {
             })
     }
 
+    private async initializeTcyTab(): Promise<void> {
+        const tcyTabContainer = document.getElementById('tcy-tab-content')
+        if (!tcyTabContainer) {
+            console.error('❌ TCY tab container not found')
+            return
+        }
+
+        this.tcyTab = new TcyTab(tcyTabContainer, this.backend)
+    }
+
+    private initializeTcyTabContent(): void {
+        if (!this.tcyTab || !this.activeWallet) return
+        
+        // Initialize TCY tab with current wallet data
+        this.tcyTab.initialize(this.activeWallet, this.currentNetwork)
+            .catch(error => {
+                console.error('❌ Failed to initialize TCY tab content:', error)
+                this.ui.showError('Failed to load TCY functionality')
+            })
+    }
+
     private setupTabNavigation(): void {
         // Tab buttons
         const tabButtons = document.querySelectorAll('[data-tab]')
@@ -336,6 +362,8 @@ export class ApplicationController {
             this.initializeWebsiteTabContent()
         } else if (tabName === 'bond') {
             this.initializeBondTabContent()
+        } else if (tabName === 'tcy') {
+            this.initializeTcyTabContent()
         }
 
         this.currentTab = tabName
@@ -509,6 +537,11 @@ export class ApplicationController {
                 this.bondTab = null
             }
             
+            if (this.tcyTab) {
+                // Reset TCY tab state
+                this.tcyTab = null
+            }
+            
             if (this.headerDisplay) {
                 // Reset header display
                 this.headerDisplay = null
@@ -586,6 +619,11 @@ export class ApplicationController {
             // Update bond tab if active
             if (this.bondTab && this.activeWallet) {
                 updatePromises.push(this.bondTab.updateNetwork(network, this.activeWallet))
+            }
+            
+            // Update TCY tab if active
+            if (this.tcyTab && this.activeWallet && this.currentTab === 'tcy') {
+                this.initializeTcyTabContent() // Re-initialize with new network
             }
             
             // Wait for all component updates

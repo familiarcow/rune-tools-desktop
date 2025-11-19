@@ -30,7 +30,7 @@ Staking & Unstaking
     - User should input the amount they want to stake. Maximum their total TCY wallet balance
     - Initiate a MsgDeposit, skip to Page 2
         - Memo: "TCY+"
-        - Asset: TCY
+        - Asset: THOR.TCY
         - Amount: Amount the user wants to stake
         - Make sure we are using the proper asset name & amount syntax for the MsgDeposit
 - Add an "Unstake" button to unstake TCY to transfer staked TCY back to your wallet balance
@@ -42,7 +42,7 @@ Staking & Unstaking
     - Initiate a MsgDeposit with RUNE as the asset
         - Amount: 0
         - Memo: `TCY-:{WITHDRAWALBASISPOINTS}`
-        - Asset: RUNE
+        - Asset: THOR.RUNE
 
 
 
@@ -96,12 +96,12 @@ Determine the next TCY distribution:
 - Endpoint:
     - Mainnet: https://rpc.ninerealms.com/status
     - Stagenet: https://stagenet-rpc.ninerealms.com/status
-- get latest thorchain block height: `sync_info.latest_bloick_height`
+- get latest thorchain block height: `sync_info.latest_block_height`
 - Example:
 ```
  try {
       // Get current block height
-      const statusResponse = await fetchJSON("https://rpc-v2.ninerealms.com/status");
+      const statusResponse = await fetchJSON("https://rpc.ninerealms.com/status");
       const currentBlock = Number(statusResponse.result.sync_info.latest_block_height);
       console.log('Current block:', currentBlock);
       
@@ -179,6 +179,9 @@ Determine the next TCY distribution:
 - TCY market cap 
 - TCY vs RUNE market cap percentage
 - Total supply breakdown (staked vs unstaked vs pooled)
+    - Staked: From `/thorchain/tcy_staker/{address}` (sum all stakers)
+    - Unstaked: From `/cosmos/bank/v1beta1/balances` (sum all wallets) 
+    - Pooled: From `/thorchain/pools` THOR.TCY `balance_asset/1e8`
 
 **Section 2 - Balances & Actions (Always shown):**
 - **Balances row:** Staked TCY | Unstaked TCY | Unstaked RUNE (amounts + USD values)
@@ -221,6 +224,242 @@ Determine the next TCY distribution:
 - Loading states during calculations
 - Asset logos with error handling
 - Smooth animations for show/hide (following RULES.md #6)
+
+## Stake & Unstake Flow Design
+
+Based on analysis of existing MsgDeposit patterns in the codebase, here's the detailed implementation design:
+
+### Flow Pattern Analysis
+
+**Three MsgDeposit patterns found:**
+1. **WithdrawDialog Pattern** (`WalletTab.ts:1105-1140`) - Popup → Form validation → Callback → SendTransaction
+2. **SwapTab Pattern** (`SwapTab.ts:673-679`) - Direct SendTransaction call with pre-populated data  
+3. **BondTab Pattern** (`BondTab.ts:518-741`) - Custom modal → Amount input → Direct SendTransaction
+
+**Common SendTransaction Integration:**
+- Container: `#global-overlay-container`
+- Pre-populated data structure:
+```typescript
+{
+    transactionType: 'deposit',
+    asset: string,              // e.g., 'THOR.TCY', 'THOR.RUNE'
+    amount: string,             // User-friendly amount (not base units)
+    memo: string,               // Specific memo format
+    skipToConfirmation: true    // Skip to confirmation step
+}
+```
+
+### TCY Stake Flow Implementation
+
+**StakeDialog Component Structure:**
+```typescript
+// File: src/renderer/components/StakeDialog.ts
+export interface StakeDialogData {
+    unstakedTcyBalance: string
+    walletAddress: string
+    network: 'mainnet' | 'stagenet'
+}
+
+export interface StakeFormData {
+    amount: string
+}
+
+export interface StakeCallback {
+    (data: StakeFormData): void
+}
+
+class StakeDialog {
+    show(stakeData: StakeDialogData, callback: StakeCallback): void
+    hide(): void
+    private render(): void  // Shows TCY balance, amount input, MAX button
+    private validateAmount(): boolean  // Amount > 0 and <= unstaked balance
+    private handleConfirm(): void  // Calls callback with validated data
+}
+```
+
+**Integration with SendTransaction:**
+```typescript
+// In TCY Tab component
+private handleStakeConfirmed(stakeData: StakeFormData): void {
+    const prePopulatedData = {
+        transactionType: 'deposit',
+        asset: 'THOR.TCY',
+        amount: stakeData.amount,           // User-friendly amount
+        memo: 'TCY+',
+        skipToConfirmation: true
+    }
+    
+    this.openSendModalWithData(prePopulatedData)
+}
+```
+
+### TCY Unstake Flow Implementation
+
+**UnstakeDialog Component Structure:**
+```typescript
+// File: src/renderer/components/UnstakeDialog.ts
+export interface UnstakeDialogData {
+    stakedTcyBalance: string
+    walletAddress: string
+    network: 'mainnet' | 'stagenet'
+}
+
+export interface UnstakeFormData {
+    percentage: number          // 0-100 percentage
+    tcyAmount: string          // Calculated TCY amount being unstaked
+    basisPoints: number        // Percentage in basis points (0-10000)
+}
+
+export interface UnstakeCallback {
+    (data: UnstakeFormData): void
+}
+
+class UnstakeDialog {
+    show(unstakeData: UnstakeDialogData, callback: UnstakeCallback): void
+    hide(): void
+    private render(): void  // Shows staked balance, percentage slider
+    private calculateUnstakeAmount(): void  // Real-time calculation
+    private validatePercentage(): boolean   // Percentage >= 0.01% and <= 100%
+    private handleConfirm(): void  // Calls callback with calculated data
+}
+```
+
+**Integration with SendTransaction:**
+```typescript
+// In TCY Tab component
+private handleUnstakeConfirmed(unstakeData: UnstakeFormData): void {
+    const prePopulatedData = {
+        transactionType: 'deposit',
+        asset: 'THOR.RUNE',
+        amount: '0',                            // Always 0 for unstaking
+        memo: `TCY-:${unstakeData.basisPoints}`, // e.g., "TCY-:10000" for 100%
+        skipToConfirmation: true
+    }
+    
+    this.openSendModalWithData(prePopulatedData)
+}
+```
+
+### Dialog Integration in TCY Tab
+
+**Required Imports:**
+```typescript
+import { StakeDialog, StakeDialogData, StakeFormData } from './StakeDialog'
+import { UnstakeDialog, UnstakeDialogData, UnstakeFormData } from './UnstakeDialog'
+import { SendTransaction, SendTransactionData, AssetBalance as SendAssetBalance } from './SendTransaction'
+```
+
+**Following WithdrawDialog pattern:**
+```typescript
+// In TCY Tab constructor
+const stakeContainer = document.getElementById('global-overlay-container')
+if (stakeContainer) {
+    this.stakeDialog = new StakeDialog(stakeContainer, this.backend)
+    this.unstakeDialog = new UnstakeDialog(stakeContainer, this.backend)
+}
+
+// Stake button handler
+private showStakeDialog(): void {
+    if (!this.stakeDialog || !this.tcyData) return
+    
+    const stakeData: StakeDialogData = {
+        unstakedTcyBalance: this.tcyData.unstakedTcyBalance,
+        walletAddress: this.tcyData.address,
+        network: this.tcyData.network
+    }
+    
+    this.stakeDialog.show(stakeData, (formData: StakeFormData) => {
+        this.handleStakeConfirmed(formData)
+    })
+}
+
+// Unstake button handler  
+private showUnstakeDialog(): void {
+    if (!this.unstakeDialog || !this.tcyData) return
+    
+    const unstakeData: UnstakeDialogData = {
+        stakedTcyBalance: this.tcyData.stakedTcyBalance,
+        walletAddress: this.tcyData.address,
+        network: this.tcyData.network
+    }
+    
+    this.unstakeDialog.show(unstakeData, (formData: UnstakeFormData) => {
+        this.handleUnstakeConfirmed(formData)
+    })
+}
+```
+
+### SendTransaction Modal Integration
+
+**Shared openSendModalWithData method:**
+```typescript
+private openSendModalWithData(prePopulatedData: any): void {
+    const dialogContainer = document.getElementById('global-overlay-container')
+    if (!dialogContainer) {
+        console.error('❌ Global overlay container not found')
+        return
+    }
+    
+    if (!this.sendTransaction) {
+        this.sendTransaction = new SendTransaction(dialogContainer, this.backend)
+    }
+    
+    const sendWalletData: SendTransactionData = {
+        walletId: this.tcyData.walletId,
+        name: this.tcyData.name,
+        currentAddress: this.tcyData.address,
+        network: this.tcyData.network,
+        availableBalances: this.formatBalancesForSend()
+    }
+    
+    this.sendTransaction.initialize(sendWalletData, {
+        onSuccess: (result) => {
+            console.log('📤 TCY transaction completed:', result)
+            this.refreshData()  // Refresh TCY data after transaction
+        },
+        onClose: () => {
+            console.log('🔄 TCY dialog closed')
+        }
+    }, prePopulatedData)
+}
+```
+
+This design follows the established patterns while providing TCY-specific functionality for both staking (TCY+ memo) and unstaking (TCY-:basisPoints memo with percentage slider).
+
+### Implementation Requirements & Validation
+
+**Stake Dialog Validation:**
+- Amount must be > 0
+- Amount must be <= unstaked TCY balance  
+- Amount must be valid number format
+- Check for TCY staking halt via mimir before allowing transaction
+
+**Unstake Dialog Validation:**
+- Percentage must be >= 0.01% (1 basis point)
+- Percentage must be <= 100% (10000 basis points)
+- Must have staked TCY balance > 0
+- Check for TCY unstaking halt via mimir before allowing transaction
+
+**Basis Points Conversion:**
+```typescript
+// Convert percentage to basis points (0.01% = 1 basis point)
+const basisPoints = Math.round(percentage * 100)
+
+// Examples:
+// 100% = 10000 basis points
+// 50% = 5000 basis points  
+// 0.01% = 1 basis point
+```
+
+**Asset Logo Paths:**
+- TCY: `/coins/TCY.svg` (ensure this file exists)
+- RUNE: `/coins/RUNE-ICON.svg` (verify existing path)
+
+**Error Handling:**
+- Handle network errors gracefully
+- Display mimir halt states prominently
+- Validate all user inputs before sending to SendTransaction
+- Show loading states during API calls
 
 ## Legacy TCY App:
 ```
@@ -575,7 +814,7 @@ Determine the next TCY distribution:
   const calculateNextDistribution = async () => {
     try {
       // Get current block height
-      const statusResponse = await fetchJSON("https://rpc-v2.ninerealms.com/status");
+      const statusResponse = await fetchJSON("https://rpc.ninerealms.com/status");
       const currentBlock = Number(statusResponse.result.sync_info.latest_block_height);
       console.log('Current block:', currentBlock);
       
