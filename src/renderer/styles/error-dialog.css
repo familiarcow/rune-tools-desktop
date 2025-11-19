@@ -1,0 +1,64 @@
+/* Error Dialog Component Styles */
+/* Scoped to .error-dialog-* to avoid conflicts */
+
+.error-dialog-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--error, #ff4444);
+  color: white;
+  padding: 24px;
+  border-radius: 8px;
+  z-index: 9999;
+  font-family: system-ui;
+  text-align: center;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.error-dialog-title {
+  margin-top: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.error-dialog-message {
+  margin: 16px 0;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.error-dialog-details {
+  opacity: 0.8;
+  font-family: monospace;
+  font-size: 0.85rem;
+  margin: 12px 0;
+  word-break: break-word;
+}
+
+.error-dialog-reload-btn {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+}
+
+.error-dialog-reload-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.error-dialog-critical {
+  background: #ff4444;
+}
+
+.error-dialog-critical .error-dialog-title {
+  font-size: 1rem;
+  font-weight: bold;
+}

@@ -226,7 +226,7 @@
 }
 
 .tcy-balance-amount-with-logo img {
-  vertical-align: middle;
+  vertical-align: baseline;
 }
 
 .tcy-balance-usd {

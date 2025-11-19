@@ -114,31 +114,12 @@ export class UnstakeDialog {
                                     <span class="tcy-amount-asset">TCY</span>
                                 </div>
                             </div>
-
-                            <!-- Transaction Preview -->
-                            <div class="tcy-transaction-preview">
-                                <h4 class="tcy-preview-title">Transaction Preview</h4>
-                                <div class="tcy-preview-details">
-                                    <div class="tcy-preview-row">
-                                        <span class="tcy-preview-label">Asset:</span>
-                                        <span class="tcy-preview-value">THOR.RUNE</span>
-                                    </div>
-                                    <div class="tcy-preview-row">
-                                        <span class="tcy-preview-label">Amount:</span>
-                                        <span class="tcy-preview-value">0</span>
-                                    </div>
-                                    <div class="tcy-preview-row">
-                                        <span class="tcy-preview-label">Memo:</span>
-                                        <span class="tcy-preview-value" id="previewMemo">TCY-:10000</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
                     <div class="tcy-dialog-footer">
                         <button class="tcy-btn tcy-btn-secondary" id="cancelUnstakeBtn">Cancel</button>
-                        <button class="tcy-btn tcy-btn-primary" id="confirmUnstakeBtn" disabled>
+                        <button class="tcy-btn tcy-btn-primary" id="confirmUnstakeBtn">
                             Continue to Transaction
                         </button>
                     </div>

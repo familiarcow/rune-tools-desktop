@@ -10,6 +10,8 @@
 
 import { BackendService } from '../services/BackendService'
 import { IdenticonService } from '../../services/IdenticonService'
+import { AssetService } from '../../services/assetService'
+import '../styles/header-display.css'
 
 export interface HeaderData {
     walletName: string
@@ -17,6 +19,8 @@ export interface HeaderData {
     network: 'mainnet' | 'stagenet'
     networkStatus: 'connected' | 'connecting' | 'disconnected'
     nodeInfo?: any
+    runePrice?: number
+    tcyPrice?: number
 }
 
 export class HeaderDisplay {
@@ -48,6 +52,9 @@ export class HeaderDisplay {
             // Load network info
             await this.loadNetworkInfo()
             
+            // Load price data
+            await this.loadPriceData()
+            
             // Start periodic status updates
             this.startStatusUpdates()
             
@@ -73,6 +80,18 @@ export class HeaderDisplay {
                             <span class="status-indicator ${this.headerData.networkStatus}"></span>
                             <span class="status-text">${this.getStatusText()}</span>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Price Display -->
+                <div class="header-display-prices">
+                    <div class="header-display-price-item">
+                        <div class="header-display-price-icon">${AssetService.GetLogoWithChain('THOR.RUNE', 16)}</div>
+                        <span class="header-display-price-value" id="header-rune-price">$0.00</span>
+                    </div>
+                    <div class="header-display-price-item">
+                        <div class="header-display-price-icon">${AssetService.GetLogoWithChain('THOR.TCY', 19)}</div>
+                        <span class="header-display-price-value" id="header-tcy-price">$0.00</span>
                     </div>
                 </div>
 
@@ -231,6 +250,96 @@ export class HeaderDisplay {
         }, 60000)
     }
 
+    private async loadPriceData(): Promise<void> {
+        if (!this.headerData) return
+
+        try {
+            console.log('💰 Loading price data...')
+            
+            // Fetch RUNE and TCY prices
+            const [runePrice, tcyPrice] = await Promise.allSettled([
+                this.fetchRunePrice(),
+                this.fetchTcyPrice()
+            ])
+            
+            if (runePrice.status === 'fulfilled') {
+                this.headerData.runePrice = runePrice.value
+            } else {
+                this.headerData.runePrice = 0
+            }
+            
+            if (tcyPrice.status === 'fulfilled') {
+                this.headerData.tcyPrice = tcyPrice.value
+            } else {
+                this.headerData.tcyPrice = 0
+            }
+            
+            this.updatePriceDisplay()
+            
+        } catch (error) {
+            console.error('❌ Error loading price data:', error)
+        }
+    }
+    
+    private async fetchRunePrice(): Promise<number> {
+        try {
+            // Get RUNE price from /network endpoint via backend
+            const network = await this.backend.getThorchainNetwork()
+            if (network && network.rune_price_in_tor) {
+                // Convert from TOR base units to USD by dividing by 1e8
+                const runePriceUsd = parseFloat(network.rune_price_in_tor) / 1e8
+                console.log('💰 RUNE price from network:', runePriceUsd)
+                return runePriceUsd
+            }
+            return 0
+        } catch (error) {
+            console.log('💰 Error fetching RUNE price:', error)
+            return 0
+        }
+    }
+    
+    private async fetchTcyPrice(): Promise<number> {
+        try {
+            const baseUrl = this.headerData?.network === 'mainnet' 
+                ? 'https://thornode.ninerealms.com'
+                : 'https://stagenet-thornode.ninerealms.com'
+                
+            // Fetch TCY price from pools endpoint
+            const poolsResponse = await fetch(`${baseUrl}/thorchain/pools`)
+            if (poolsResponse.ok) {
+                const pools = await poolsResponse.json()
+                const tcyPool = pools.find((pool: any) => pool.asset === 'THOR.TCY')
+                
+                if (tcyPool && tcyPool.asset_tor_price) {
+                    const tcyPriceUsd = Number(tcyPool.asset_tor_price) / 1e8
+                    console.log('💰 TCY price from pools:', tcyPriceUsd)
+                    return tcyPriceUsd
+                }
+            }
+            
+            return 0
+        } catch (error) {
+            console.log('💰 Error fetching TCY price:', error)
+            return 0
+        }
+    }
+    
+    private updatePriceDisplay(): void {
+        if (!this.headerData) return
+        
+        // Update RUNE price display
+        const runePriceEl = this.container.querySelector('#header-rune-price')
+        if (runePriceEl && this.headerData.runePrice !== undefined) {
+            runePriceEl.textContent = `$${this.headerData.runePrice.toFixed(2)}`
+        }
+        
+        // Update TCY price display  
+        const tcyPriceEl = this.container.querySelector('#header-tcy-price')
+        if (tcyPriceEl && this.headerData.tcyPrice !== undefined) {
+            tcyPriceEl.textContent = `$${this.headerData.tcyPrice.toFixed(2)}`
+        }
+    }
+
     // Event handlers
     private showWalletMenu(): void {
         // Create a simple dropdown menu
@@ -345,6 +454,7 @@ export class HeaderDisplay {
     // Public methods
     async refreshStatus(): Promise<void> {
         await this.loadNetworkInfo()
+        await this.loadPriceData()
     }
 
     async updateNetwork(network: 'mainnet' | 'stagenet'): Promise<void> {
@@ -365,8 +475,9 @@ export class HeaderDisplay {
         // Update connection status to show connecting
         this.updateConnectionStatus()
 
-        // Refresh network info for new network
+        // Refresh network info and prices for new network
         await this.loadNetworkInfo()
+        await this.loadPriceData()
 
         console.log('✅ HeaderDisplay network updated to:', network)
     }

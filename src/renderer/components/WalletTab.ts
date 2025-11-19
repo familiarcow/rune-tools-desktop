@@ -37,7 +37,9 @@ export interface AssetBalance {
 export interface PortfolioSummary {
     walletUsdValue: number  // Renamed from totalUsdValue
     bondUsdValue: number    // New: Total bond value in USD
-    totalUsdValue: number   // New: Combined wallet + bond value
+    tcyUsdValue: number     // New: Total TCY staking value in USD
+    lpUsdValue: number      // New: Total LP value in USD  
+    totalUsdValue: number   // New: Combined wallet + bond + tcy + lp value
     thorNativeValue: number
     securedValue: number
     tradeValue: number
@@ -87,6 +89,8 @@ export class WalletTab {
                 portfolioSummary: {
                     walletUsdValue: 0,
                     bondUsdValue: 0,
+                    tcyUsdValue: 0,
+                    lpUsdValue: 0,
                     totalUsdValue: 0,
                     thorNativeValue: 0,
                     securedValue: 0,
@@ -135,13 +139,25 @@ export class WalletTab {
                         <div class="wallet-portfolio-value-amount" id="total-usd-value">$0.00</div>
                     </div>
                     <div class="wallet-portfolio-breakdown">
-                        <div class="portfolio-item">
-                            <span class="portfolio-item-label">Wallet:</span>
-                            <span class="portfolio-item-value" id="wallet-usd-value">$0.00</span>
+                        <div class="portfolio-column">
+                            <div class="portfolio-item">
+                                <span class="portfolio-item-label">Wallet:</span>
+                                <span class="portfolio-item-value" id="wallet-usd-value">$0.00</span>
+                            </div>
+                            <div class="portfolio-item">
+                                <span class="portfolio-item-label">Bond:</span>
+                                <span class="portfolio-item-value" id="bond-usd-value">$0.00</span>
+                            </div>
                         </div>
-                        <div class="portfolio-item">
-                            <span class="portfolio-item-label">Bond:</span>
-                            <span class="portfolio-item-value" id="bond-usd-value">$0.00</span>
+                        <div class="portfolio-column">
+                            <div class="portfolio-item">
+                                <span class="portfolio-item-label">TCY:</span>
+                                <span class="portfolio-item-value" id="tcy-usd-value">$0.00</span>
+                            </div>
+                            <div class="portfolio-item">
+                                <span class="portfolio-item-label">LP:</span>
+                                <span class="portfolio-item-value" id="lp-usd-value">$0.00</span>
+                            </div>
                         </div>
                     </div>
                     <div class="wallet-portfolio-actions">
@@ -313,6 +329,12 @@ export class WalletTab {
             // Process bond data
             await this.processBondData(bondData)
             
+            // Process TCY data
+            await this.processTcyData()
+            
+            // Set LP balance placeholder (will be implemented later)
+            this.walletData.portfolioSummary.lpUsdValue = 0
+            
             // Update UI
             this.updatePortfolioSummary()
             this.updateAssetTiers()
@@ -416,8 +438,87 @@ export class WalletTab {
         }
 
         this.walletData.portfolioSummary.bondUsdValue = bondUsdValue
-        this.walletData.portfolioSummary.totalUsdValue = 
-            this.walletData.portfolioSummary.walletUsdValue + bondUsdValue
+        // Note: totalUsdValue will be calculated in updatePortfolioSummary() to include all components
+    }
+
+    private async processTcyData(): Promise<void> {
+        if (!this.walletData) return
+        
+        console.log('🏦 Loading TCY staking data for', this.walletData.address)
+        
+        try {
+            // Get TCY staking balance and prices
+            const [stakedBalance, tcyPrice] = await Promise.allSettled([
+                this.fetchTcyStakedBalance(),
+                this.fetchTcyPrice()
+            ])
+            
+            let tcyUsdValue = 0
+            
+            if (stakedBalance.status === 'fulfilled' && tcyPrice.status === 'fulfilled') {
+                const stakedAmount = parseFloat(stakedBalance.value)
+                const price = tcyPrice.value
+                
+                tcyUsdValue = stakedAmount * price
+                console.log('🏦 TCY Staking:', { stakedAmount, price, usdValue: tcyUsdValue })
+            } else {
+                console.log('ℹ️ No TCY staking data available or price unavailable')
+            }
+            
+            this.walletData.portfolioSummary.tcyUsdValue = tcyUsdValue
+            
+        } catch (error) {
+            console.error('❌ Error loading TCY data:', error)
+            this.walletData.portfolioSummary.tcyUsdValue = 0
+        }
+    }
+    
+    private async fetchTcyStakedBalance(): Promise<string> {
+        if (!this.walletData) return '0'
+        
+        const baseUrl = this.walletData.network === 'mainnet' 
+            ? 'https://thornode.ninerealms.com'
+            : 'https://stagenet-thornode.ninerealms.com'
+            
+        try {
+            const response = await fetch(`${baseUrl}/thorchain/tcy_staker/${this.walletData.address}`)
+            if (response.ok) {
+                const data = await response.json()
+                if (data && data.amount) {
+                    return (Number(data.amount) / 1e8).toString()
+                }
+            }
+        } catch (error) {
+            console.log('🏦 Error fetching TCY staked balance:', error)
+        }
+        
+        return '0'
+    }
+    
+    private async fetchTcyPrice(): Promise<number> {
+        try {
+            const baseUrl = this.walletData?.network === 'mainnet' 
+                ? 'https://thornode.ninerealms.com'
+                : 'https://stagenet-thornode.ninerealms.com'
+                
+            // Fetch TCY price from pools endpoint
+            const poolsResponse = await fetch(`${baseUrl}/thorchain/pools`)
+            if (poolsResponse.ok) {
+                const pools = await poolsResponse.json()
+                const tcyPool = pools.find((pool: any) => pool.asset === 'THOR.TCY')
+                
+                if (tcyPool && tcyPool.asset_tor_price) {
+                    const tcyPriceUsd = Number(tcyPool.asset_tor_price) / 1e8
+                    console.log('💰 TCY price from pools:', tcyPriceUsd)
+                    return tcyPriceUsd
+                }
+            }
+            
+            return 0
+        } catch (error) {
+            console.log('💰 Error fetching TCY price:', error)
+            return 0
+        }
     }
 
     private async getRunePrice(): Promise<number> {
@@ -731,10 +832,28 @@ export class WalletTab {
             bondValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.bondUsdValue)
         }
 
-        // Update total portfolio value
+        // Update TCY value
+        const tcyValueEl = this.container.querySelector('#tcy-usd-value')
+        if (tcyValueEl) {
+            tcyValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.tcyUsdValue)
+        }
+
+        // Update LP value
+        const lpValueEl = this.container.querySelector('#lp-usd-value')
+        if (lpValueEl) {
+            lpValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.lpUsdValue)
+        }
+
+        // Update total portfolio value (sum of all components)
+        const totalValue = this.walletData.portfolioSummary.walletUsdValue + 
+                          this.walletData.portfolioSummary.bondUsdValue +
+                          this.walletData.portfolioSummary.tcyUsdValue +
+                          this.walletData.portfolioSummary.lpUsdValue
+        this.walletData.portfolioSummary.totalUsdValue = totalValue
+        
         const totalValueEl = this.container.querySelector('#total-usd-value')
         if (totalValueEl) {
-            totalValueEl.textContent = this.formatUsd(this.walletData.portfolioSummary.totalUsdValue)
+            totalValueEl.textContent = this.formatUsd(totalValue)
         }
 
         const changeEl = this.container.querySelector('#value-change-24h')
@@ -972,6 +1091,8 @@ export class WalletTab {
         this.walletData.portfolioSummary = {
             walletUsdValue: 0,
             bondUsdValue: 0,
+            tcyUsdValue: 0,
+            lpUsdValue: 0,
             totalUsdValue: 0,
             thorNativeValue: 0,
             securedValue: 0,

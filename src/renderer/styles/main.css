@@ -1796,13 +1796,3 @@ body {
   font-size: 13px;
   line-height: 1.4;
 }
-
-/* Tab Icon Styling */
-.tab-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  vertical-align: text-bottom;
-  display: inline-block;
-  flex-shrink: 0;
-}

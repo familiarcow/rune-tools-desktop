@@ -1,6 +1,52 @@
 /* Wallet Portfolio Component Styles */
 /* Scoped to .wallet-portfolio-* to avoid conflicts */
 
+/* Portfolio Header Section */
+.wallet-portfolio-header-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.wallet-portfolio-prices {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.portfolio-price-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.portfolio-price-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.portfolio-price-value {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary, #ccc);
+}
+
+/* Portfolio Breakdown Columns */
+.wallet-portfolio-breakdown {
+    display: flex;
+    gap: 24px;
+    justify-content: space-between;
+}
+
+.portfolio-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .wallet-portfolio-compact {
     display: flex;
     align-items: center;
@@ -102,7 +148,7 @@
 .wallet-portfolio-actions {
     display: flex;
     gap: 8px;
-    margin-left: 12px;
+    margin-left: 32px;
 }
 }
 

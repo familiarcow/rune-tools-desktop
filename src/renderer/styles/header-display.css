@@ -1,0 +1,50 @@
+/* Header Display Component Styles */
+/* Scoped to .header-display-* to avoid conflicts */
+
+/* Header Price Display */
+.header-display-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.header-display-price-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-display-price-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.header-display-price-icon img {
+  vertical-align: baseline;
+  margin-top: 1px;
+}
+
+.header-display-price-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #ccc);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .header-display-prices {
+    gap: 2px;
+  }
+  
+  .header-display-price-item {
+    gap: 4px;
+  }
+  
+  .header-display-price-value {
+    font-size: 0.7rem;
+  }
+}

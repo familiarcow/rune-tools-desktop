@@ -14,6 +14,7 @@ import { Buffer } from 'buffer'
 import './styles/password-input.css'
 import './styles/pools-tab.css'
 import './styles/wallet-selection-improved.css'
+import './styles/error-dialog.css'
 
 // Component imports
 import { splashScreen } from './components/SplashScreen'
@@ -132,35 +133,13 @@ class RuneToolsApplication {
     private showFatalError(error: Error): void {
         const errorDiv = document.createElement('div')
         errorDiv.innerHTML = `
-            <div style="
-                position: fixed; 
-                top: 50%; 
-                left: 50%; 
-                transform: translate(-50%, -50%);
-                background: var(--error, #ff4444); 
-                color: white; 
-                padding: 24px; 
-                border-radius: 8px; 
-                z-index: 9999;
-                font-family: system-ui;
-                text-align: center;
-                max-width: 500px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            ">
-                <h3 style="margin-top: 0;">⚠️ Application Error</h3>
-                <p>Failed to initialize Rune Tools</p>
-                <small style="opacity: 0.8; font-family: monospace;">
+            <div class="error-dialog-overlay">
+                <h3 class="error-dialog-title">⚠️ Application Error</h3>
+                <p class="error-dialog-message">Failed to initialize Rune Tools</p>
+                <small class="error-dialog-details">
                     ${error.message}
                 </small>
-                <br><br>
-                <button onclick="location.reload()" style="
-                    padding: 8px 16px; 
-                    background: rgba(255,255,255,0.2); 
-                    border: none; 
-                    border-radius: 4px; 
-                    color: white; 
-                    cursor: pointer;
-                ">
+                <button onclick="location.reload()" class="error-dialog-reload-btn">
                     Reload Application
                 </button>
             </div>
@@ -200,31 +179,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const errorDiv = document.createElement('div')
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         errorDiv.innerHTML = `
-            <div style="
-                position: fixed; 
-                top: 50%; 
-                left: 50%; 
-                transform: translate(-50%, -50%);
-                background: #ff4444; 
-                color: white; 
-                padding: 24px; 
-                border-radius: 8px; 
-                z-index: 9999;
-                font-family: system-ui;
-                text-align: center;
-                max-width: 500px;
-            ">
-                <strong>⚠️ Critical Error</strong><br>
-                Application failed to start<br>
-                <small>Error: ${errorMessage}</small><br><br>
-                <button onclick="location.reload()" style="
-                    padding: 8px 16px; 
-                    background: rgba(255,255,255,0.2); 
-                    border: none; 
-                    border-radius: 4px; 
-                    color: white; 
-                    cursor: pointer;
-                ">
+            <div class="error-dialog-overlay error-dialog-critical">
+                <div class="error-dialog-title">⚠️ Critical Error</div>
+                <div class="error-dialog-message">Application failed to start</div>
+                <small class="error-dialog-details">Error: ${errorMessage}</small>
+                <button onclick="location.reload()" class="error-dialog-reload-btn">
                     Reload
                 </button>
             </div>

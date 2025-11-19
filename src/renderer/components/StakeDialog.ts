@@ -90,36 +90,18 @@ export class StakeDialog {
                                 </label>
                                 <div class="tcy-amount-input-group">
                                     <input type="text" class="tcy-form-control" id="stakeAmount" 
-                                           placeholder="0.00">
+                                           placeholder="0.00" value="${this.stakeData.unstakedTcyBalance}">
                                     <button class="tcy-btn tcy-btn-text" id="maxStakeAmountBtn">Max</button>
+                                    <button class="tcy-btn tcy-btn-text" id="clearStakeAmountBtn">Clear</button>
                                 </div>
                                 <div class="tcy-field-error hidden" id="stakeAmountError"></div>
-                            </div>
-
-                            <!-- Transaction Preview -->
-                            <div class="tcy-transaction-preview">
-                                <h4 class="tcy-preview-title">Transaction Preview</h4>
-                                <div class="tcy-preview-details">
-                                    <div class="tcy-preview-row">
-                                        <span class="tcy-preview-label">Asset:</span>
-                                        <span class="tcy-preview-value">THOR.TCY</span>
-                                    </div>
-                                    <div class="tcy-preview-row">
-                                        <span class="tcy-preview-label">Amount:</span>
-                                        <span class="tcy-preview-value" id="previewAmount">0.00</span>
-                                    </div>
-                                    <div class="tcy-preview-row">
-                                        <span class="tcy-preview-label">Memo:</span>
-                                        <span class="tcy-preview-value">TCY+</span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="tcy-dialog-footer">
                         <button class="tcy-btn tcy-btn-secondary" id="cancelStakeBtn">Cancel</button>
-                        <button class="tcy-btn tcy-btn-primary" id="confirmStakeBtn" disabled>
+                        <button class="tcy-btn tcy-btn-primary" id="confirmStakeBtn">
                             Continue to Transaction
                         </button>
                     </div>
@@ -145,11 +127,14 @@ export class StakeDialog {
         const maxBtn = document.getElementById('maxStakeAmountBtn')
         maxBtn?.addEventListener('click', () => this.setMaxAmount())
 
+        // Clear amount button
+        const clearBtn = document.getElementById('clearStakeAmountBtn')
+        clearBtn?.addEventListener('click', () => this.clearAmount())
+
         // Amount input
         const amountInput = document.getElementById('stakeAmount') as HTMLInputElement
         amountInput?.addEventListener('input', () => {
             this.validateForm()
-            this.updatePreview()
         })
         amountInput?.addEventListener('blur', () => this.validateAmount())
 
@@ -169,7 +154,14 @@ export class StakeDialog {
         if (amountInput) {
             amountInput.value = this.stakeData.unstakedTcyBalance
             this.validateForm()
-            this.updatePreview()
+        }
+    }
+
+    private clearAmount(): void {
+        const amountInput = document.getElementById('stakeAmount') as HTMLInputElement
+        if (amountInput) {
+            amountInput.value = ''
+            this.validateForm()
         }
     }
 
@@ -201,25 +193,17 @@ export class StakeDialog {
     }
 
     private validateForm(): boolean {
-        const amountValid = this.validateAmount()
+        // Only disable button if amount is empty
+        const amountInput = document.getElementById('stakeAmount') as HTMLInputElement
+        const isEmpty = !amountInput || !amountInput.value.trim()
 
         // Update confirm button state
         const confirmBtn = document.getElementById('confirmStakeBtn') as HTMLButtonElement
         if (confirmBtn) {
-            confirmBtn.disabled = !amountValid
+            confirmBtn.disabled = isEmpty
         }
 
-        return amountValid
-    }
-
-    private updatePreview(): void {
-        const amountInput = document.getElementById('stakeAmount') as HTMLInputElement
-        const previewAmount = document.getElementById('previewAmount')
-        
-        if (amountInput && previewAmount) {
-            const amount = amountInput.value.trim() || '0.00'
-            previewAmount.textContent = amount
-        }
+        return !isEmpty
     }
 
     private showFieldError(fieldId: string, message: string): void {

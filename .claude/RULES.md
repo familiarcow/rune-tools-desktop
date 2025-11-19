@@ -6,6 +6,7 @@
   4. Never modify global selectors (.btn, .card, etc.)
   5. Incremental changes only - one small change at a time
   6. If an element has something that refreshes and changes, apply a beautiful and clean animation for the transition.
+  7. Always vertical-align asset logos with baseline - no vertical align offset adjustments (no margin-top/margin-bottom for alignment)
 
   Network Sensitivity:
   - We have a "network" setting: mainnet or stagenet
