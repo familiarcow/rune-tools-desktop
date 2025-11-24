@@ -15,6 +15,7 @@ import { WithdrawDialog, WithdrawDialogData, WithdrawFormData } from './Withdraw
 import { AssetService } from '../../services/assetService'
 import { IdenticonService } from '../../services/IdenticonService'
 import { BondService, UserBondData } from '../../services/bondService'
+import { LpService } from '../services/LpService'
 
 export interface WalletTabData {
     walletId: string
@@ -50,6 +51,7 @@ export class WalletTab {
     private container: HTMLElement
     private backend: BackendService
     private bondService: BondService
+    private lpService: LpService
     private walletData: WalletTabData | null = null
     private refreshInterval: NodeJS.Timeout | null = null
     private sendTransaction: SendTransaction | null = null
@@ -61,6 +63,7 @@ export class WalletTab {
         this.container = container
         this.backend = backend
         this.bondService = new BondService('mainnet') // Will be updated based on network
+        this.lpService = LpService.getInstance()
         
         // Initialize withdraw dialog
         const withdrawContainer = document.getElementById('withdraw-dialog-container')
@@ -332,8 +335,8 @@ export class WalletTab {
             // Process TCY data
             await this.processTcyData()
             
-            // Set LP balance placeholder (will be implemented later)
-            this.walletData.portfolioSummary.lpUsdValue = 0
+            // Process LP data
+            await this.processLpData()
             
             // Update UI
             this.updatePortfolioSummary()
@@ -470,6 +473,35 @@ export class WalletTab {
         } catch (error) {
             console.error('❌ Error loading TCY data:', error)
             this.walletData.portfolioSummary.tcyUsdValue = 0
+        }
+    }
+
+    private async processLpData(): Promise<void> {
+        if (!this.walletData) return
+        
+        console.log('🏊‍♂️ Loading LP data for', this.walletData.address)
+        
+        try {
+            // Get RUNE price for LP USD calculations
+            const runePrice = await this.getRunePrice()
+            
+            // Calculate LP USD value using LpService
+            const lpResult = await this.lpService.calculateLpUsdValue(
+                this.walletData.address,
+                this.walletData.network,
+                runePrice
+            )
+            
+            this.walletData.portfolioSummary.lpUsdValue = lpResult.totalUsdValue
+            
+            console.log('🏊‍♂️ LP data processed:', {
+                positions: lpResult.positions.length,
+                totalUsdValue: lpResult.totalUsdValue
+            })
+            
+        } catch (error) {
+            console.error('❌ Error loading LP data:', error)
+            this.walletData.portfolioSummary.lpUsdValue = 0
         }
     }
     
