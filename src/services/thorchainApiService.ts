@@ -60,11 +60,37 @@ export class ThorchainApiService {
 
   public async getNodeInfo(): Promise<any> {
     try {
-      const response = await this.api.get('/thorchain/node');
+      // Try multiple endpoints to get node information
+      let response;
+      try {
+        // Try the main thorchain network endpoint first
+        response = await this.api.get('/thorchain/network');
+      } catch (networkError) {
+        try {
+          // Fallback to constants endpoint
+          response = await this.api.get('/thorchain/constants');
+        } catch (constantsError) {
+          // Final fallback - use a simple endpoint that should always work
+          response = await this.api.get('/thorchain/pools');
+          // If pools work, we can assume the node is healthy
+          return { 
+            status: 'active', 
+            network: this.getCurrentNetwork(),
+            endpoints_working: true,
+            pools_available: Array.isArray(response.data) ? response.data.length : 0
+          };
+        }
+      }
       return response.data;
     } catch (error) {
       console.error('Error fetching node info:', error);
-      throw new Error('Failed to fetch THORChain node information');
+      // Don't throw error - return a basic status instead
+      return {
+        status: 'unknown',
+        network: this.getCurrentNetwork(),
+        error: 'Node info unavailable',
+        endpoints_working: false
+      };
     }
   }
 
@@ -99,6 +125,20 @@ export class ThorchainApiService {
         .map(pool => this.cleanPoolData(pool));
     } catch (error) {
       console.error('Error fetching pools:', error);
+      throw new Error('Failed to fetch THORChain pools');
+    }
+  }
+
+  public async getAllPools(): Promise<Pool[]> {
+    try {
+      const response = await this.api.get('/thorchain/pools');
+      const rawPools: RawPool[] = response.data || [];
+      
+      // Return all pools (Available and Staged) and clean up the data
+      return rawPools
+        .map(pool => this.cleanPoolData(pool));
+    } catch (error) {
+      console.error('Error fetching all pools:', error);
       throw new Error('Failed to fetch THORChain pools');
     }
   }
@@ -219,7 +259,10 @@ export class ThorchainApiService {
       earnings_annual: rawPool.earnings_annual ? normalizeFromE8(rawPool.earnings_annual) : undefined,
       pool_slip_average: rawPool.pool_slip_average ? parseNumber(rawPool.pool_slip_average) : undefined,
       pool_slip_average_24h: rawPool.pool_slip_average_24h ? parseNumber(rawPool.pool_slip_average_24h) : undefined,
-      asset_price_usd: rawPool.asset_tor_price ? normalizeFromE8(rawPool.asset_tor_price) : undefined, // Asset USD price
+      asset_price_usd: rawPool.asset_tor_price ? normalizeFromE8(rawPool.asset_tor_price) : 0, // Asset USD price
+      savers_fill_bps: parseNumber(rawPool.savers_fill_bps),
+      savers_capacity_remaining: normalizeFromE8(rawPool.savers_capacity_remaining),
+      trading_halted: rawPool.trading_halted || false,
     };
   }
 

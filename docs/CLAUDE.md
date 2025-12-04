@@ -9,6 +9,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run dev` - Watch mode compilation for development
 - TypeScript compilation target: ES2020, outputs to `dist/` directory
 
+## UI Development Guidelines
+
+**Important**: When working with DOM manipulation in TypeScript, always cast `querySelector()` results to specific HTML element types to avoid compilation errors. See [TypeScript DOM Patterns](./TypeScriptDOMPatterns.md) for detailed patterns and common solutions.
+
 ## Architecture Overview
 
 This is an Electron desktop application for interacting with THORChain, structured as a main process communicating with a renderer process via IPC handlers.
@@ -51,3 +55,10 @@ Assets use THORChain naming convention (e.g., 'THOR.RUNE', 'BTC.BTC', 'ETH.ETH')
 - **MsgDeposit** - THORChain-specific deposits to protocol (requires memo)
 
 Test files in root directory validate specific functionality including memo validation, transaction normalization, and tracking.
+
+## Documentation Index
+
+- [Architecture.md](./Architecture.md) - Overall application architecture and design principles
+- [WalletBalances.md](./WalletBalances.md) - Wallet balance processing and display system
+- [SendTransactionSystem.md](./SendTransactionSystem.md) - Send transaction popup interface and security
+- [TypeScriptDOMPatterns.md](./TypeScriptDOMPatterns.md) - Common TypeScript + DOM patterns and solutions

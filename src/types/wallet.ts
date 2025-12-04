@@ -1,5 +1,7 @@
 export interface WalletInfo {
-  address: string;
+  address: string; // Current network address
+  mainnetAddress: string; // THOR mainnet address (thor1...)
+  stagenetAddress: string; // THOR stagenet address (sthor1...)
   publicKey: string;
   mnemonic: string;
 }

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Minimal Test</h1>
+        <p id="status">Testing basic functionality...</p>
+        <button id="testBtn">Test IPC</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const status = document.getElementById('status');
+                const result = document.getElementById('result');
+                const testBtn = document.getElementById('testBtn');
+                
+                status.textContent = 'DOM loaded successfully';
+                
+                testBtn.addEventListener('click', async () => {
+                    try {
+                        result.textContent = 'Testing IPC...';
+                        const networkInfo = await ipcRenderer.invoke('get-network');
+                        result.innerHTML = `<pre>${JSON.stringify(networkInfo, null, 2)}</pre>`;
+                    } catch (error) {
+                        result.textContent = `IPC Error: ${error.message}`;
+                        console.error('IPC test failed:', error);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

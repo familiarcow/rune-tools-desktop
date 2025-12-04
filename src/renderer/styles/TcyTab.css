@@ -1,0 +1,290 @@
+/* TCY Tab Component Styles - Scoped to .tcy-tab */
+
+.tcy-tab-actions-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--spacing-lg) !important;
+}
+
+.tcy-tab-actions-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.tcy-tab-action-btn {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.tcy-tab-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Stake button - primary styling */
+.tcy-tab-stake-btn {
+  background: #007acc;
+  color: white;
+}
+
+.tcy-tab-stake-btn:hover:not(:disabled) {
+  background: #005999;
+}
+
+/* Unstake button - secondary styling */  
+.tcy-tab-unstake-btn {
+  background: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #333;
+}
+
+.tcy-tab-unstake-btn:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #007acc;
+}
+
+.tcy-tab-btn-icon {
+  font-size: 18px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.tcy-tab-btn-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Supply Distribution */
+.tcy-supply-grid-four {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.tcy-supply-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 12px;
+  background: var(--bg-tertiary, #3d3d3d);
+  border-radius: var(--border-radius, 8px);
+  border: 1px solid var(--border-color, #444);
+}
+
+.tcy-supply-label {
+  font-size: 12px;
+  color: var(--text-secondary, #ccc);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.tcy-supply-value {
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tcy-supply-value img {
+  vertical-align: baseline;
+  align-self: center;
+  margin-top: -1px;
+}
+
+/* Section Header with Actions */
+.tcy-section-header-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tcy-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tcy-header-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tcy-header-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tcy-stake-btn-header {
+  background: #007acc;
+  color: white;
+}
+
+.tcy-stake-btn-header:hover:not(:disabled) {
+  background: #005999;
+}
+
+.tcy-unstake-btn-header {
+  background: #2a2a2a;
+  color: #ffffff;
+  border: 1px solid #333;
+}
+
+.tcy-unstake-btn-header:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #007acc;
+}
+
+/* Balance Grid Layout */
+.tcy-balances-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.tcy-balance-card {
+  background: var(--bg-secondary, #2d2d2d);
+  border: 1px solid var(--border-color, #444);
+  border-radius: var(--border-radius, 8px);
+  padding: 20px;
+}
+
+.tcy-balance-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tcy-balance-icon {
+  flex-shrink: 0;
+}
+
+.tcy-balance-info {
+  flex: 1;
+}
+
+.tcy-balance-label {
+  font-size: 12px;
+  color: var(--text-secondary, #ccc);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Balance Amount Row - side by side layout */
+.tcy-balance-amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.tcy-balance-amount {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.tcy-balance-amount-with-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.tcy-balance-amount-with-logo span {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.tcy-balance-amount-with-logo img {
+  vertical-align: baseline;
+}
+
+.tcy-balance-usd {
+  text-align: right;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-secondary, #ccc);
+  font-weight: 500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .tcy-section-header-with-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .tcy-header-actions {
+    justify-content: center;
+  }
+  
+  .tcy-balances-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .tcy-balance-card {
+    padding: 16px;
+  }
+  
+  .tcy-supply-grid-four {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tcy-header-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .tcy-balance-amount-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .tcy-balance-usd {
+    text-align: left;
+  }
+  
+  .tcy-supply-grid-four {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .tcy-supply-item {
+    padding: 8px;
+  }
+}

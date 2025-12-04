@@ -1,0 +1,334 @@
+/* Memo Creation Styles */
+
+.memo-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.memo-type-option {
+  border: 2px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--card-bg, #1a1a1a);
+}
+
+.memo-type-option:hover {
+  border-color: var(--accent-primary, #007bff);
+  background: var(--card-bg-hover, #222);
+}
+
+.memo-type-option.active {
+  border-color: var(--accent-primary, #007bff);
+  background: var(--accent-primary-bg, #001a33);
+}
+
+.memo-type-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.memo-type-title {
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.memo-type-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #999);
+  line-height: 1.4;
+}
+
+.memo-type-option input[type="radio"] {
+  margin: 0;
+}
+
+/* Form Layout */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+  margin-bottom: 6px;
+}
+
+.form-group input {
+  padding: 10px 12px;
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  background: var(--input-bg, #2a2a2a);
+  color: var(--text-primary, #fff);
+  font-size: 0.875rem;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--accent-primary, #007bff);
+  box-shadow: 0 0 0 2px var(--accent-primary-shadow, rgba(0, 123, 255, 0.25));
+}
+
+/* Memo Preview */
+.memo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--code-bg, #1e1e1e);
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+}
+
+.memo-preview code {
+  flex: 1;
+  color: var(--accent-primary, #007bff);
+  background: none;
+  font-size: 0.875rem;
+}
+
+.copy-btn-small {
+  background: var(--button-secondary-bg, #444);
+  border: 1px solid var(--button-secondary-border, #555);
+  color: var(--text-primary, #fff);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.copy-btn-small:hover {
+  background: var(--button-secondary-hover, #555);
+}
+
+/* Form Helpers */
+.form-helper {
+  margin-top: 8px;
+}
+
+.form-helper small {
+  color: var(--text-secondary, #999);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* Error States */
+.form-error {
+  color: var(--error, #ef4444);
+  font-size: 0.875rem;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--error-bg, rgba(239, 68, 68, 0.1));
+  border: 1px solid var(--error, #ef4444);
+  border-radius: 4px;
+}
+
+.form-error.hidden {
+  display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .memo-type-selector {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Specific Form Layouts */
+.custom-memo-form textarea {
+  min-height: 80px;
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  background: var(--input-bg, #2a2a2a);
+  color: var(--text-primary, #fff);
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+}
+
+.custom-memo-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary, #007bff);
+  box-shadow: 0 0 0 2px var(--accent-primary-shadow, rgba(0, 123, 255, 0.25));
+}
+
+/* Input validation states */
+.form-control.error {
+  border-color: var(--error, #ef4444);
+}
+
+.form-control.valid {
+  border-color: var(--success, #22c55e);
+}
+
+/* Animation for memo type switching */
+#memoConfigContainer {
+  transition: opacity 0.2s ease;
+}
+
+.memo-config-updating {
+  opacity: 0.7;
+}
+
+/* Address display for deposit forms */
+.address-display-readonly {
+  padding: 12px;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border, #333);
+  border-radius: 6px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.address-display-readonly .address-code {
+  color: var(--accent-primary, #007bff);
+  background: none;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+/* Percentage slider styling */
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.percentage-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border, #333);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.percentage-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-primary, #007bff);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary, #000);
+}
+
+.percentage-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-primary, #007bff);
+  cursor: pointer;
+  border: 2px solid var(--bg-primary, #000);
+}
+
+.slider-value {
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent-primary, #007bff);
+  font-size: 1.1rem;
+}
+
+/* Quote container styling */
+.quote-container {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+}
+
+.quote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.quote-header h4 {
+  margin: 0;
+  color: var(--text-primary, #fff);
+  font-size: 1rem;
+}
+
+.btn-refresh {
+  background: transparent;
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btn-refresh:hover {
+  background: var(--bg-input, #2a2a2a);
+  border-color: var(--accent-primary, #007bff);
+}
+
+.quote-details .detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--border, #333);
+}
+
+.quote-details .detail-row:last-child {
+  border-bottom: none;
+}
+
+.quote-details .detail-row span:first-child {
+  color: var(--text-secondary, #999);
+}
+
+.quote-details .detail-row span:last-child {
+  color: var(--text-primary, #fff);
+  font-weight: 500;
+}
+
+/* Input with suffix styling */
+.input-with-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-suffix .form-control {
+  padding-right: 30px;
+}
+
+.input-suffix {
+  position: absolute;
+  right: 12px;
+  color: var(--text-secondary, #999);
+  font-size: 0.875rem;
+  pointer-events: none;
+}

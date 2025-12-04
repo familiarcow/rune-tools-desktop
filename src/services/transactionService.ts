@@ -5,6 +5,7 @@ import { TransactionParams, TransactionResponse, PreparedTransaction, Coin, Tran
 import { MsgDeposit } from '../utils/msgDeposit';
 import { WalletInfo } from '../types/wallet';
 import { NetworkService } from './networkService';
+import { convertToBaseUnits, convertFromBaseUnits, formatAmount, getAssetDenom } from '../utils/assetUtils';
 
 export class TransactionService {
   private static readonly THORCHAIN_HD_PATH = "m/44'/931'/0'/0/0";
@@ -34,31 +35,52 @@ export class TransactionService {
     this.networkService.setNetwork(network);
     // Clear cached module address when network changes
     this.thorchainModuleAddress = null;
+    
+    // NOTE: We don't cache sequence numbers in this service, but CosmJS clients might
+    // Each transaction creates a fresh client connection to avoid stale sequence issues
+    console.log('🔄 TransactionService network switched to:', network);
   }
 
   public static getAssetDenom(asset: string): string {
-    if (asset === 'THOR.RUNE' || asset === 'RUNE') {
-      return 'rune';
-    } else if (asset.startsWith('THOR.')) {
-      return asset.toLowerCase().replace('.', '/');
-    } else {
-      // Secured assets use exact format (e.g., 'BTC.BTC', 'ETH.ETH')
-      return asset;
-    }
+    return getAssetDenom(asset);
+  }
+
+  // Static methods now delegate to centralized assetUtils
+  public static convertToBaseUnits(amount: string, asset: string): string {
+    return convertToBaseUnits(amount, asset);
+  }
+
+  public static convertFromBaseUnits(baseUnits: string, asset: string): string {
+    return convertFromBaseUnits(baseUnits, asset);
+  }
+
+  public static formatAmount(amount: string, asset: string): string {
+    return formatAmount(amount, asset);
   }
 
   public static validateTransactionParams(params: TransactionParams): void {
     if (!params.asset) {
       throw new Error('Asset is required');
     }
-    if (!params.amount || parseFloat(params.amount) <= 0) {
-      throw new Error('Amount must be greater than zero');
-    }
-    if (params.useMsgDeposit && !params.memo) {
-      throw new Error('Memo is required for MsgDeposit transactions');
-    }
-    if (!params.useMsgDeposit && !params.toAddress) {
-      throw new Error('To address is required for MsgSend transactions');
+    
+    // Amount validation depends on transaction type
+    if (params.useMsgDeposit) {
+      // For MsgDeposit, amount can be 0 (e.g., memoless registration)
+      // Just ensure amount is provided and not negative
+      if (!params.amount || parseFloat(params.amount) < 0) {
+        throw new Error('Amount must be zero or greater for MsgDeposit transactions');
+      }
+      if (!params.memo) {
+        throw new Error('Memo is required for MsgDeposit transactions');
+      }
+    } else {
+      // For MsgSend, amount must be > 0
+      if (!params.amount || parseFloat(params.amount) <= 0) {
+        throw new Error('Amount must be greater than zero for send transactions');
+      }
+      if (!params.toAddress) {
+        throw new Error('To address is required for MsgSend transactions');
+      }
     }
     // Note: memo is optional for both MsgSend and MsgDeposit (but required for MsgDeposit above)
   }
@@ -76,6 +98,8 @@ export class TransactionService {
     // We'll use MsgSend to THORChain module instead
     const registry = new Registry();
 
+    // Force fresh connection to avoid sequence caching issues
+    console.log('🔗 Connecting to RPC endpoint:', this.getRpcEndpoint());
     const client = await SigningStargateClient.connectWithSigner(
       this.getRpcEndpoint(),
       signer,
@@ -87,9 +111,12 @@ export class TransactionService {
 
   public prepareMsgSend(fromAddress: string, params: TransactionParams): PreparedTransaction {
     const denom = TransactionService.getAssetDenom(params.asset);
+    
+    // CRITICAL: params.amount MUST be in NORMALIZED UNITS (user input)
+    // Converting to BASE UNITS for blockchain transaction
     const coin: Coin = {
       denom,
-      amount: params.amount
+      amount: TransactionService.convertToBaseUnits(params.amount, params.asset)
     };
 
     const message: TransactionMessage = {
@@ -106,9 +133,12 @@ export class TransactionService {
 
   public prepareMsgDeposit(fromAddress: string, params: TransactionParams): PreparedTransaction {
     const denom = TransactionService.getAssetDenom(params.asset);
+    
+    // CRITICAL: params.amount MUST be in NORMALIZED UNITS (user input)
+    // Converting to BASE UNITS for blockchain transaction
     const coin: Coin = {
       denom,
-      amount: params.amount
+      amount: TransactionService.convertToBaseUnits(params.amount, params.asset)
     };
 
     const message: TransactionMessage = {
@@ -127,9 +157,12 @@ export class TransactionService {
     // Alternative: Use MsgSend to THORChain module (equivalent to MsgDeposit)
     const denom = TransactionService.getAssetDenom(params.asset);
     const moduleAddress = await this.getThorchainModuleAddress();
+    
+    // CRITICAL: params.amount MUST be in NORMALIZED UNITS (user input)
+    // Converting to BASE UNITS for blockchain transaction
     const coin: Coin = {
       denom,
-      amount: params.amount
+      amount: TransactionService.convertToBaseUnits(params.amount, params.asset)
     };
 
     const message: TransactionMessage = {
@@ -146,7 +179,7 @@ export class TransactionService {
 
   public static getDefaultFee(): TransactionFee {
     return {
-      amount: [{ denom: "rune", amount: "2000000" }], // 2 RUNE
+      amount: [{ denom: "rune", amount: "2000000" }], // 0.02 RUNE (2M base units)
       gas: "50000000"
     };
   }
@@ -160,6 +193,23 @@ export class TransactionService {
 
     // Setup CosmJS client
     const { client, signerAddress } = await this.setupCosmosClient(walletInfo);
+    
+    // DEBUG: Force fresh account query to check sequence with retry
+    let currentSequence: number | undefined;
+    try {
+      console.log('🔍 Querying fresh account info for address:', signerAddress);
+      const account = await client.getAccount(signerAddress);
+      currentSequence = account?.sequence;
+      console.log('🔍 DEBUG: Fresh account info from blockchain:', {
+        address: signerAddress,
+        accountNumber: account?.accountNumber,
+        sequence: currentSequence,
+        network: this.networkService.getCurrentNetwork(),
+        rpcEndpoint: this.getRpcEndpoint()
+      });
+    } catch (error) {
+      console.warn('⚠️ Could not fetch account info for debugging:', error);
+    }
 
     // Prepare transaction message
     let preparedTx: PreparedTransaction;
@@ -175,23 +225,88 @@ export class TransactionService {
     const fee = TransactionService.getDefaultFee();
 
     // Sign and broadcast (memo is supported for both MsgSend and MsgDeposit)
-    const response = await client.signAndBroadcast(
-      signerAddress,
-      [preparedTx.message],
-      fee,
-      params.memo || ""
-    );
+    try {
+      // CRITICAL: Query account info RIGHT before signing to see what sequence CosmJS will use
+      console.log('🎯 About to call signAndBroadcast - querying sequence CosmJS will use...');
+      const preSignAccount = await client.getAccount(signerAddress);
+      console.log('🎯 PRE-SIGN: CosmJS will use sequence:', preSignAccount?.sequence);
+      
+      const response = await client.signAndBroadcast(
+        signerAddress,
+        [preparedTx.message],
+        fee,
+        params.memo || ""
+      );
 
-    if (response.code !== 0) {
-      throw new Error(`Transaction failed: ${response.rawLog}`);
+      if (response.code !== 0) {
+        throw new Error(`Transaction failed: ${response.rawLog}`);
+      }
+
+      console.log('✅ Transaction broadcast successful:', response.transactionHash);
+      return {
+        code: response.code,
+        transactionHash: response.transactionHash,
+        rawLog: response.rawLog,
+        events: response.events as any[]
+      };
+    } catch (error) {
+      console.error('❌ Broadcasting error:', error);
+      
+      // Check if this is the "tx already exists in cache" error
+      if (error instanceof Error && error.message.includes('tx already exists in cache')) {
+        console.log('💡 Transaction already exists in cache - this indicates the transaction was previously successful');
+        console.log('🔍 This is not an error - the transaction is already submitted to the network');
+        // We can't recover the original transaction hash, so we need to handle this gracefully
+        throw new Error('Transaction already submitted. Please check your transaction history for the confirmation.');
+      }
+      
+      // Check for sequence mismatch and retry once
+      if (error instanceof Error && error.message.includes('account sequence mismatch')) {
+        console.log('🔄 Sequence mismatch detected - attempting retry with fresh account info...');
+        
+        try {
+          // Wait a moment for any pending transactions to settle
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Create completely fresh client connection
+          const { client: freshClient, signerAddress: freshSigner } = await this.setupCosmosClient(walletInfo);
+          
+          // Query fresh account info again
+          const freshAccount = await freshClient.getAccount(freshSigner);
+          console.log('🔄 RETRY: Fresh account sequence:', freshAccount?.sequence);
+          
+          // If we're still getting the wrong sequence, there's an RPC caching issue
+          if (freshAccount?.sequence === currentSequence) {
+            console.warn('⚠️ RPC still returning stale sequence after retry - this indicates RPC caching issues');
+          }
+          
+          // Retry the broadcast with fresh client
+          const retryResponse = await freshClient.signAndBroadcast(
+            freshSigner,
+            [preparedTx.message],
+            fee,
+            params.memo || ""
+          );
+
+          if (retryResponse.code !== 0) {
+            throw new Error(`Retry transaction failed: ${retryResponse.rawLog}`);
+          }
+
+          console.log('✅ RETRY successful:', retryResponse.transactionHash);
+          return {
+            code: retryResponse.code,
+            transactionHash: retryResponse.transactionHash,
+            rawLog: retryResponse.rawLog,
+            events: retryResponse.events as any[]
+          };
+        } catch (retryError) {
+          console.error('❌ Retry also failed:', retryError);
+          throw new Error(`Transaction failed after retry: ${(retryError as Error).message}`);
+        }
+      }
+      
+      throw error;
     }
-
-    return {
-      code: response.code,
-      transactionHash: response.transactionHash,
-      rawLog: response.rawLog,
-      events: response.events as any[]
-    };
   }
 
   public async estimateGas(

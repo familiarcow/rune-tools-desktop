@@ -1,0 +1,473 @@
+/* Send Modal Component Styles */
+/* Scoped to .send-modal-* to avoid conflicts */
+
+/* Overlay and Modal Container */
+.send-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.send-modal-overlay.active {
+    opacity: 1;
+}
+
+.send-modal-container {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 900px;
+    height: 85%;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9) translateY(20px);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.send-modal-overlay.active .send-modal-container {
+    transform: scale(1) translateY(0);
+}
+
+/* Header Section */
+.send-modal-header {
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid var(--border-color, #333);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-secondary, #1a1a1a);
+}
+
+.send-modal-progress-steps {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.send-modal-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+}
+
+.send-modal-step.active {
+    opacity: 1;
+}
+
+.send-modal-step.completed {
+    opacity: 0.8;
+}
+
+.send-modal-step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-tertiary, #2d2d2d);
+    border: 2px solid var(--border-color, #444);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary, #ccc);
+    transition: all 0.3s ease;
+}
+
+.send-modal-step.active .send-modal-step-number {
+    background: var(--accent-primary, #00d4ff);
+    border-color: var(--accent-primary, #00d4ff);
+    color: var(--bg-primary, #000);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.4);
+}
+
+.send-modal-step.completed .send-modal-step-number {
+    background: var(--success, #00ff88);
+    border-color: var(--success, #00ff88);
+    color: var(--bg-primary, #000);
+}
+
+.send-modal-step-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary, #ccc);
+    transition: color 0.3s ease;
+}
+
+.send-modal-step.active .send-modal-step-label {
+    color: var(--text-primary, #fff);
+    font-weight: 600;
+}
+
+.send-modal-step-connector {
+    width: 24px;
+    height: 2px;
+    background: var(--border-color, #444);
+    margin: 0 8px;
+    transition: background-color 0.3s ease;
+}
+
+.send-modal-step.completed ~ .send-modal-step .send-modal-step-connector,
+.send-modal-step.completed .send-modal-step-connector {
+    background: var(--success, #00ff88);
+}
+
+.send-modal-close-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--bg-tertiary, #2d2d2d);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary, #ccc);
+}
+
+.send-modal-close-btn:hover {
+    background: var(--error, #ff6b6b);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Content Area */
+.send-modal-content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-primary, #0a0a0a);
+    min-height: 0;
+    pointer-events: auto;
+}
+
+.send-modal-page {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+    overflow-y: auto;
+    padding: 32px;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.send-modal-page.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    z-index: 2;
+}
+
+.send-modal-page-title {
+    margin-bottom: 24px;
+}
+
+.send-modal-page-title h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.send-modal-page-icon {
+    font-size: 2rem;
+    color: var(--accent-primary, #00d4ff);
+}
+
+.send-modal-page-subtitle {
+    font-size: 1rem;
+    color: var(--text-muted, #888);
+    margin: 8px 0 0 0;
+}
+
+/* Footer Actions */
+.send-modal-actions {
+    padding: 20px 32px 24px;
+    border-top: 1px solid var(--border-color, #333);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-secondary, #1a1a1a);
+}
+
+.send-modal-actions-left {
+    display: flex;
+    gap: 12px;
+}
+
+.send-modal-actions-right {
+    display: flex;
+    gap: 12px;
+}
+
+.send-modal-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.send-modal-btn-primary {
+    background: var(--accent-primary, #00d4ff);
+    color: var(--bg-primary, #000);
+}
+
+.send-modal-btn-primary:hover:not(:disabled) {
+    background: #00b8e6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.send-modal-btn-primary:disabled {
+    background: var(--bg-tertiary, #2d2d2d);
+    color: var(--text-muted, #888);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.send-modal-btn-secondary {
+    background: var(--bg-tertiary, #2d2d2d);
+    color: var(--text-secondary, #ccc);
+    border: 1px solid var(--border-color, #444);
+}
+
+.send-modal-btn-secondary:hover {
+    background: var(--bg-input, #3a3a3a);
+    border-color: var(--accent-primary, #00d4ff);
+    color: var(--text-primary, #fff);
+}
+
+.send-modal-btn-icon {
+    font-size: 1rem;
+}
+
+.send-modal-spacer {
+    flex: 1;
+}
+
+/* Success State */
+.send-modal-success {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.send-modal-success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: var(--success, #00ff88);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bg-primary, #000);
+    animation: send-modal-success-pulse 0.6s ease-out;
+}
+
+@keyframes send-modal-success-pulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.send-modal-success h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin: 0 0 24px 0;
+}
+
+.send-modal-transaction-info {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+}
+
+.send-modal-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color, #444);
+}
+
+.send-modal-info-row:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.send-modal-info-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #ccc);
+    font-weight: 500;
+}
+
+.send-modal-info-value {
+    font-size: 0.9rem;
+    color: var(--text-primary, #fff);
+    font-family: monospace;
+}
+
+.send-modal-hash-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.send-modal-transaction-hash {
+    background: var(--bg-input, #3a3a3a);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #444);
+}
+
+.send-modal-copy-btn,
+.send-modal-explorer-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--bg-tertiary, #2d2d2d);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-secondary, #ccc);
+}
+
+.send-modal-copy-btn:hover {
+    background: var(--accent-primary, #00d4ff);
+    color: var(--bg-primary, #000);
+}
+
+.send-modal-explorer-btn:hover {
+    background: var(--success, #00ff88);
+    color: var(--bg-primary, #000);
+}
+
+.send-modal-status-success {
+    color: var(--success, #00ff88);
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .send-modal-container {
+        width: 95%;
+        height: 90%;
+        max-height: 600px;
+    }
+    
+    .send-modal-header {
+        padding: 16px 20px;
+    }
+    
+    .send-modal-progress-steps {
+        gap: 12px;
+    }
+    
+    .send-modal-step-label {
+        display: none;
+    }
+    
+    .send-modal-page {
+        padding: 20px;
+    }
+    
+    .send-modal-actions {
+        padding: 16px 20px;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .send-modal-actions-left,
+    .send-modal-actions-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .send-modal-btn {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* Backward compatibility for sub-components */
+.send-modal-page .page-header {
+    margin-bottom: 24px;
+}
+
+.send-modal-page .page-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin: 0;
+}
+
+/* Loading States */
+.send-modal-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+}
+
+.send-modal-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-color, #444);
+    border-top: 3px solid var(--accent-primary, #00d4ff);
+    border-radius: 50%;
+    animation: send-modal-spin 1s linear infinite;
+}
+
+@keyframes send-modal-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.send-modal-loading-text {
+    font-size: 1rem;
+    color: var(--text-secondary, #ccc);
+}

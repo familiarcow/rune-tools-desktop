@@ -30,6 +30,11 @@ export class THORWalletService {
       throw new Error('Invalid seed phrase');
     }
 
+    // Derive addresses for both networks
+    const mainnetAddress = await this.deriveAddressForNetwork(mnemonic, 'mainnet');
+    const stagenetAddress = await this.deriveAddressForNetwork(mnemonic, 'stagenet');
+
+    // Create wallet with current network's prefix to get pubkey
     const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
       prefix: this.getAddressPrefix(),
       hdPaths: [stringToPath(THORWalletService.DERIVATION_PATH)]
@@ -39,10 +44,24 @@ export class THORWalletService {
     const account = accounts[0];
 
     return {
-      address: account.address,
+      address: account.address, // Current network address
+      mainnetAddress,
+      stagenetAddress,
       publicKey: Buffer.from(account.pubkey).toString('hex'),
       mnemonic: mnemonic
     };
+  }
+
+  private async deriveAddressForNetwork(mnemonic: string, network: 'mainnet' | 'stagenet'): Promise<string> {
+    const prefix = network === 'mainnet' ? 'thor' : 'sthor';
+    
+    const wallet = await DirectSecp256k1HdWallet.fromMnemonic(mnemonic, {
+      prefix: prefix,
+      hdPaths: [stringToPath(THORWalletService.DERIVATION_PATH)]
+    });
+
+    const accounts = await wallet.getAccounts();
+    return accounts[0].address;
   }
 
   public async deriveAddress(mnemonic: string): Promise<string> {

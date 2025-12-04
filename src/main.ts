@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import { THORWalletService } from './services/walletService';
 import { ThorchainApiService } from './services/thorchainApiService';
 import { TransactionService } from './services/transactionService';
@@ -14,8 +15,40 @@ import { NetworkService } from './services/networkService';
 import { NetworkMode } from './types/network';
 import { MemolessService } from './services/memolessService';
 import { MemolessFlowState, RegistrationConfirmation } from './types/memoless';
+import { SecureWalletStorageService, SecureWalletData, WalletStorageInfo } from './services/secureWalletStorage';
 
 let mainWindow: BrowserWindow;
+
+// Password verification utilities (mirroring CryptoUtils for main process)
+async function verifyPassword(password: string, storedSalt: string, storedHash: string): Promise<boolean> {
+  const salt = Buffer.from(storedSalt, 'hex');
+  const hash = await deriveKey(password, salt);
+  const computedHash = hash.toString('hex');
+  
+  return constantTimeCompare(computedHash, storedHash);
+}
+
+async function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.pbkdf2(password, salt, 100000, 32, 'sha256', (err, derivedKey) => {
+      if (err) reject(err);
+      else resolve(derivedKey);
+    });
+  });
+}
+
+function constantTimeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  
+  return result === 0;
+}
 
 // Initialize services with network support
 const networkService = new NetworkService();
@@ -25,25 +58,92 @@ const transactionService = new TransactionService(networkService);
 const transactionTrackingService = new TransactionTrackingService();
 const balanceNormalizationService = new BalanceNormalizationService(networkService);
 const memolessService = new MemolessService(networkService);
+const walletStorageService = new SecureWalletStorageService();
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    title: 'Rune.Tools (beta)',
+    icon: path.join(__dirname, '../../images/logos/odin.png'),
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true, // Keep web security enabled by default
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../src/renderer/index.html'));
+  // Selective CORS bypass for rune.tools referrer
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders((details, callback) => {
+    const referrer = details.requestHeaders['Referer'] || details.requestHeaders['referer'] || '';
+    const isRuneToolsReferrer = referrer.includes('rune.tools') || referrer.includes('localhost') || referrer.includes('127.0.0.1');
+    
+    // Only bypass CORS for requests from rune.tools or local development
+    if (isRuneToolsReferrer) {
+      console.log(`🌐 Allowing CORS for request to: ${details.url} (referrer: ${referrer})`);
+      details.requestHeaders['Access-Control-Allow-Origin'] = '*';
+      details.requestHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
+      details.requestHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
+    }
+    
+    callback({ requestHeaders: details.requestHeaders });
+  });
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
+  // Handle CORS preflight responses
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    const referrer = details.responseHeaders?.['referer'] || '';
+    const isRuneToolsReferrer = referrer.includes('rune.tools') || details.url.includes('localhost') || details.url.includes('127.0.0.1');
+    
+    if (isRuneToolsReferrer) {
+      const responseHeaders = {
+        ...details.responseHeaders,
+        'Access-Control-Allow-Origin': ['*'],
+        'Access-Control-Allow-Methods': ['GET, POST, PUT, DELETE, OPTIONS'],
+        'Access-Control-Allow-Headers': ['Content-Type, Authorization'],
+        'Access-Control-Max-Age': ['86400']
+      };
+      callback({ responseHeaders });
+    } else {
+      callback({});
+    }
+  });
+
+  mainWindow.loadFile(path.join(__dirname, 'renderer/index.html'));
+
+  // Only open dev tools in development
+  if (process.env.NODE_ENV === 'development' || !app.isPackaged) {
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    
+    // Also ensure dev tools open after the page loads in development
+    mainWindow.webContents.once('did-finish-load', () => {
+      console.log('Page loaded, ensuring dev tools are open...');
+      mainWindow.webContents.openDevTools({ mode: 'detach' });
+    });
   }
 }
 
-app.whenReady().then(createWindow);
+// Set app name as early as possible
+app.setName('Rune.Tools (beta)');
+
+app.whenReady().then(() => {
+  // Set app name again when ready
+  app.setName('Rune.Tools (beta)');
+  
+  // Set dock icon for macOS
+  if (process.platform === 'darwin' && app.dock) {
+    // Use absolute path from project root
+    const iconPath = path.resolve(process.cwd(), 'images', 'logos', 'odin.png');
+    console.log('Trying to load icon from:', iconPath);
+    try {
+      app.dock.setIcon(iconPath);
+    } catch (error) {
+      console.error('Failed to set dock icon:', error);
+    }
+  }
+  
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -441,11 +541,11 @@ ipcMain.handle('memoless-validate-dust-threshold', async (event, amount: string,
   }
 });
 
-ipcMain.handle('memoless-validate-amount-for-deposit', async (event, userInput: string, referenceID: string, assetDecimals: number, dustThreshold: number) => {
+ipcMain.handle('memoless-validate-amount-for-deposit', async (event, asset: string, exactAmount: string, decimals: number, expectedMemo: string, expectedReference: string) => {
   try {
-    return memolessService.validateAmountForDeposit(userInput, referenceID, assetDecimals, dustThreshold);
+    return memolessService.validateMemoRegistration(asset, exactAmount, decimals, expectedMemo, expectedReference);
   } catch (error) {
-    console.error('Error validating amount for deposit:', error);
+    console.error('Error validating memo registration:', error);
     throw error;
   }
 });
@@ -491,6 +591,170 @@ ipcMain.handle('memoless-get-network-display', async () => {
     return memolessService.getCurrentNetworkDisplay();
   } catch (error) {
     console.error('Error getting network display:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-memoless-service', async () => {
+  try {
+    // Return the memoless service instance
+    return memolessService;
+  } catch (error) {
+    console.error('Error getting memoless service:', error);
+    throw error;
+  }
+});
+
+// IPC handlers for secure wallet storage
+ipcMain.handle('save-wallet', async (event, walletData: SecureWalletData) => {
+  try {
+    await walletStorageService.saveWallet(walletData);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving wallet:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('load-wallet', async (event, walletId: string) => {
+  try {
+    return await walletStorageService.loadWallet(walletId);
+  } catch (error) {
+    console.error('Error loading wallet:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-available-wallets', async () => {
+  try {
+    return await walletStorageService.getAvailableWallets();
+  } catch (error) {
+    console.error('Error getting available wallets:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('update-wallet-access', async (event, walletId: string, isLocked: boolean = false) => {
+  try {
+    await walletStorageService.updateWalletAccess(walletId, isLocked);
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating wallet access:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('delete-wallet', async (event, walletId: string) => {
+  try {
+    await walletStorageService.deleteWallet(walletId);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting wallet:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('wallet-exists', async (event, walletId: string) => {
+  try {
+    return await walletStorageService.walletExists(walletId);
+  } catch (error) {
+    console.error('Error checking wallet existence:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-storage-stats', async () => {
+  try {
+    return await walletStorageService.getStorageStats();
+  } catch (error) {
+    console.error('Error getting storage stats:', error);
+    throw error;
+  }
+});
+
+// IPC handler for saving session data
+ipcMain.handle('save-session', async (event, sessionData: any) => {
+  try {
+    // For now, just log the session data. In a full implementation,
+    // you might want to store this in a secure session file
+    console.log('💾 Session saved:', sessionData);
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving session:', error);
+    throw error;
+  }
+});
+
+// IPC handler for unlocking wallet with password verification
+ipcMain.handle('unlock-wallet', async (event, walletId: string, password: string) => {
+  try {
+    const walletData = await walletStorageService.loadWallet(walletId);
+    if (!walletData) {
+      throw new Error('Wallet not found');
+    }
+
+    // CRITICAL SECURITY: Verify password before allowing access
+    const isPasswordValid = await verifyPassword(
+      password,
+      walletData.salt,
+      walletData.passwordHash
+    );
+
+    if (!isPasswordValid) {
+      console.warn('⚠️ Invalid password attempt for wallet:', walletId);
+      throw new Error('Invalid password');
+    }
+
+    console.log('✅ Password verified successfully for wallet:', walletId);
+
+    // Password is valid - update access and unlock
+    await walletStorageService.updateWalletAccess(walletId, false);
+
+    // Return wallet info for the UI (without sensitive data)
+    return {
+      walletId: walletData.walletId,
+      name: walletData.name,
+      mainnetAddress: walletData.addresses.mainnet,
+      stagenetAddress: walletData.addresses.stagenet,
+      isLocked: false,
+      lastUsed: new Date()
+    };
+  } catch (error) {
+    console.error('Error unlocking wallet:', error);
+    throw error;
+  }
+});
+
+// IPC handler for securely decrypting wallet mnemonic for transactions
+ipcMain.handle('decrypt-wallet-mnemonic', async (event, walletId: string, password: string) => {
+  try {
+    const walletData = await walletStorageService.loadWallet(walletId);
+    if (!walletData) {
+      throw new Error('Wallet not found');
+    }
+    
+    // CRITICAL SECURITY: Verify password first
+    console.log('🔐 Verifying password for mnemonic decryption:', walletId);
+    
+    const isPasswordValid = await verifyPassword(password, walletData.salt, walletData.passwordHash);
+    
+    if (!isPasswordValid) {
+      console.warn('⚠️ Invalid password attempt for mnemonic decryption:', walletId);
+      throw new Error('Invalid password');
+    }
+    
+    console.log('✅ Password verified successfully for mnemonic decryption');
+    
+    // Return encrypted data for renderer to decrypt using CryptoUtils
+    // This avoids the Web Crypto vs Node.js compatibility issues
+    return {
+      encryptedSeedPhrase: walletData.encryptedSeedPhrase,
+      salt: walletData.salt,
+      iv: walletData.iv
+    };
+    
+  } catch (error) {
+    console.error('❌ Error verifying password for mnemonic decryption:', error);
     throw error;
   }
 });

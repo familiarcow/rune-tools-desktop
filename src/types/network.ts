@@ -57,7 +57,7 @@ export const NETWORK_CONFIGS: Record<NetworkMode, NetworkConfig> = {
   stagenet: {
     mode: 'stagenet',
     thorNodeUrl: 'https://stagenet-thornode.ninerealms.com',
-    rpcUrl: 'https://stagenet-rpc.ninerealms.com',
+    rpcUrl: 'https://stagenet-rpc.ninerealms.com', // TODO: Test alternative RPC if sequence issues persist
     addressPrefix: 'sthor'
   }
 };

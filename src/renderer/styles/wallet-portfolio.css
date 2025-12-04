@@ -1,0 +1,158 @@
+/* Wallet Portfolio Component Styles */
+/* Scoped to .wallet-portfolio-* to avoid conflicts */
+
+/* Portfolio Header Section */
+.wallet-portfolio-header-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.wallet-portfolio-prices {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.portfolio-price-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.portfolio-price-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.portfolio-price-value {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary, #ccc);
+}
+
+/* Portfolio Breakdown Columns */
+.wallet-portfolio-breakdown {
+    display: flex;
+    gap: 24px;
+    justify-content: space-between;
+}
+
+.portfolio-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wallet-portfolio-compact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.wallet-portfolio-info {
+    flex: 1;
+}
+
+.wallet-portfolio-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.wallet-portfolio-identicon {
+    flex-shrink: 0;
+}
+
+.wallet-portfolio-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.wallet-portfolio-address-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wallet-portfolio-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+}
+
+.wallet-portfolio-address {
+    font-size: 0.75rem;
+    font-family: monospace;
+    color: var(--text-muted, #888);
+}
+
+.wallet-portfolio-copy-btn {
+    padding: 2px 4px;
+    font-size: 0.7rem;
+}
+
+.wallet-portfolio-total {
+    text-align: center;
+    margin: 0 20px;
+}
+
+.wallet-portfolio-value-label {
+    font-size: 0.7rem;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+}
+
+.wallet-portfolio-value-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-primary, #00d4ff);
+}
+
+.wallet-portfolio-breakdown {
+    text-align: right;
+    min-width: 120px;
+}
+
+.portfolio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+    gap: 8px;
+}
+
+.portfolio-item-label {
+    font-size: 0.65rem;
+    color: var(--text-muted, #888);
+    text-transform: uppercase;
+}
+
+.portfolio-item-value {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary, #ccc);
+}
+
+.wallet-portfolio-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 32px;
+}
+}
+
+.wallet-portfolio-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}

@@ -15,6 +15,78 @@ import {
   MemoCheckResponse
 } from '../types/memoless';
 
+// Legacy helper functions for backward compatibility
+export class MemolessLegacyHelpers {
+  private memolessService: MemolessService;
+
+  constructor(memolessService: MemolessService) {
+    this.memolessService = memolessService;
+  }
+
+  // Legacy validation functions matching the exact names from docs
+  validateAmountToReference(amount: string, referenceID: string, inAssetDecimals?: number): boolean {
+    const decimals = inAssetDecimals || this.memolessService.getAssetDecimals('BTC.BTC'); // Default fallback
+    return this.memolessService.validateAmountToReference(amount, referenceID, decimals);
+  }
+
+  validateAmountAboveInboundDustThreshold(amount: string, dustThreshold?: number): boolean {
+    const threshold = dustThreshold || 0.00001; // Default fallback
+    return this.memolessService.validateAmountAboveInboundDustThreshold(amount, threshold * 1e8); // Convert to raw units
+  }
+
+  // Legacy amount formatting that appends reference ID exactly as specified
+  formatAmountWithReferenceID(
+    userInput: string, 
+    referenceID: string, 
+    inAssetDecimals: number
+  ): string {
+    const result = this.memolessService.formatAmountWithReference(userInput, referenceID, inAssetDecimals);
+    return result.finalAmount;
+  }
+
+  // Helper to check if amount needs truncation (no rounding)
+  truncateAmountToDecimals(amount: string, maxDecimals: number): string {
+    const [integerPart, decimalPart = ''] = amount.split('.');
+    if (decimalPart.length <= maxDecimals) {
+      return amount;
+    }
+    // Truncate decimals without rounding
+    const truncatedDecimals = decimalPart.substring(0, maxDecimals);
+    return `${integerPart}.${truncatedDecimals}`;
+  }
+
+  // Get the last N digits from decimal part
+  getLastDecimalDigits(amount: string, digitCount: number, assetDecimals: number): string {
+    const [, decimalPart = ''] = amount.split('.');
+    const paddedDecimals = decimalPart.padEnd(assetDecimals, '0');
+    return paddedDecimals.slice(-digitCount);
+  }
+
+  // Example generation for docs validation
+  generateExampleAmounts(referenceID: string, inAssetDecimals: number): {
+    examples: string[];
+    explanation: string;
+  } {
+    const refLength = referenceID.length;
+    const examples: string[] = [];
+    
+    // Generate examples with different user amounts
+    const baseAmounts = ['1', '0.5', '10.25', '100'];
+    
+    baseAmounts.forEach(baseAmount => {
+      const result = this.memolessService.formatAmountWithReference(baseAmount, referenceID, inAssetDecimals);
+      if (result.isValid) {
+        examples.push(`${baseAmount} → ${result.finalAmount}`);
+      }
+    });
+
+    const explanation = `For referenceID '${referenceID}' (${refLength} digits) with ${inAssetDecimals} decimals: ` +
+      `The last ${refLength} decimal digits must be exactly '${referenceID}'.`;
+
+    return { examples, explanation };
+  }
+}
+
 export class MemolessService {
   private thorchainApiService: ThorchainApiService;
   private transactionService: TransactionService;
@@ -90,7 +162,7 @@ export class MemolessService {
       
       const transactionParams = {
         asset: 'THOR.RUNE',
-        amount: '1', // Minimal amount for registration (1 RUNE = 1e8)
+        amount: '0', // Zero amount for memoless registration - memo contains the intent
         useMsgDeposit: true,
         memo: registrationMemo
       };
@@ -108,13 +180,17 @@ export class MemolessService {
     }
   }
 
-  // Step 4: Check reference ID after registration
+  // Step 4: Check reference ID after registration using /thorchain/memo/{MsgDepositTXID}
   public async getMemoReference(txId: string): Promise<MemolessRegistration> {
     try {
-      // Wait 6 seconds for transaction to confirm
+      console.log(`Retrieving memo reference for transaction: ${txId}`);
+      
+      // Wait for transaction to be confirmed (6 seconds per THORChain block time)
       await new Promise(resolve => setTimeout(resolve, 6000));
       
       const response = await this.thorchainApiService.getMemoReference(txId);
+      
+      console.log('Memo reference retrieved:', response);
       
       return {
         asset: response.asset,
@@ -128,6 +204,56 @@ export class MemolessService {
       console.error('Error fetching memo reference:', error);
       throw new Error(`Failed to fetch memo reference: ${(error as Error).message}`);
     }
+  }
+
+  // Retry mechanism for reference ID retrieval with exponential backoff
+  public async getMemoReferenceWithRetry(
+    txId: string, 
+    maxRetries: number = 5,
+    initialDelay: number = 6000
+  ): Promise<MemolessRegistration> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`Attempt ${attempt}/${maxRetries} to retrieve memo reference for ${txId}`);
+        
+        if (attempt > 1) {
+          // Exponential backoff: 6s, 12s, 24s, 48s, 96s
+          const delay = initialDelay * Math.pow(2, attempt - 1);
+          console.log(`Waiting ${delay/1000}s before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          // Initial delay
+          await new Promise(resolve => setTimeout(resolve, initialDelay));
+        }
+        
+        const response = await this.thorchainApiService.getMemoReference(txId);
+        
+        if (response && response.reference) {
+          console.log(`Successfully retrieved memo reference on attempt ${attempt}:`, response);
+          return {
+            asset: response.asset,
+            memo: response.memo,
+            reference: response.reference,
+            height: response.height,
+            registrationHash: response.registration_hash,
+            registeredBy: response.registered_by
+          };
+        } else {
+          throw new Error('Reference ID not found in response');
+        }
+      } catch (error) {
+        lastError = error as Error;
+        console.warn(`Attempt ${attempt} failed:`, error);
+        
+        if (attempt === maxRetries) {
+          break;
+        }
+      }
+    }
+    
+    throw new Error(`Failed to retrieve memo reference after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
   // Step 4.5: Validate memo registration with amount
@@ -226,7 +352,7 @@ export class MemolessService {
     };
   }
 
-  // Step 7: Validate amount with reference encoding
+  // Step 7: Validate amount with reference encoding (per docs lines 191-196)
   public validateAmountToReference(
     amount: string, 
     referenceID: string, 
@@ -235,27 +361,64 @@ export class MemolessService {
     try {
       let amountStr = amount.toString();
       
-      // Ensure decimal point exists
-      if (amountStr.indexOf('.') === -1) {
-        amountStr += '.';
+      // If amount has more decimals than assetDecimals, remove extra digits (DO NOT ROUND)
+      const [integerPart, decimalPart = ''] = amountStr.split('.');
+      let processedDecimalPart = decimalPart;
+      
+      if (decimalPart.length > assetDecimals) {
+        processedDecimalPart = decimalPart.substring(0, assetDecimals);
+        console.log(`Amount truncated from ${amountStr} to ${integerPart}.${processedDecimalPart}`);
       }
       
       // Pad with zeros to match assetDecimals
-      const [integerPart, decimalPart = ''] = amountStr.split('.');
-      const paddedDecimals = decimalPart.padEnd(assetDecimals, '0').substring(0, assetDecimals);
+      const paddedDecimals = processedDecimalPart.padEnd(assetDecimals, '0');
       
       // Get last referenceID.length digits
       const referenceLength = referenceID.length;
       const lastDigits = paddedDecimals.slice(-referenceLength);
       
-      return lastDigits === referenceID;
+      // Verify that it equals the referenceID exactly
+      const isValid = lastDigits === referenceID;
+      
+      console.log('validateAmountToReference:', {
+        amount: amountStr,
+        processedAmount: `${integerPart}.${paddedDecimals}`,
+        referenceID,
+        lastDigits,
+        isValid
+      });
+      
+      return isValid;
     } catch (error) {
       console.error('Error validating amount to reference:', error);
       return false;
     }
   }
 
-  // Format user input with reference ID
+  // Helper: validateAmountAboveInboundDustThreshold (per docs line 197-198)
+  public validateAmountAboveInboundDustThreshold(
+    amount: string, 
+    dustThreshold: number
+  ): boolean {
+    try {
+      const numericAmount = parseFloat(amount);
+      const normalizedDustThreshold = dustThreshold / 1e8; // Convert from raw to asset units
+      const isAboveThreshold = numericAmount > normalizedDustThreshold;
+      
+      console.log('validateAmountAboveInboundDustThreshold:', {
+        amount: numericAmount,
+        dustThreshold: normalizedDustThreshold,
+        isAboveThreshold
+      });
+      
+      return isAboveThreshold;
+    } catch (error) {
+      console.error('Error validating dust threshold:', error);
+      return false;
+    }
+  }
+
+  // Format user input with reference ID (per docs lines 260-271)
   public formatAmountWithReference(
     userInput: string, 
     referenceID: string, 
@@ -280,29 +443,26 @@ export class MemolessService {
         };
       }
 
-      // Handle decimal precision
+      // Calculate reference encoding constraints
       const referenceLength = referenceID.length;
       const maxUserDecimals = Math.max(0, assetDecimals - referenceLength);
       
-      if (inputStr.indexOf('.') !== -1) {
-        const decimalPart = inputStr.split('.')[1];
-        if (decimalPart.length > maxUserDecimals) {
-          inputStr = inputStr.substring(0, inputStr.indexOf('.') + maxUserDecimals + 1);
-          warnings.push('Amount truncated to fit reference ID requirements');
-        }
-      }
-
-      // Ensure decimal point
-      if (inputStr.indexOf('.') === -1) {
-        inputStr += '.';
-      }
-
-      // Build final amount: user input + zeros + reference ID
+      // Handle user input decimal precision
       const [integerPart, decimalPart = ''] = inputStr.split('.');
-      const zerosNeeded = Math.max(0, assetDecimals - decimalPart.length - referenceLength);
-      const finalAmount = inputStr + '0'.repeat(zerosNeeded) + referenceID;
+      let processedDecimalPart = decimalPart;
+      
+      // Truncate if user has too many decimals
+      if (decimalPart.length > maxUserDecimals) {
+        processedDecimalPart = decimalPart.substring(0, maxUserDecimals);
+        warnings.push(`Amount truncated to ${maxUserDecimals} decimals to fit reference ID`);
+      }
 
-      // Validate that the base amount (excluding reference digits) is greater than 0
+      // Build final amount: integer + user decimals + padding zeros + reference ID
+      const zerosNeeded = Math.max(0, assetDecimals - processedDecimalPart.length - referenceLength);
+      const finalDecimalPart = processedDecimalPart + '0'.repeat(zerosNeeded) + referenceID;
+      const finalAmount = `${integerPart}.${finalDecimalPart}`;
+
+      // Validate that the base amount is meaningful
       const finalAmountNum = parseFloat(finalAmount);
       const referenceValue = parseInt(referenceID) / Math.pow(10, assetDecimals);
       const baseAmount = finalAmountNum - referenceValue;
@@ -310,7 +470,7 @@ export class MemolessService {
       if (baseAmount <= 0) {
         return {
           isValid: false,
-          processedInput: inputStr.replace(/\.$/, ''),
+          processedInput: inputStr,
           finalAmount: finalAmount,
           equivalentUSD: '0.00',
           warnings: warnings,
@@ -318,9 +478,19 @@ export class MemolessService {
         };
       }
 
+      console.log('formatAmountWithReference:', {
+        userInput: inputStr,
+        referenceID,
+        assetDecimals,
+        maxUserDecimals,
+        zerosNeeded,
+        finalAmount,
+        baseAmount
+      });
+
       return {
         isValid: true,
-        processedInput: inputStr.replace(/\.$/, ''), // Remove trailing dot for display
+        processedInput: inputStr,
         finalAmount: finalAmount,
         equivalentUSD: '0.00', // Will be calculated separately
         warnings: warnings,
@@ -496,7 +666,7 @@ export class MemolessService {
     }
   }
 
-  // Get current THORChain block and calculate expiry time
+  // Get current THORChain block and calculate expiry time (per docs lines 236-257)
   public async getExpiryTimeEstimate(expiryBlock: string): Promise<{ 
     currentBlock: number; 
     expiryBlock: number; 
@@ -504,11 +674,19 @@ export class MemolessService {
     blocksRemaining: number 
   }> {
     try {
+      // Get current THORChain block using /thorchain/lastblock/THORCHAIN
       const blockData = await this.thorchainApiService.getCurrentBlock();
       const currentBlock = blockData[0]?.thorchain || 0;
       const expiryBlockNum = parseInt(expiryBlock);
       const blocksRemaining = expiryBlockNum - currentBlock;
       const timeRemaining = this.calculateBlockTimeEstimate(currentBlock, expiryBlockNum);
+      
+      console.log('Expiry time calculation:', {
+        currentBlock,
+        expiryBlock: expiryBlockNum,
+        blocksRemaining,
+        timeRemaining
+      });
       
       return {
         currentBlock: currentBlock,
@@ -524,6 +702,112 @@ export class MemolessService {
         timeRemaining: 'Unknown',
         blocksRemaining: 0
       };
+    }
+  }
+
+  // Helper functions for legacy memoless compatibility
+  
+  // Convert USD amount to asset amount using price
+  public convertUSDToAsset(usdAmount: string, priceUSD: number): string {
+    try {
+      const usd = parseFloat(usdAmount);
+      if (priceUSD <= 0) return '0';
+      const assetAmount = usd / priceUSD;
+      return assetAmount.toString();
+    } catch (error) {
+      console.error('Error converting USD to asset:', error);
+      return '0';
+    }
+  }
+
+  // Convert asset amount to USD using price
+  public convertAssetToUSD(assetAmount: string, priceUSD: number): string {
+    try {
+      const asset = parseFloat(assetAmount);
+      const usdValue = asset * priceUSD;
+      return usdValue.toFixed(2);
+    } catch (error) {
+      console.error('Error converting asset to USD:', error);
+      return '0.00';
+    }
+  }
+
+  // Get asset decimals with fallback to 8
+  public getAssetDecimals(asset: string): number {
+    const [chain] = asset.split('.');
+    const decimalMap: { [key: string]: number } = {
+      'BTC': 8,
+      'ETH': 18,
+      'LTC': 8,
+      'BCH': 8,
+      'BNB': 8,
+      'AVAX': 18,
+      'ATOM': 6,
+      'DOGE': 8,
+      'BSC': 18,
+      'GAIA': 6,
+      'BASE': 18,
+      'XRP': 6
+    };
+    return decimalMap[chain] || 8;
+  }
+
+  // Extract chain from asset identifier
+  public getAssetChain(asset: string): string {
+    return asset.split('.')[0];
+  }
+
+  // Check if asset is a gas asset (not a token)
+  public isGasAsset(asset: string): boolean {
+    // Gas assets don't have contract addresses (no hyphen in asset part)
+    const parts = asset.split('.');
+    if (parts.length !== 2) return false;
+    
+    const [chain, assetPart] = parts;
+    return !assetPart.includes('-');
+  }
+
+  // Normalize raw amount to asset units (divide by 10^decimals)
+  public normalizeRawAmount(rawAmount: string, decimals: number): string {
+    try {
+      const raw = parseFloat(rawAmount);
+      const normalized = raw / Math.pow(10, decimals);
+      return normalized.toString();
+    } catch (error) {
+      console.error('Error normalizing raw amount:', error);
+      return '0';
+    }
+  }
+
+  // Convert asset units to raw amount (multiply by 10^decimals)
+  public denormalizeToRawAmount(assetAmount: string, decimals: number): string {
+    try {
+      // Use string manipulation to avoid floating point precision issues
+      const [integerPart = '0', decimalPart = ''] = assetAmount.split('.');
+      const paddedDecimalPart = decimalPart.padEnd(decimals, '0').substring(0, decimals);
+      const rawAmountStr = integerPart + paddedDecimalPart;
+      return parseInt(rawAmountStr.replace(/^0+/, '') || '0').toString();
+    } catch (error) {
+      console.error('Error denormalizing to raw amount:', error);
+      return '0';
+    }
+  }
+
+  // Format transaction hash for explorer URL (strip 0x prefix if present)
+  public formatTxHashForExplorer(txHash: string): string {
+    if (txHash.startsWith('0x')) {
+      return txHash.substring(2);
+    }
+    return txHash;
+  }
+
+  // Generate explorer URL for transaction tracking
+  public getExplorerUrl(txHash: string, network: 'mainnet' | 'stagenet' = 'stagenet'): string {
+    const cleanHash = this.formatTxHashForExplorer(txHash);
+    if (network === 'mainnet') {
+      return `https://thorchain.net/tx/${cleanHash}`;
+    } else {
+      return `https://stagenet.thorchain.net/tx/${cleanHash}`;
     }
   }
 }

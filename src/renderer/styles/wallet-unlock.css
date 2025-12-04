@@ -1,0 +1,324 @@
+/* Wallet Unlock Dialog Component Styles */
+/* Scoped to .wallet-unlock-* to avoid conflicts */
+
+.wallet-unlock-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.wallet-unlock-modal.active {
+    display: flex;
+    opacity: 1;
+}
+
+.wallet-unlock-content {
+    background: var(--bg-secondary, #1a1a1a);
+    border: 1px solid var(--border-color, #333);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.wallet-unlock-modal.active .wallet-unlock-content {
+    transform: scale(1);
+}
+
+.wallet-unlock-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.wallet-unlock-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.wallet-unlock-icon {
+    font-size: 1.8rem;
+    color: var(--accent-primary, #00d4ff);
+}
+
+.wallet-unlock-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted, #888);
+    font-weight: 400;
+}
+
+.wallet-unlock-wallet-info {
+    background: var(--bg-card, #2d2d2d);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.wallet-unlock-wallet-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.wallet-unlock-wallet-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--bg-primary, #000);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 212, 255, 0.2);
+    overflow: hidden;
+    background: var(--bg-tertiary, #2d2d2d);
+}
+
+.wallet-unlock-wallet-avatar svg {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+}
+
+.wallet-unlock-wallet-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.wallet-unlock-wallet-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    margin-bottom: 6px;
+}
+
+.wallet-unlock-wallet-address {
+    font-size: 0.9rem;
+    font-family: monospace;
+    color: var(--text-muted, #888);
+    background: var(--bg-input, #3a3a3a);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #444);
+}
+
+.wallet-unlock-form {
+    margin-bottom: 24px;
+}
+
+.wallet-unlock-form-group {
+    margin-bottom: 20px;
+}
+
+.wallet-unlock-form-group:last-child {
+    margin-bottom: 0;
+}
+
+.wallet-unlock-password-container {
+    position: relative;
+}
+
+.wallet-unlock-security-note {
+    background: var(--bg-input, #3a3a3a);
+    border: 1px solid var(--border-color, #444);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.wallet-unlock-security-icon {
+    font-size: 1.2rem;
+    color: var(--accent-primary, #00d4ff);
+    flex-shrink: 0;
+}
+
+.wallet-unlock-security-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #ccc);
+    line-height: 1.4;
+}
+
+.wallet-unlock-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.wallet-unlock-btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.wallet-unlock-btn-primary {
+    background: var(--accent-primary, #00d4ff);
+    color: var(--bg-primary, #000);
+}
+
+.wallet-unlock-btn-primary:hover {
+    background: #00b8e6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+}
+
+.wallet-unlock-btn-primary:disabled {
+    background: var(--bg-tertiary, #2d2d2d);
+    color: var(--text-muted, #888);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.wallet-unlock-btn-secondary {
+    background: var(--bg-tertiary, #2d2d2d);
+    color: var(--text-secondary, #ccc);
+    border: 1px solid var(--border-color, #444);
+}
+
+.wallet-unlock-btn-secondary:hover {
+    background: var(--bg-input, #3a3a3a);
+    border-color: var(--accent-primary, #00d4ff);
+    color: var(--text-primary, #fff);
+}
+
+.wallet-unlock-btn-icon {
+    font-size: 1rem;
+}
+
+.wallet-unlock-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--bg-input, #3a3a3a);
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #444);
+}
+
+.wallet-unlock-loading.active {
+    display: flex;
+}
+
+.wallet-unlock-loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-color, #444);
+    border-top: 2px solid var(--accent-primary, #00d4ff);
+    border-radius: 50%;
+    animation: wallet-unlock-spin 1s linear infinite;
+}
+
+.wallet-unlock-loading-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #ccc);
+}
+
+@keyframes wallet-unlock-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.wallet-unlock-error {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid var(--error, #ff6b6b);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+}
+
+.wallet-unlock-error.active {
+    display: flex;
+}
+
+.wallet-unlock-error-icon {
+    font-size: 1.2rem;
+    color: var(--error, #ff6b6b);
+    flex-shrink: 0;
+}
+
+.wallet-unlock-error-text {
+    font-size: 0.9rem;
+    color: var(--error, #ff6b6b);
+    line-height: 1.4;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .wallet-unlock-content {
+        margin: 20px;
+        padding: 24px;
+        width: calc(100% - 40px);
+    }
+    
+    .wallet-unlock-actions {
+        flex-direction: column;
+    }
+    
+    .wallet-unlock-btn {
+        width: 100%;
+    }
+    
+    .wallet-unlock-wallet-display {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .wallet-unlock-wallet-details {
+        text-align: center;
+    }
+}
+
+/* Animation for smooth entry */
+@keyframes wallet-unlock-slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.wallet-unlock-modal.active .wallet-unlock-content {
+    animation: wallet-unlock-slideIn 0.3s ease-out;
+}

@@ -1,0 +1,504 @@
+/* ==========================================================================
+   Deposit Step Overrides - Force New Layout
+   ========================================================================== */
+
+/* Override all old styles with higher specificity */
+.step-content.deposit-step .amount-input-section {
+  margin-bottom: 24px !important;
+}
+
+.step-content.deposit-step .amount-input-section label {
+  display: block !important;
+  font-weight: 500 !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 16px !important;
+  margin-bottom: 12px !important;
+}
+
+.step-content.deposit-step .amount-input-group {
+  display: flex !important;
+  align-items: stretch !important;
+  background: var(--bg-secondary, #2a2a2a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  transition: border-color 0.2s !important;
+}
+
+.step-content.deposit-step .amount-input-group:focus-within {
+  border-color: var(--accent-primary, #007bff) !important;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1) !important;
+}
+
+.step-content.deposit-step .amount-prefix {
+  background: var(--bg-input, #1a1a1a) !important;
+  color: var(--text-primary, #fff) !important;
+  padding: 12px 16px !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  border-right: 1px solid var(--border-color, #444) !important;
+  display: flex !important;
+  align-items: center !important;
+  min-width: 40px !important;
+  justify-content: center !important;
+}
+
+.step-content.deposit-step .amount-input {
+  flex: 1 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 12px 16px !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 16px !important;
+  outline: none !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+.step-content.deposit-step .amount-input::placeholder {
+  color: var(--text-secondary, #999) !important;
+}
+
+.step-content.deposit-step .unit-toggle {
+  background: var(--bg-input, #1a1a1a) !important;
+  border: none !important;
+  border-left: 1px solid var(--border-color, #444) !important;
+  padding: 12px 16px !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  outline: none !important;
+  min-width: 80px !important;
+}
+
+.step-content.deposit-step .unit-toggle:hover {
+  background: var(--bg-secondary, #2a2a2a) !important;
+}
+
+/* Final Amount Emphasized Section */
+.step-content.deposit-step .final-amount-section {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05)) !important;
+  border: 2px solid var(--accent-primary, #007bff) !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  margin-bottom: 12px !important;
+  text-align: center !important;
+}
+
+.step-content.deposit-step .final-amount-header {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--text-primary, #fff) !important;
+  margin-bottom: 8px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  transition: color 0.3s ease !important;
+}
+
+.step-content.deposit-step .final-amount-header[style*="#ef4444"] {
+  animation: pulse-error 1.5s ease-in-out infinite alternate !important;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.4) !important;
+}
+
+.step-content.deposit-step .final-amount-display {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+.step-content.deposit-step .final-amount-primary {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--accent-primary, #007bff) !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  text-shadow: 0 1px 2px rgba(0, 123, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.step-content.deposit-step .final-amount-primary[style*="#ef4444"] {
+  animation: pulse-error 1.5s ease-in-out infinite alternate !important;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+}
+
+.step-content.deposit-step .final-amount-secondary {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--text-secondary, #ccc) !important;
+  margin-top: 1px !important;
+}
+
+/* Section Divider */
+.step-content.deposit-step .section-divider {
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, var(--border-color, #444), transparent) !important;
+  margin: 20px 0 !important;
+}
+
+/* Transaction Details Main Section */
+.step-content.deposit-step .transaction-details-main {
+  background: var(--bg-secondary, #2a2a2a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.step-content.deposit-step .qr-transaction-layout {
+  display: flex !important;
+  gap: 16px !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+.step-content.deposit-step .qr-container-compact {
+  flex-shrink: 0 !important;
+  width: fit-content !important;
+  min-width: fit-content !important;
+}
+
+.step-content.deposit-step .qr-box {
+  width: fit-content !important;
+  height: fit-content !important;
+  min-width: fit-content !important;
+  min-height: fit-content !important;
+  background: white !important;
+  border: 2px solid var(--border-color, #444) !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  padding: 8px !important;
+  box-sizing: border-box !important;
+  max-width: 300px !important;
+  max-height: 300px !important;
+}
+
+.step-content.deposit-step .qr-placeholder,
+.step-content.deposit-step .qr-loading {
+  color: var(--text-secondary, #666) !important;
+  font-size: 10px !important;
+  text-align: center !important;
+  padding: 12px !important;
+  line-height: 1.2 !important;
+}
+
+/* Dynamic QR code content styling */
+.step-content.deposit-step .qr-box canvas,
+.step-content.deposit-step .qr-box svg {
+  max-width: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  display: block !important;
+}
+
+.step-content.deposit-step .transaction-details-compact {
+  flex: 1 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.step-content.deposit-step .section-header {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--text-primary, #fff) !important;
+  margin-bottom: 10px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid var(--border-color, #444) !important;
+  text-align: center !important;
+}
+
+.step-content.deposit-step .section-header.warning {
+  color: var(--warning, #ffa500) !important;
+  border-bottom-color: var(--warning, #ffa500) !important;
+}
+
+/* Detail Rows */
+.step-content.deposit-step .detail-row {
+  display: flex !important;
+  flex-direction: column !important;
+  margin-bottom: 12px !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+}
+
+.step-content.deposit-step .detail-row-dual {
+  display: flex !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.step-content.deposit-step .detail-half {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.step-content.deposit-step .detail-row-triple {
+  display: flex !important;
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+.step-content.deposit-step .detail-third {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.step-content.deposit-step .asset-below-qr {
+  margin-top: 8px !important;
+  text-align: center !important;
+}
+
+.step-content.deposit-step .asset-below-qr .network-display {
+  font-size: 12px !important;
+  padding: 6px 8px !important;
+}
+
+.step-content.deposit-step .detail-row label,
+.step-content.deposit-step .detail-half label {
+  font-weight: 500 !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 12px !important;
+  margin-bottom: 6px !important;
+  text-align: left !important;
+}
+
+.step-content.deposit-step .network-display {
+  background: var(--bg-input, #1a1a1a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 13px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+}
+
+.step-content.deposit-step .reference-display {
+  background: var(--bg-input, #1a1a1a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 13px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-weight: 600 !important;
+}
+
+.step-content.deposit-step .input-copy-group {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+}
+
+.step-content.deposit-step .detail-input {
+  flex: 1 !important;
+  background: var(--bg-input, #1a1a1a) !important;
+  border: 1px solid var(--accent-primary, #007bff) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  color: var(--accent-primary, #007bff) !important;
+  font-size: 13px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-weight: 600 !important;
+  transition: border-color 0.2s !important;
+  text-align: left !important;
+  width: auto !important;
+  max-width: none !important;
+  direction: ltr !important;
+  justify-self: flex-start !important;
+  align-self: flex-start !important;
+}
+
+.step-content.deposit-step .detail-input:focus {
+  outline: none !important;
+  border-color: var(--accent-primary, #007bff) !important;
+}
+
+.step-content.deposit-step .copy-button {
+  background: var(--accent-secondary, #28a745) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  transition: all 0.2s !important;
+  min-width: 40px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.step-content.deposit-step .copy-button:hover {
+  background: var(--accent-secondary-hover, #218838) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Critical Instructions Below Transaction Details */
+.step-content.deposit-step .critical-instructions-below {
+  background: var(--bg-secondary, #2a2a2a) !important;
+  border: 1px solid var(--warning, #ffa500) !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  margin-top: 16px !important;
+}
+
+.step-content.deposit-step .instructions-list-bullets {
+  margin: 0 !important;
+  padding-left: 16px !important;
+  list-style-type: disc !important;
+}
+
+.step-content.deposit-step .instructions-list-bullets li {
+  color: var(--text-secondary, #ccc) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 6px !important;
+}
+
+.step-content.deposit-step .instructions-list-bullets li strong {
+  color: var(--warning, #ffa500) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* Usage Statistics and Expiry Info */
+.step-content.deposit-step .usage-stats {
+  font-size: 11px !important;
+  color: var(--text-secondary, #ccc) !important;
+  margin-top: 4px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+.step-content.deposit-step .usage-text {
+  background: rgba(0, 123, 255, 0.1) !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(0, 123, 255, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+.step-content.deposit-step .usage-compact,
+.step-content.deposit-step .expiry-compact {
+  background: var(--bg-input, #1a1a1a) !important;
+  border: 1px solid var(--border-color, #444) !important;
+  border-radius: 6px !important;
+  padding: 10px 12px !important;
+  color: var(--text-primary, #fff) !important;
+  font-size: 13px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-weight: 600 !important;
+}
+
+.step-content.deposit-step .usage-compact-text {
+  color: var(--accent-primary, #007bff) !important;
+}
+
+.step-content.deposit-step .expiry-info {
+  text-align: center !important;
+  margin-top: 8px !important;
+  padding: 8px !important;
+  background: var(--bg-secondary, #2a2a2a) !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color, #444) !important;
+}
+
+.step-content.deposit-step .expiry-label {
+  font-size: 10px !important;
+  color: var(--text-secondary, #ccc) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  font-weight: 600 !important;
+  margin-bottom: 4px !important;
+}
+
+.step-content.deposit-step .time-remaining {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+.step-content.deposit-step .time-good {
+  color: var(--accent-secondary, #28a745) !important;
+  text-shadow: 0 1px 2px rgba(40, 167, 69, 0.3) !important;
+}
+
+.step-content.deposit-step .time-warning {
+  color: var(--warning, #ffa500) !important;
+  text-shadow: 0 1px 2px rgba(255, 165, 0, 0.3) !important;
+}
+
+.step-content.deposit-step .time-urgent {
+  color: var(--error, #ef4444) !important;
+  text-shadow: 0 1px 2px rgba(239, 68, 68, 0.3) !important;
+  animation: pulse-urgent 1.5s ease-in-out infinite alternate !important;
+}
+
+.step-content.deposit-step .time-expired {
+  color: var(--error, #ef4444) !important;
+  text-shadow: 0 1px 2px rgba(239, 68, 68, 0.3) !important;
+  text-decoration: line-through !important;
+}
+
+.step-content.deposit-step .time-unknown {
+  color: var(--text-secondary, #999) !important;
+  font-style: italic !important;
+}
+
+@keyframes pulse-urgent {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-error {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .step-content.deposit-step .qr-transaction-layout {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+  
+  .step-content.deposit-step .detail-row-dual {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .step-content.deposit-step .final-amount-primary {
+    font-size: 16px !important;
+  }
+  
+  .step-content.deposit-step .qr-box {
+    max-width: 200px !important;
+    max-height: 200px !important;
+  }
+  
+  .step-content.deposit-step .expiry-info {
+    margin-top: 12px !important;
+  }
+}
