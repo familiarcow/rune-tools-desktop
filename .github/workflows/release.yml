@@ -41,6 +41,7 @@ jobs:
         env:
           DEBUG: electron-builder
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release manifest
         run: node scripts/create-manifest.js
