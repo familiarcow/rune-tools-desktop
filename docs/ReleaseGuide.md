@@ -88,591 +88,33 @@ gpg --armor --detach-sign release-manifest.json
 ## Required Files
 
 ### 1. GitHub Actions Workflow
-Create `.github/workflows/release.yml`:
-
-```yaml
-name: Release Build
-
-on:
-  push:
-    tags: ['v*']
-
-jobs:
-  build-and-release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: macos-latest
-            platform: mac
-          - os: windows-latest
-            platform: windows
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Import GPG key
-        run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --import
-          echo "trust\n5\ny\nsave\nquit" | gpg --command-fd 0 --edit-key ${{ secrets.GPG_KEY_ID }}
-
-      - name: Build application
-        run: npm run dist
-
-      - name: Create release manifest
-        run: node scripts/create-manifest.js
-      
-      - name: Extract changelog for current version
-        run: node scripts/extract-changelog.js
-
-      - name: Sign manifest
-        run: |
-          gpg --batch --yes --pinentry-mode loopback --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
-              --armor --detach-sign release-manifest.json
-
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist-electron/*.dmg
-            dist-electron/*.exe
-            release-manifest.json
-            release-manifest.json.asc
-            changelog.md
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```
+The working `.github/workflows/release.yml` is already configured with:
+- Cross-platform builds (macOS + Windows)
+- Platform-specific GPG key import (Unix vs PowerShell)
+- Proper Node.js version (20)
+- PERSONAL_GITHUB_TOKEN for release permissions
+- ICNS icon support for macOS
 
 ### 2. Scripts Setup
-Create `scripts/create-manifest.js`:
+The working scripts are already configured:
+- `scripts/create-manifest.js` - Generates release manifest with checksums and file sizes
+- `scripts/extract-changelog.js` - Extracts version-specific changelog from `docs/CHANGELOG.md`
 
-```javascript
-#!/usr/bin/env node
-const fs = require('fs');
-const crypto = require('crypto');
-const { execSync } = require('child_process');
-const pkg = require('../package.json');
+Both scripts are integrated into the GitHub Actions workflow.
 
-function createManifest() {
-    const version = pkg.version;
-    console.log(`Creating manifest for v${version}...`);
-    
-    // Calculate checksums and sizes
-    const checksums = {};
-    const fileSizes = {};
-    
-    if (fs.existsSync('dist-electron')) {
-        const files = fs.readdirSync('dist-electron');
-        
-        files.forEach(file => {
-            if (file.match(/\.(dmg|exe)$/)) {
-                const filePath = `dist-electron/${file}`;
-                const content = fs.readFileSync(filePath);
-                const hash = crypto.createHash('sha256').update(content).digest('hex');
-                const stats = fs.statSync(filePath);
-                
-                checksums[file] = `sha256:${hash}`;
-                fileSizes[file] = formatBytes(stats.size);
-                
-                console.log(`✅ ${file}: ${fileSizes[file]} (${hash.substring(0, 16)}...)`);
-            }
-        });
-    }
-    
-    // Get recent commits for basic release notes
-    let releaseNotes = 'Latest updates and improvements';
-    try {
-        const commits = execSync('git log --oneline --since="2 weeks ago" -10')
-            .toString()
-            .split('\n')
-            .filter(line => line.trim())
-            .map(line => line.replace(/^[a-f0-9]+ /, ''))
-            .slice(0, 5);
-            
-        if (commits.length > 0) {
-            releaseNotes = commits.join('\n');
-        }
-    } catch (error) {
-        console.warn('Could not generate release notes from commits');
-    }
-    
-    // Create manifest
-    const manifest = {
-        version: version,
-        releaseDate: new Date().toISOString(),
-        
-        downloadUrls: {
-            mac: `https://github.com/familiarcow/rune-tools-desktop/releases/download/v${version}/rune-tools-desktop-${version}.dmg`,
-            windows: `https://github.com/familiarcow/rune-tools-desktop/releases/download/v${version}/rune-tools-desktop-setup-${version}.exe`
-        },
-        
-        checksums: checksums,
-        fileSizes: fileSizes,
-        releaseNotes: releaseNotes,
-        
-        buildInfo: {
-            commitHash: execSync('git rev-parse HEAD').toString().trim(),
-            buildDate: new Date().toISOString(),
-            nodeVersion: process.version,
-            platform: process.platform
-        }
-    };
-    
-    // Write manifest
-    fs.writeFileSync('release-manifest.json', JSON.stringify(manifest, null, 2));
-    console.log('✅ Release manifest created');
-    
-    return manifest;
-}
-
-function formatBytes(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-if (require.main === module) {
-    createManifest();
-}
-
-module.exports = { createManifest };
-```
-
-Create `scripts/extract-changelog.js`:
-
-```javascript
-#!/usr/bin/env node
-
-const fs = require('fs');
-const path = require('path');
-
-/**
- * Extract the changelog entry for the current version from CHANGELOG.md
- * and create a release-specific changelog.md file
- */
-
-function extractChangelog() {
-    try {
-        // Read package.json to get current version
-        const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-        const currentVersion = packageJson.version;
-        
-        // Read CHANGELOG.md
-        const changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
-        const changelogContent = fs.readFileSync(changelogPath, 'utf8');
-        
-        console.log(`📝 Extracting changelog for version ${currentVersion}`);
-        
-        // Split into lines for processing
-        const lines = changelogContent.split('\n');
-        
-        // Find the version section
-        const versionPattern = new RegExp(`^## \\[${currentVersion.replace(/\./g, '\\.')}\\]`);
-        let startIndex = -1;
-        let endIndex = -1;
-        
-        // Find start of current version section
-        for (let i = 0; i < lines.length; i++) {
-            if (versionPattern.test(lines[i])) {
-                startIndex = i;
-                break;
-            }
-        }
-        
-        if (startIndex === -1) {
-            throw new Error(`Version ${currentVersion} not found in CHANGELOG.md`);
-        }
-        
-        // Find end of current version section (next ## heading or end of file)
-        for (let i = startIndex + 1; i < lines.length; i++) {
-            if (lines[i].startsWith('## ')) {
-                endIndex = i;
-                break;
-            }
-        }
-        
-        // If no next section found, use end of file
-        if (endIndex === -1) {
-            endIndex = lines.length;
-        }
-        
-        // Extract the version section
-        const versionLines = lines.slice(startIndex, endIndex);
-        
-        // Create release notes with header and installation info
-        const releaseNotes = [
-            `# Rune Tools Desktop v${currentVersion}`,
-            '',
-            ...versionLines.slice(1), // Skip the version header since we have our own
-            '',
-            '---',
-            '',
-            '## Downloads',
-            '- **macOS**: Download the `.dmg` file',
-            '- **Windows**: Download the `.exe` file',
-            '',
-            '## Installation Notes',
-            'Since these binaries are not code-signed with expensive certificates, you may see security warnings:',
-            '',
-            '**macOS**: If you see "cannot be opened because it is from an unidentified developer", Control+click the app and select "Open"',
-            '',
-            '**Windows**: If Windows SmartScreen blocks it, click "More info" then "Run anyway"',
-            '',
-            '## Verification',
-            'You can verify the integrity of downloads using:',
-            '- **Checksums**: Included in `release-manifest.json`',
-            '- **GPG Signature**: The manifest is cryptographically signed with our release key',
-            '',
-            '## Need Help?',
-            'Join our community or report issues on [GitHub](https://github.com/familiarcow/rune-tools-desktop/issues).'
-        ].join('\n');
-        
-        // Write to changelog.md for the release
-        fs.writeFileSync('changelog.md', releaseNotes);
-        
-        console.log(`✅ Created changelog.md for v${currentVersion}`);
-        console.log(`📊 Changelog contains ${versionLines.length} lines`);
-        
-        // Also extract just the changes for the manifest
-        const changesOnly = versionLines.slice(1).join('\n').trim();
-        
-        // Update the manifest creation
-        const manifestPath = 'release-manifest.json';
-        if (fs.existsSync(manifestPath)) {
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-            manifest.changelog = changesOnly;
-            fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-            console.log('✅ Added changelog to release manifest');
-        }
-        
-    } catch (error) {
-        console.error('❌ Failed to extract changelog:', error.message);
-        process.exit(1);
-    }
-}
-
-if (require.main === module) {
-    extractChangelog();
-}
-
-module.exports = { extractChangelog };
-```
-
-### 3. Update Checker Service
-Create `src/renderer/services/UpdateService.ts`:
-
-```typescript
-interface UpdateInfo {
-    version: string;
-    downloadUrl: string;
-    releaseNotes: string;
-    fileSize?: string;
-    isVerified: boolean;
-    changelogUrl: string;
-}
-
-export class UpdateService {
-    private currentVersion = require('../../../package.json').version;
-    private readonly GITHUB_REPO = 'familiarcow/rune-tools-desktop';
-    private readonly RELEASES_API = `https://api.github.com/repos/${this.GITHUB_REPO}/releases/latest`;
-
-    async checkForUpdates(): Promise<UpdateInfo | null> {
-        try {
-            console.log('🔍 Checking for updates...');
-            
-            const response = await fetch(this.RELEASES_API, { 
-                signal: AbortSignal.timeout(8000) // 8 second timeout
-            });
-            
-            if (!response.ok) {
-                console.warn('Update check failed:', response.status);
-                return null;
-            }
-            
-            const release = await response.json();
-            const latestVersion = release.tag_name.replace('v', '');
-            
-            if (!this.isNewerVersion(latestVersion)) {
-                console.log('✅ Already on latest version');
-                return null;
-            }
-            
-            // Get platform-specific download info
-            const downloadInfo = this.getPlatformDownloadInfo(release);
-            if (!downloadInfo) {
-                console.warn('No download available for current platform');
-                return null;
-            }
-            
-            // Try to verify release (optional, non-blocking)
-            const isVerified = await this.verifyRelease(release);
-            
-            const updateInfo: UpdateInfo = {
-                version: latestVersion,
-                downloadUrl: downloadInfo.url,
-                releaseNotes: this.formatReleaseNotes(release.body || 'Updates available'),
-                fileSize: downloadInfo.size,
-                isVerified: isVerified,
-                changelogUrl: `https://github.com/${this.GITHUB_REPO}/releases/tag/v${latestVersion}`
-            };
-            
-            console.log(`✅ Update available: v${latestVersion}`);
-            return updateInfo;
-            
-        } catch (error) {
-            console.warn('Update check failed:', error);
-            return null; // Fail silently to not disrupt app
-        }
-    }
-    
-    private isNewerVersion(remoteVersion: string): boolean {
-        const current = this.currentVersion.split('.').map(Number);
-        const remote = remoteVersion.split('.').map(Number);
-        
-        for (let i = 0; i < 3; i++) {
-            if (remote[i] > current[i]) return true;
-            if (remote[i] < current[i]) return false;
-        }
-        return false;
-    }
-    
-    private getPlatformDownloadInfo(release: any): { url: string; size?: string } | null {
-        const platform = process.platform;
-        let assetName: string;
-        
-        if (platform === 'darwin') {
-            assetName = '.dmg';
-        } else if (platform === 'win32') {
-            assetName = '.exe';
-        } else {
-            return null; // Unsupported platform
-        }
-        
-        const asset = release.assets.find((a: any) => a.name.endsWith(assetName));
-        if (!asset) return null;
-        
-        return {
-            url: asset.browser_download_url,
-            size: this.formatBytes(asset.size)
-        };
-    }
-    
-    private async verifyRelease(release: any): Promise<boolean> {
-        try {
-            // Look for signed manifest (optional verification)
-            const manifestAsset = release.assets.find((a: any) => a.name === 'release-manifest.json');
-            const signatureAsset = release.assets.find((a: any) => a.name === 'release-manifest.json.asc');
-            
-            if (!manifestAsset || !signatureAsset) {
-                console.warn('Release manifest or signature not found');
-                return false;
-            }
-            
-            // For now, just return true if signature file exists
-            // Full PGP verification can be added later if needed
-            return true;
-            
-        } catch (error) {
-            console.warn('Release verification failed:', error);
-            return false;
-        }
-    }
-    
-    private formatReleaseNotes(notes: string): string {
-        // Clean up and format release notes
-        return notes
-            .split('\n')
-            .slice(0, 5) // First 5 lines
-            .join('\n')
-            .trim();
-    }
-    
-    private formatBytes(bytes: number): string {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    }
-}
-```
+### 3. Update System
+The update system is fully implemented with:
+- `UpdateService.ts` - Complete update checking with GPG verification
+- `AppConstants.ts` - Embedded PGP public key and version management  
+- Browser-compatible implementation (no Node.js dependencies)
+- Real cryptographic verification using OpenPGP.js
 
 ### 4. Update Notification UI
-Add to your main controller:
-
-```typescript
-// In your WalletSelectionController or main app controller
-import { UpdateService } from '../services/UpdateService';
-
-async initialize(): Promise<void> {
-    // ... existing initialization code ...
-    
-    // Check for updates (non-blocking)
-    this.checkForUpdates();
-}
-
-private async checkForUpdates(): void {
-    try {
-        const updateService = new UpdateService();
-        const updateInfo = await updateService.checkForUpdates();
-        
-        if (updateInfo) {
-            this.showUpdateNotification(updateInfo);
-        }
-    } catch (error) {
-        console.warn('Update check failed:', error);
-    }
-}
-
-private showUpdateNotification(updateInfo: any): void {
-    const notification = document.createElement('div');
-    notification.className = 'update-notification';
-    notification.innerHTML = `
-        <div class="update-content">
-            <div class="update-info">
-                <span class="update-icon">⬆️</span>
-                <div class="update-text">
-                    <div class="update-title">Rune Tools v${updateInfo.version} Available</div>
-                    <div class="update-subtitle">${updateInfo.fileSize || 'Ready to download'}</div>
-                </div>
-            </div>
-            <div class="update-actions">
-                <button class="update-btn update-btn-primary" onclick="window.open('${updateInfo.downloadUrl}')">
-                    Download
-                </button>
-                <button class="update-btn" onclick="this.parentElement.parentElement.parentElement.remove()">
-                    Later
-                </button>
-            </div>
-        </div>
-        ${!updateInfo.isVerified ? '<div class="update-warning">⚠️ Could not verify release signature</div>' : ''}
-    `;
-    
-    document.body.insertBefore(notification, document.body.firstChild);
-    
-    // Auto-hide after 30 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 30000);
-}
-```
-
-### 5. Update Notification CSS
-Add to your stylesheet:
-
-```css
-.update-notification {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    color: white;
-    padding: 16px 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    font-family: system-ui, -apple-system, sans-serif;
-    position: relative;
-    z-index: 1000;
-}
-
-.update-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1000px;
-    margin: 0 auto;
-    gap: 20px;
-}
-
-.update-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.update-icon {
-    font-size: 24px;
-}
-
-.update-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 2px;
-}
-
-.update-subtitle {
-    font-size: 14px;
-    opacity: 0.9;
-}
-
-.update-actions {
-    display: flex;
-    gap: 12px;
-}
-
-.update-btn {
-    padding: 8px 16px;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 6px;
-    background: rgba(255,255,255,0.15);
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.update-btn:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateY(-1px);
-}
-
-.update-btn-primary {
-    background: rgba(255,255,255,0.25);
-    font-weight: 600;
-}
-
-.update-warning {
-    background: rgba(255,152,0,0.9);
-    color: white;
-    padding: 8px 16px;
-    margin-top: 8px;
-    border-radius: 4px;
-    font-size: 13px;
-    text-align: center;
-}
-
-@media (max-width: 768px) {
-    .update-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 16px;
-    }
-    
-    .update-actions {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .update-btn {
-        flex: 1;
-        max-width: 120px;
-    }
-}
-```
+The UI system is fully integrated in:
+- `WalletSelectionController.ts` - Update checking and notification display
+- `index.html` - Inline CSS following app patterns
+- Complete notification system with Download/Changelog/Later buttons
+- GPG verification status indicators
 
 ---
 
@@ -794,6 +236,133 @@ npm install
 npm run dist
 ```
 
+### Release Asset Conflicts
+If you encounter "already_exists" errors during GitHub Actions:
+
+```bash
+# Delete conflicting release and recreate
+gh release delete v1.2.3 --yes
+git push origin :refs/tags/v1.2.3  # Delete remote tag
+git push origin v1.2.3             # Push tag again to trigger fresh build
+```
+
+**Root Cause:** This happens when:
+- Package.json version doesn't match the git tag
+- Previous builds left artifacts with the same names
+- Release was manually created with conflicting asset names
+
+**Prevention:**
+1. Always update `package.json` and `AppConstants.ts` versions together
+2. Update `docs/CHANGELOG.md` with version entry before tagging
+3. Use semantic versioning consistently
+
+### Version Mismatch Issues
+```bash
+# Ensure all version references match
+grep -r "0.1.0" package.json src/renderer/constants/AppConstants.ts docs/CHANGELOG.md
+
+# Update all versions consistently
+npm version patch  # Updates package.json automatically
+# Manually update AppConstants.ts and CHANGELOG.md to match
+```
+
+### Changelog Extraction Failures
+If `extract-changelog.js` fails with "Version X.X.X not found":
+
+```bash
+# 1. Add missing version section to docs/CHANGELOG.md
+echo "## [1.2.3] - $(date +%Y-%m-%d)
+
+### Fixed
+- Your changes here
+
+" >> docs/CHANGELOG.md
+
+# 2. Or use the Unreleased section fallback
+# The script will automatically use [Unreleased] if specific version isn't found
+```
+
+### GPG Key Import Failures
+
+**macOS/Linux (Bash):**
+```bash
+# Test GPG import locally
+echo "$GPG_PRIVATE_KEY" | base64 -d > /tmp/test.key
+gpg --batch --import /tmp/test.key
+rm /tmp/test.key
+```
+
+**Windows (PowerShell):**
+```powershell
+# Test GPG import on Windows
+$key = [System.Convert]::FromBase64String($env:GPG_PRIVATE_KEY)
+Set-Content -Path "test.key" -Value $key -Encoding Byte
+gpg --batch --import test.key
+Remove-Item test.key
+```
+
+**Common Issues:**
+- Base64 encoding includes line breaks (use `-w 0` flag)
+- GPG passphrase not set in secrets
+- GPG key ID format incorrect (use long format)
+
+### GitHub Actions Permission Issues
+If you see "403 Forbidden" errors:
+
+1. **Use PERSONAL_GITHUB_TOKEN instead of GITHUB_TOKEN**:
+   ```yaml
+   env:
+     GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+   ```
+
+2. **Ensure token has correct permissions**:
+   - `contents: write` - For creating releases
+   - `actions: read` - For workflow access
+
+3. **Generate token with proper scopes**:
+   - Go to GitHub Settings > Developer settings > Personal access tokens
+   - Create token with `public_repo` scope (or `repo` for private repos)
+
+### Cross-Platform Build Issues
+
+**Matrix Strategy Problems:**
+```yaml
+# Use proper matrix configuration
+strategy:
+  matrix:
+    os: [macos-latest, windows-latest]
+    # NOT: separate include blocks for each OS
+```
+
+**Platform-Specific Commands:**
+```yaml
+# Use conditional steps for platform differences
+- name: Import GPG key (Unix)
+  if: runner.os != 'Windows'
+  # bash commands
+
+- name: Import GPG key (Windows)  
+  if: runner.os == 'Windows'
+  # powershell commands
+```
+
+### Icon Format Issues (macOS)
+If macOS app appears "damaged":
+
+```bash
+# Convert PNG to ICNS format
+mkdir app.iconset
+sips -z 16 16 icon.png --out app.iconset/icon_16x16.png
+sips -z 32 32 icon.png --out app.iconset/icon_16x16@2x.png
+# ... (create all required sizes)
+iconutil -c icns app.iconset -o icon.icns
+
+# Update package.json
+"mac": {
+  "icon": "path/to/icon.icns"  # Use .icns, not .png
+}
+```
+
 ### Update Check Issues
 ```bash
 # Test GitHub API
@@ -804,10 +373,33 @@ curl -H "Authorization: token YOUR_GITHUB_TOKEN" \
   https://api.github.com/rate_limit
 ```
 
+### Complete Release Workflow Debugging
+
+**Step-by-step verification:**
+1. **Local build test**: `npm run dist` 
+2. **Version consistency**: All files have matching versions
+3. **Changelog entry**: Version section exists in CHANGELOG.md
+4. **GPG setup**: Keys imported and trusted
+5. **GitHub secrets**: All required secrets configured
+6. **Clean release**: No conflicting assets exist
+
+**Emergency Release Cleanup:**
+```bash
+# Nuclear option: delete everything and start fresh
+gh release delete v1.2.3 --yes
+git tag -d v1.2.3
+git push origin :refs/tags/v1.2.3
+
+# Fix versions, changelog, commit
+git add -A && git commit -m "Fix release issues"
+git tag v1.2.3 && git push && git push --tags
+```
+
 ### Users Not Seeing Updates
 - Verify release is published (not draft)
 - Check tag format is `v1.2.3` (semantic versioning)
 - Ensure release assets uploaded correctly
+- Confirm app version is older than release version
 
 ---
 
