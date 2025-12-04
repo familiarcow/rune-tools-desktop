@@ -5,8 +5,11 @@ on:
     tags: ['v*']
 
 jobs:
-  build-mac:
-    runs-on: macos-latest
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
 
     steps:
       - name: Checkout code
@@ -54,12 +57,13 @@ jobs:
           gpg --batch --yes --armor --detach-sign release-manifest.json
 
 
-      - name: Upload macOS assets
+      - name: Upload release assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
             dist-electron/*.dmg
             dist-electron/*.zip
+            dist-electron/*.exe
             release-manifest.json
             release-manifest.json.asc
             changelog.md
