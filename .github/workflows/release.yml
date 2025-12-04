@@ -24,7 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Import GPG key
+      - name: Import GPG key (Unix)
+        if: runner.os != 'Windows'
         run: |
           echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d > /tmp/private.key
           gpg --batch --import /tmp/private.key
@@ -36,6 +37,16 @@ jobs:
           save
           quit
           EOF
+
+      - name: Import GPG key (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $key = [System.Convert]::FromBase64String("${{ secrets.GPG_PRIVATE_KEY }}")
+          Set-Content -Path "private.key" -Value $key -Encoding Byte
+          gpg --batch --import private.key
+          Remove-Item private.key
+          "trust", "5", "y", "save", "quit" | gpg --batch --yes --command-fd 0 --edit-key ${{ secrets.GPG_KEY_ID }}
+        shell: powershell
 
 
       - name: Build application
@@ -53,8 +64,7 @@ jobs:
         run: node scripts/extract-changelog.js
 
       - name: Sign manifest
-        run: |
-          gpg --batch --yes --armor --detach-sign release-manifest.json
+        run: gpg --batch --yes --armor --detach-sign release-manifest.json
 
 
       - name: Upload release assets
