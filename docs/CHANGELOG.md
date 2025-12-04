@@ -7,19 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Automated release system with GitHub Actions
-- In-app update notifications with download links
-- PGP-signed release manifests for security verification
-- Cross-platform builds (macOS and Windows)
-
-### Changed
-- Improved build process with proper icon handling
-- Enhanced update checking with graceful error handling
+## [0.1.2] - 2025-12-04
 
 ### Fixed
-- Update service browser compatibility issues
-- CSS loading and component scoping
+- Fixed macOS app "damaged" warning by converting PNG icon to ICNS format
+- Fixed Windows GPG key import in GitHub Actions workflow
+- Fixed cross-platform build compatibility issues
+
+### Changed
+- Updated release workflow to support both macOS and Windows builds
+- Improved GPG key handling with platform-specific implementations
 
 ## [0.1.0] - 2025-12-04
 
