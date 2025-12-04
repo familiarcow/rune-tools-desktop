@@ -62,7 +62,7 @@
       "node_modules/**/*"
     ],
     "mac": {
-      "icon": "images/logos/odin.png",
+      "icon": "images/logos/odin.icns",
       "category": "public.app-category.finance"
     },
     "win": {
