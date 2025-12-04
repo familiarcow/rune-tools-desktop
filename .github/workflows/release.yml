@@ -41,7 +41,7 @@ jobs:
         env:
           DEBUG: electron-builder
           CSC_IDENTITY_AUTO_DISCOVERY: false
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
       - name: Create release manifest
         run: node scripts/create-manifest.js
@@ -59,6 +59,7 @@ jobs:
         with:
           files: |
             dist-electron/*.dmg
+            dist-electron/*.zip
             release-manifest.json
             release-manifest.json.asc
             changelog.md
@@ -66,5 +67,5 @@ jobs:
           prerelease: false
           body_path: changelog.md
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
