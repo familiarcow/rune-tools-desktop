@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
@@ -31,18 +31,23 @@ jobs:
       - name: Import GPG key (macOS/Linux)
         if: runner.os != 'Windows'
         run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --import
-          echo "trust" | gpg --command-fd 0 --edit-key ${{ secrets.GPG_KEY_ID }} trust quit
-          # Set trust level to ultimate (5)
-          echo -e "5\ny\nsave\nquit" | gpg --command-fd 0 --expert --edit-key ${{ secrets.GPG_KEY_ID }}
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --batch --import
+          gpg --batch --yes --command-fd 0 --edit-key ${{ secrets.GPG_KEY_ID }} << EOF
+          trust
+          5
+          y
+          save
+          quit
+          EOF
 
       - name: Import GPG key (Windows)
         if: runner.os == 'Windows'
         run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | powershell -command "[System.Convert]::FromBase64String((Get-Content -)) | Set-Content -Path temp_key.asc -Encoding Byte"
-          gpg --import temp_key.asc
-          echo "5" | gpg --command-fd 0 --expert --edit-key ${{ secrets.GPG_KEY_ID }} trust save quit
-          del temp_key.asc
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" > temp_key_b64.txt
+          certutil -decode temp_key_b64.txt temp_key.asc
+          gpg --batch --import temp_key.asc
+          echo "5" | gpg --batch --yes --command-fd 0 --expert --edit-key ${{ secrets.GPG_KEY_ID }} trust save quit
+          del temp_key_b64.txt temp_key.asc
 
       - name: Build application
         run: npm run dist
