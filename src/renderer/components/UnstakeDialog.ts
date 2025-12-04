@@ -48,6 +48,12 @@ export class UnstakeDialog {
         this.setupEventListeners()
         this.setupImageErrorHandling()
         
+        // Ensure slider is set to 100% and calculate amounts
+        const percentageSlider = document.getElementById('unstakePercentage') as HTMLInputElement
+        if (percentageSlider) {
+            percentageSlider.value = '100'
+        }
+        
         // Run initial validation to enable button for default 100% value
         this.calculateUnstakeAmount()
         this.validateForm()
@@ -126,9 +132,6 @@ export class UnstakeDialog {
                 </div>
             </div>
         `
-        
-        // Initialize the calculations
-        this.calculateUnstakeAmount()
     }
 
     private setupEventListeners(): void {
@@ -167,9 +170,8 @@ export class UnstakeDialog {
         const percentageSlider = document.getElementById('unstakePercentage') as HTMLInputElement
         const percentageDisplay = document.getElementById('percentageDisplay')
         const unstakeAmountDisplay = document.getElementById('unstakeAmountDisplay')
-        const previewMemo = document.getElementById('previewMemo')
 
-        if (!percentageSlider || !percentageDisplay || !unstakeAmountDisplay || !previewMemo) return
+        if (!percentageSlider || !percentageDisplay || !unstakeAmountDisplay) return
 
         const percentage = parseFloat(percentageSlider.value)
         const stakedBalance = parseFloat(this.unstakeData.stakedTcyBalance)
@@ -183,7 +185,8 @@ export class UnstakeDialog {
         // Update display
         percentageDisplay.textContent = `${percentage.toFixed(2)}%`
         unstakeAmountDisplay.textContent = unstakeAmount.toFixed(8)
-        previewMemo.textContent = `TCY-:${basisPoints}`
+        
+        console.log(`📊 Unstake calculation: ${percentage}% = ${unstakeAmount.toFixed(8)} TCY (${basisPoints} basis points)`)
     }
 
     private validatePercentage(): boolean {

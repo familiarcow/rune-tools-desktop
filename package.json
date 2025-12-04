@@ -61,14 +61,14 @@
       "node_modules/**/*"
     ],
     "mac": {
-      "icon": "images/logos/odin.png",
+      "icon": "images/logos/odin.svg",
       "category": "public.app-category.finance"
     },
     "win": {
-      "icon": "images/logos/odin.png"
+      "icon": "images/logos/odin.svg"
     },
     "linux": {
-      "icon": "images/logos/odin.png"
+      "icon": "images/logos/odin.svg"
     }
   }
 }

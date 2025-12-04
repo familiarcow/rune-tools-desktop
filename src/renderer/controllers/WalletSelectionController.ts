@@ -17,6 +17,7 @@ import { WalletGenerator, GeneratedWallet } from '../components/WalletGenerator'
 import { WalletRestoration, RestoredWallet } from '../components/WalletRestoration'
 import { ApplicationController } from './ApplicationController'
 import { IdenticonService } from '../../services/IdenticonService'
+import { UpdateService } from '../services/UpdateService'
 
 export interface WalletInfo {
     walletId: string
@@ -70,6 +71,9 @@ export class WalletSelectionController {
             
             // Update UI
             this.updateWalletSelectionUI()
+            
+            // Check for updates (non-blocking)
+            this.checkForUpdates()
             
             console.log('✅ WalletSelectionController initialized')
         } catch (error) {
@@ -1265,5 +1269,65 @@ export class WalletSelectionController {
             console.error(`❌ Failed to ${isImport ? 'restore' : 'create'} wallet:`, error)
             this.ui.showError(`Failed to ${isImport ? 'restore' : 'create'} wallet: ` + (error as Error).message)
         }
+    }
+
+    /**
+     * Check for updates and show notification if available
+     */
+    private async checkForUpdates(): Promise<void> {
+        try {
+            const updateService = new UpdateService()
+            const updateInfo = await updateService.checkForUpdates()
+            
+            if (updateInfo) {
+                this.showUpdateNotification(updateInfo)
+            }
+        } catch (error) {
+            console.warn('Update check failed:', error)
+        }
+    }
+
+    /**
+     * Show update notification banner
+     */
+    private showUpdateNotification(updateInfo: any): void {
+        // Remove any existing update notification
+        const existingNotification = document.getElementById('update-notification')
+        if (existingNotification) {
+            existingNotification.remove()
+        }
+
+        const notification = document.createElement('div')
+        notification.id = 'update-notification'
+        notification.className = 'update-notification'
+        notification.innerHTML = `
+            <div class="update-content">
+                <div class="update-info">
+                    <span class="update-icon">⬆️</span>
+                    <div class="update-text">
+                        <div class="update-title">Rune Tools v${updateInfo.version} Available</div>
+                        <div class="update-subtitle">${updateInfo.fileSize || 'Ready to download'}</div>
+                        ${!updateInfo.isVerified ? '<div class="update-warning-text">⚠️ Could not verify release signature</div>' : ''}
+                    </div>
+                </div>
+                <div class="update-actions">
+                    <button class="update-btn update-btn-primary" onclick="window.open('${updateInfo.downloadUrl}')">
+                        Download
+                    </button>
+                    <button class="update-btn" onclick="document.getElementById('update-notification').remove()">
+                        Later
+                    </button>
+                </div>
+            </div>
+        `
+        
+        document.body.insertBefore(notification, document.body.firstChild)
+        
+        // Auto-hide after 30 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove()
+            }
+        }, 30000)
     }
 }

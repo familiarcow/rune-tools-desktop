@@ -1,0 +1,102 @@
+name: Release Build
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: windows
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Import GPG key (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 -d | gpg --import
+          echo "trust" | gpg --command-fd 0 --edit-key ${{ secrets.GPG_KEY_ID }} trust quit
+          # Set trust level to ultimate (5)
+          echo -e "5\ny\nsave\nquit" | gpg --command-fd 0 --expert --edit-key ${{ secrets.GPG_KEY_ID }}
+
+      - name: Import GPG key (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | powershell -command "[System.Convert]::FromBase64String((Get-Content -)) | Set-Content -Path temp_key.asc -Encoding Byte"
+          gpg --import temp_key.asc
+          echo "5" | gpg --command-fd 0 --expert --edit-key ${{ secrets.GPG_KEY_ID }} trust save quit
+          del temp_key.asc
+
+      - name: Build application
+        run: npm run dist
+
+      - name: Create release manifest
+        run: node scripts/create-manifest.js
+
+      - name: Sign manifest (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: |
+          gpg --batch --yes --pinentry-mode loopback --passphrase "${{ secrets.GPG_PASSPHRASE }}" \
+              --armor --detach-sign release-manifest.json
+
+      - name: Sign manifest (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          echo "${{ secrets.GPG_PASSPHRASE }}" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign release-manifest.json
+
+      - name: Upload macOS assets
+        uses: softprops/action-gh-release@v1
+        if: matrix.platform == 'mac'
+        with:
+          files: |
+            dist-electron/*.dmg
+            release-manifest.json
+            release-manifest.json.asc
+          draft: false
+          prerelease: false
+          body: |
+            ## Rune Tools Desktop ${{ github.ref_name }}
+            
+            ### Downloads
+            - **macOS**: Download the `.dmg` file
+            - **Windows**: Download the `.exe` file
+            
+            ### Installation Notes
+            Since these binaries are not code-signed with expensive certificates, you may see security warnings:
+            
+            **macOS**: If you see "cannot be opened because it is from an unidentified developer", Control+click the app and select "Open"
+            
+            **Windows**: If Windows SmartScreen blocks it, click "More info" then "Run anyway"
+            
+            ### Verification
+            You can verify the integrity of downloads using the included checksums in `release-manifest.json`.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows assets
+        uses: softprops/action-gh-release@v1
+        if: matrix.platform == 'windows'
+        with:
+          files: |
+            dist-electron/*.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
