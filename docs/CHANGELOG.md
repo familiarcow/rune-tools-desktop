@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2025-12-04
+
+### Fixed
+- Resolved blockmap file conflicts in GitHub Actions workflow
+- Improved release asset handling for cross-platform builds
+- Enhanced release documentation with comprehensive troubleshooting
+
 ## [0.1.2] - 2025-12-04
 
 ### Fixed
