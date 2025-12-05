@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -11,7 +11,7 @@
     "dev": "concurrently \"tsc --watch\" \"vite\"",
     "dev:main": "tsc --watch",
     "dev:renderer": "vite",
-    "dist": "./scripts/build-pkg.sh",
+    "dist": "npm run build && electron-builder",
     "pack": "npm run build && electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -66,20 +66,10 @@
       "category": "public.app-category.finance",
       "target": [
         {
-          "target": "pkg",
-          "arch": [
-            "arm64",
-            "x64"
-          ]
+          "target": "dmg",
+          "arch": ["arm64", "x64"]
         }
       ]
-    },
-    "pkg": {
-      "scripts": "scripts/postinstall.sh",
-      "installLocation": "/Applications",
-      "allowAnywhere": false,
-      "allowCurrentUserHome": false,
-      "allowRootDirectory": false
     },
     "win": {
       "icon": "images/logos/odin.png"
