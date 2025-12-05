@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2025-12-04
+
+### Changed
+- Improved version display positioning on wallet selection screen
+- Moved version display outside wallet container for better layout separation
+
+### Added
+- Documentation for version display system in Architecture.md
+
 ## [0.1.3] - 2025-12-04
 
 ### Added

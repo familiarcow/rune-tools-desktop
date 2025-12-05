@@ -46,6 +46,50 @@ dist/renderer/ (generated)
 8. **✅ TypeScript Support**: Full type safety throughout
 9. **✅ Security Implementation**: Complete password hashing and encryption system
 10. **✅ Wallet Selection UI**: Complete wallet creation/import/selection interface
+11. **✅ Version Display System**: Centralized version management across all UI phases
+
+---
+
+## 📱 Version Display System (COMPLETED)
+
+### **Implementation Overview**
+Centralized version management across all UI phases ensures consistent version display throughout the application.
+
+### **Display Locations**
+1. **Splash Screen**: Version appears below main logo during startup (`v0.1.4`)
+2. **Wallet Selection**: Version displayed outside wallet container for better layout separation
+3. **Settings Tab**: Dedicated version section with GitHub releases link
+
+### **Architecture**
+```typescript
+// Single source of truth
+src/renderer/constants/AppConstants.ts
+export const APP_VERSION = '0.1.4';
+
+// Dynamic updates
+index.html - Version Display Script:
+- Imports APP_VERSION from AppConstants
+- Updates all version elements on DOM ready
+- Synchronized across splash, wallet selection, and settings
+```
+
+### **Files Modified**
+- `src/renderer/index.html`: Version elements and update script
+- `src/renderer/constants/AppConstants.ts`: Central version constant
+- `package.json`: Package version
+- `docs/CHANGELOG.md`: Version history
+
+### **Maintenance Process**
+1. Update `package.json` version
+2. Update `AppConstants.ts` version
+3. Update hardcoded HTML fallbacks
+4. All displays automatically sync via JavaScript
+
+### **User Experience**
+- Version immediately visible on app launch
+- Always accessible without navigation
+- Direct link to releases for updates
+- Consistent display formatting
 
 ---
 
