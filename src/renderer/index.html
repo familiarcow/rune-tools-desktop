@@ -484,6 +484,36 @@
       border-radius: var(--border-radius);
       border: 1px solid var(--border-color);
     }
+    
+    .settings-tab-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    
+    .settings-tab-link-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      transform: translateY(-1px);
+    }
+    
+    .settings-tab-link-icon {
+      font-size: 14px;
+    }
+    
+    .settings-tab-link-text {
+      font-weight: 500;
+    }
 
     .info-item {
       display: flex;
@@ -4408,6 +4438,17 @@
           margin: 0 auto;
         ">
       </div>
+      
+      <!-- Version Display -->
+      <div style="
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.8);
+        text-align: center;
+      ">
+        v<span id="splash-version">0.1.3</span>
+      </div>
     </div>
   </div>
 
@@ -4665,6 +4706,17 @@
                 </div>
               </div>
             </div>
+            
+            <!-- Version Display -->
+            <div style="
+              text-align: center;
+              margin: 20px 0;
+              padding: 10px;
+              font-size: 14px;
+              color: var(--text-muted);
+            ">
+              Rune Tools Desktop v<span id="wallet-selection-version">0.1.3</span>
+            </div>
           </div>
 
           <!-- Wallet Creation Flow -->
@@ -4902,6 +4954,27 @@
                     </div>
                   </div>
                 </div>
+                
+                <!-- Version and Release Info -->
+                <div class="settings-tab-section">
+                  <h4 class="settings-tab-section-title">
+                    📦 Version Information
+                  </h4>
+                  <div class="settings-tab-info-section">
+                    <div class="settings-tab-info-item">
+                      <span class="settings-tab-info-label">Application Version:</span>
+                      <div class="settings-tab-info-value">v<span id="settings-version">0.1.3</span></div>
+                    </div>
+                    <div class="settings-tab-info-item">
+                      <span class="settings-tab-info-label">Updates & Releases:</span>
+                      <button onclick="window.open('https://github.com/familiarcow/rune-tools-desktop/releases')" 
+                              class="settings-tab-link-btn" title="View releases on GitHub">
+                        <span class="settings-tab-link-icon">🔗</span>
+                        <span class="settings-tab-link-text">View Releases</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -5031,6 +5104,27 @@
   
   <!-- Send modal styles -->
   <link rel="stylesheet" href="./styles/send-modal.css">
+  
+  <!-- Version Display Script -->
+  <script type="module">
+    import { APP_VERSION } from './constants/AppConstants.js';
+    
+    // Update all version displays when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const versionElements = [
+        'splash-version',
+        'wallet-selection-version', 
+        'settings-version'
+      ];
+      
+      versionElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.textContent = APP_VERSION;
+        }
+      });
+    });
+  </script>
   
   <!-- Vite entry point -->
   <script type="module" src="./main.ts"></script>

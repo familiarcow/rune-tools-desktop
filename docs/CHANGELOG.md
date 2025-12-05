@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3] - 2025-12-04
 
+### Added
+- Version display on splash screen for immediate visibility
+- Version information under wallet list on selection screen
+- Version section in Settings tab with GitHub releases link
+
 ### Fixed
 - Resolved blockmap file conflicts in GitHub Actions workflow
 - Improved release asset handling for cross-platform builds
