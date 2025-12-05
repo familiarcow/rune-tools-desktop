@@ -11,7 +11,7 @@
     "dev": "concurrently \"tsc --watch\" \"vite\"",
     "dev:main": "tsc --watch",
     "dev:renderer": "vite",
-    "dist": "npm run build && electron-builder",
+    "dist": "./scripts/build-pkg.sh",
     "pack": "npm run build && electron-builder --dir",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -28,7 +28,7 @@
     "@types/node": "^24.9.1",
     "concurrently": "^9.2.1",
     "electron": "^38.3.0",
-    "electron-builder": "^26.0.12",
+    "electron-builder": "^26.3.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vite": "^7.1.11"
@@ -67,7 +67,10 @@
       "target": [
         {
           "target": "pkg",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         }
       ]
     },
