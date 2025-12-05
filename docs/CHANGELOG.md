@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2025-12-04
+
+### Changed
+- **BREAKING**: Switch from DMG to PKG installer for macOS distribution
+- Reduced user installation friction from 2 security warnings to 1
+- Automated quarantine attribute removal via post-install script
+- Professional installer experience with automatic app placement
+
+### Added
+- Post-install script for automatic quarantine removal
+- Comprehensive installer change documentation
+- PKG installer configuration for electron-builder
+
+### Technical
+- Updated GitHub Actions workflow for PKG distribution
+- Updated release manifest and changelog scripts
+- Added InstallerChangeLog.md with rollback procedures
+
 ## [0.1.4] - 2025-12-04
 
 ### Changed

@@ -1,5 +1,5 @@
 // App version - update this when package.json changes
-export const APP_VERSION = '0.1.4';
+export const APP_VERSION = '0.1.5';
 
 // GitHub repository info
 export const GITHUB_REPO = 'familiarcow/rune-tools-desktop';

@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -63,7 +63,20 @@
     ],
     "mac": {
       "icon": "images/logos/odin.icns",
-      "category": "public.app-category.finance"
+      "category": "public.app-category.finance",
+      "target": [
+        {
+          "target": "pkg",
+          "arch": ["arm64", "x64"]
+        }
+      ]
+    },
+    "pkg": {
+      "scripts": "scripts/postinstall.sh",
+      "installLocation": "/Applications",
+      "allowAnywhere": false,
+      "allowCurrentUserHome": false,
+      "allowRootDirectory": false
     },
     "win": {
       "icon": "images/logos/odin.png"

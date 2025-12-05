@@ -16,7 +16,7 @@ function createManifest() {
         const files = fs.readdirSync('dist-electron');
         
         files.forEach(file => {
-            if (file.match(/\.(dmg|exe|zip)$/)) {
+            if (file.match(/\.(pkg|exe|zip)$/)) {
                 const filePath = `dist-electron/${file}`;
                 const content = fs.readFileSync(filePath);
                 const hash = crypto.createHash('sha256').update(content).digest('hex');
