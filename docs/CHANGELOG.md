@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.7] - 2025-12-05
+
+### Changed  
+- **BREAKING**: Reverted from PKG back to DMG installer for macOS distribution
+- Improved unsigned app distribution experience with DMG format
+- Dual architecture support for both Apple Silicon and Intel Macs
+
+### Removed
+- PKG installer configuration and post-install scripts
+- Complex PKG workaround scripts (scripts/build-pkg.sh)
+- PKG-specific electron-builder cleanup handling
+
+### Technical
+- Restored standard electron-builder DMG workflow
+- Updated build configuration for both arm64 and x64 architectures
+- Simplified distribution process until code signing certificates available
+
+### Reason
+- PKG installers require Apple Developer certificates for optimal user experience
+- DMG approach better suited for beta/unsigned distribution
+- Temporary rollback until proper code signing infrastructure established
+
+## [0.1.6] - 2025-12-05
+
+### Fixed
+- Resolved electron-builder PKG cleanup error preventing successful builds
+- PKG installers now generate correctly for both ARM64 and x64 architectures
+
+### Changed
+- Upgraded electron-builder from v26.0.12 to v26.3.4
+- Added workaround script (scripts/build-pkg.sh) for PKG build issues
+
+### Added
+- Documentation for PKG build fix (docs/PKG_BUILD_FIX.md)
+- Automated handling of electron-builder cleanup bugs
+
 ## [0.1.5] - 2025-12-04
 
 ### Changed
