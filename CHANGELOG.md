@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.6] - 2024-12-11
+
+### Changed
+- **Test Build**: Re-release to test Apple certificate signing with newly configured GitHub secrets
+- Verify that code signing and notarization now work correctly with proper certificate import
+
+---
+
 ## [0.2.5] - 2024-12-11
 
 ### Fixed
