@@ -49,3 +49,6 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# Release documentation (contains internal processes)
+RELEASE_INSTRUCTIONS.md
