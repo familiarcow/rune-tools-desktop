@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.12] - 2024-12-11
+
+### Fixed
+- **Build Timeout**: Increased GitHub Actions timeout from 15 to 30 minutes for Apple notarization
+- **Notarization Config**: Explicitly specified notarytool for more efficient notarization process
+- **Debug Output**: Added electron-notarize debug logging for better build visibility
+
+---
+
 ## [0.2.11] - 2024-12-11
 
 ### Fixed
