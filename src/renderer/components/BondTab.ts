@@ -108,11 +108,7 @@ export class BondTab {
         
         this.container.innerHTML = `
             <div class="bond-tab-container">
-                <div class="bond-tab-header">
-                    <h2>🏦 Node Bonding</h2>
-                    <p class="bond-tab-subtitle">Loading your bond data...</p>
-                </div>
-                
+           
                 <div class="bond-tab-loading">
                     <div class="bond-tab-loading-spinner"></div>
                     <p>Fetching bond information from ${this.currentNetwork}...</p>
@@ -149,48 +145,91 @@ export class BondTab {
                 <div class="bond-tab-content">
                     <div class="bond-tab-not-whitelisted">
                         <div class="bond-tab-not-whitelisted-container">
-                            <div class="bond-tab-status-section">
-                                <div class="bond-tab-status-icon">
-                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <line x1="15" y1="9" x2="9" y2="15"></line>
-                                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                            <!-- Hero Section -->
+                            <div class="bond-tab-hero-section">
+                                <div class="bond-tab-hero-icon">
+                                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                        <path d="M9 12l2 2 4-4"/>
+                                        <path d="M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.745 3.745 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.745 3.745 0 0 1 3.296-1.043A3.745 3.745 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.745 3.745 0 0 1 3.296 1.043 3.745 3.745 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12z"/>
                                     </svg>
                                 </div>
-                                <h3>Address Not Whitelisted</h3>
-                                <p class="bond-tab-status-description">
-                                    This address is not currently whitelisted as a bond provider on any THORChain nodes.
+                                <h3 class="bond-tab-hero-title">Ready to Bond?</h3>
+                                <p class="bond-tab-hero-subtitle">
+                                    This address is not currently whitelisted for bonding. Get started by connecting with node operators.
                                 </p>
                             </div>
                             
-                            <div class="bond-tab-info-section">
-                                <div class="bond-tab-network-stats">
-                                    <div class="bond-tab-apy-display">
-                                        <span class="bond-tab-info-label">Current Network APY</span>
-                                        <span class="bond-tab-apy-value">${this.networkData ? (this.networkData.bondingAPY * 100).toFixed(2) : '0.00'}%</span>
+                            <!-- Opportunity Cards -->
+                            <div class="bond-tab-opportunity-grid">
+                                <div class="bond-tab-opportunity-card bond-tab-apy-card">
+                                    <h4>Current Network APY</h4>
+                                    <div class="bond-tab-apy-highlight">${this.networkData ? (this.networkData.bondingAPY * 100).toFixed(2) : '0.00'}%</div>
+                                    <p>Annual yield for bond providers</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Address Section -->
+                            <div class="bond-tab-address-section">
+                                <h4>Your Address</h4>
+                                <div class="bond-tab-address-display" data-address="${address}" data-action="copy-address">
+                                    <div class="bond-tab-address-content">
+                                        <span class="bond-tab-address-text">${address || 'Not available'}</span>
+                                        <div class="bond-tab-copy-icon">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+                            
+                            <!-- Steps Section -->
+                            <div class="bond-tab-steps-section">
+                                <h4>How to Start Bonding</h4>
+                                <div class="bond-tab-steps-list">
+                                    <div class="bond-tab-step">
+                                        <div class="bond-tab-step-number">1</div>
+                                        <div class="bond-tab-step-content">
+                                            <h5>Find a Node Operator</h5>
+                                            <p>Connect with THORChain node operators who accept bond providers</p>
+                                        </div>
+                                    </div>
+                                    <div class="bond-tab-step">
+                                        <div class="bond-tab-step-number">2</div>
+                                        <div class="bond-tab-step-content">
+                                            <h5>Get Whitelisted</h5>
+                                            <p>Provide your address to be added to their bond provider list</p>
+                                        </div>
+                                    </div>
+                                    <div class="bond-tab-step">
+                                        <div class="bond-tab-step-number">3</div>
+                                        <div class="bond-tab-step-content">
+                                            <h5>Start Bonding</h5>
+                                            <p>Add RUNE bonds to support network security and earn rewards</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Actions -->
+                            <div class="bond-tab-actions-grid">
+                                <button class="bond-tab-primary-btn bond-tab-refresh-btn" data-action="refresh">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="23 4 23 10 17 10"></polyline>
+                                        <polyline points="1 20 1 14 7 14"></polyline>
+                                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                    </svg>
+                                    Check Status
+                                </button>
                                 
-                                <div class="bond-tab-address-container">
-                                    <span class="bond-tab-info-label">Address</span>
-                                    <div class="bond-tab-address-copy" data-address="${address}" data-action="copy-address">
-                                        <span class="bond-tab-info-value bond-tab-full-address">${address || 'Not available'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="bond-tab-help-section">
-                                <h4>To start bonding:</h4>
-                                <ul class="bond-tab-help-list">
-                                    <li>Contact a node operator to whitelist your address</li>
-                                    <li>Once whitelisted, you can add bonds to support the network</li>
-                                    <li>Earn rewards based on your bond contribution</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="bond-tab-actions-section">
-                                <button class="bond-tab-action-btn bond-tab-refresh-btn" data-action="refresh">
-                                    🔄 Check Again
+                                <button class="bond-tab-secondary-btn" data-action="open-runebond">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="15,3 21,3 21,9"></polyline>
+                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                    Connect with a Node Operator
                                 </button>
                             </div>
                         </div>
@@ -484,6 +523,14 @@ export class BondTab {
                 }
             })
         }
+        
+        // RuneBond external link
+        const runebondBtn = this.container.querySelector('[data-action="open-runebond"]')
+        if (runebondBtn) {
+            runebondBtn.addEventListener('click', () => {
+                this.openExternalUrl('https://runebond.com/')
+            })
+        }
     }
     
     private async handleAddBond(nodeAddress: string): Promise<void> {
@@ -515,15 +562,38 @@ export class BondTab {
         window.open(url, '_blank')
     }
     
+    private openExternalUrl(url: string): void {
+        // Open in system's default browser
+        // In Electron, window.open with external URLs should open in the default browser
+        window.open(url, '_blank')
+    }
+    
     private async showBondAmountModal(action: 'add' | 'remove', node: BondNodeInfo): Promise<void> {
-        // Get user's current RUNE balance
+        // Get user's current RUNE balance using the same approach as TCY tab
         let runeBalance = '0'
         try {
-            const balances = await this.services.getWalletBalances()
-            const runeBalanceData = balances.find((b: any) => b.asset === 'THOR.RUNE')
-            runeBalance = runeBalanceData ? runeBalanceData.balance : '0'
+            // Get current address based on network
+            const currentAddress = this.currentNetwork === 'mainnet' 
+                ? this.currentWallet.mainnetAddress 
+                : this.currentWallet.stagenetAddress
+                
+            const baseUrl = this.currentNetwork === 'mainnet' 
+                ? 'https://thornode.ninerealms.com' 
+                : 'https://stagenet-thornode.ninerealms.com'
+                
+            const balancesResponse = await fetch(`${baseUrl}/cosmos/bank/v1beta1/balances/${currentAddress}`)
+            if (balancesResponse.ok) {
+                const balancesData = await balancesResponse.json()
+                console.log('💰 RUNE wallet balances response:', balancesData)
+                
+                const runeBalanceData = balancesData.balances?.find((b: any) => b.denom === 'rune')
+                runeBalance = runeBalanceData ? (Number(runeBalanceData.amount) / 1e8).toString() : '0'
+                console.log('🔍 Final RUNE balance:', runeBalance)
+            } else {
+                console.log('💰 Error fetching RUNE wallet balance, status:', balancesResponse.status)
+            }
         } catch (error) {
-            console.error('Failed to fetch RUNE balance:', error)
+            console.error('❌ Failed to fetch RUNE balance:', error)
         }
         
         const modalHtml = `
@@ -531,7 +601,7 @@ export class BondTab {
                 <div class="bond-tab-modal">
                     <div class="bond-tab-modal-header">
                         <h3>${action === 'add' ? 'Add to Bond' : 'Remove from Bond'}</h3>
-                        <button class="bond-tab-modal-close" onclick="document.getElementById('bondAmountModal').remove()">×</button>
+                        <button class="bond-tab-modal-close" data-action="close-modal">×</button>
                     </div>
                     
                     <div class="bond-tab-modal-body">
@@ -550,7 +620,7 @@ export class BondTab {
                                 <div class="bond-tab-modal-info-item">
                                     <span class="bond-tab-modal-info-label">Your Balance</span>
                                     <span class="bond-tab-modal-info-value">
-                                        ${this.formatNumber(parseFloat(runeBalance).toFixed(2))} 
+                                        ${this.formatNumber((parseFloat(runeBalance) || 0).toFixed(2))} 
                                         <img src="images/assets/RUNE.svg" alt="RUNE" class="bond-tab-modal-rune-icon" />
                                     </span>
                                 </div>
@@ -591,15 +661,15 @@ export class BondTab {
                             </div>
                             ${action === 'remove' 
                                 ? `<small class="bond-tab-modal-hint">Max: ${this.formatNumber(node.bondFullAmount)} RUNE (your current bond)</small>` 
-                                : `<small class="bond-tab-modal-hint">Max: ${this.formatNumber(parseFloat(runeBalance).toFixed(2))} RUNE (your balance)</small>`
+                                : `<small class="bond-tab-modal-hint">Max: ${this.formatNumber((parseFloat(runeBalance) || 0).toFixed(2))} RUNE (your balance)</small>`
                             }
                         </div>
                         
                         <div class="bond-tab-modal-actions">
-                            <button class="bond-tab-modal-btn bond-tab-modal-cancel" onclick="document.getElementById('bondAmountModal').remove()">
+                            <button class="bond-tab-modal-btn bond-tab-modal-cancel" data-action="close-modal">
                                 Cancel
                             </button>
-                            <button class="bond-tab-modal-btn bond-tab-modal-confirm" onclick="bondTab.processBondAmount('${action}', '${node.address}')">
+                            <button class="bond-tab-modal-btn bond-tab-modal-confirm" data-action="confirm-bond" data-bond-action="${action}" data-node-address="${node.address}">
                                 ${action === 'add' ? 'Add Bond' : 'Remove Bond'}
                             </button>
                         </div>
@@ -610,6 +680,31 @@ export class BondTab {
         
         // Add modal to page
         document.body.insertAdjacentHTML('beforeend', modalHtml)
+        
+        // Add event listeners for modal buttons
+        const modal = document.getElementById('bondAmountModal')
+        if (modal) {
+            // Close modal buttons
+            const closeBtns = modal.querySelectorAll('[data-action="close-modal"]')
+            closeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.remove()
+                })
+            })
+            
+            // Confirm bond button
+            const confirmBtn = modal.querySelector('[data-action="confirm-bond"]')
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', (e) => {
+                    const target = e.currentTarget as HTMLElement
+                    const bondAction = target.getAttribute('data-bond-action')
+                    const nodeAddress = target.getAttribute('data-node-address')
+                    if (bondAction && nodeAddress) {
+                        this.processBondAmount(bondAction as 'add' | 'remove', nodeAddress)
+                    }
+                })
+            }
+        }
         
         // Focus on input
         const input = document.getElementById('bondAmount') as HTMLInputElement
@@ -631,9 +726,6 @@ export class BondTab {
                 }
             }, { once: true })
         }
-        
-        // Store reference for global access
-        ;(window as any).bondTab = this
     }
     
     private processBondAmount(action: 'add' | 'remove', nodeAddress: string): void {
@@ -756,1033 +848,9 @@ export class BondTab {
     }
 
     private addComponentStyles(): void {
-        // Check if styles already exist to avoid duplicates
-        if (document.getElementById('bond-tab-styles')) return
-        
-        const style = document.createElement('style')
-        style.id = 'bond-tab-styles'
-        style.textContent = `
-            .bond-tab-container {
-                height: 100%;
-                width: 100%;
-                padding: var(--spacing-lg);
-                display: flex;
-                flex-direction: column;
-                position: relative;
-                overflow-y: auto;
-            }
-            
-            .bond-tab-header {
-                text-align: center;
-                margin-bottom: var(--spacing-xl);
-            }
-            
-            .bond-tab-header h2 {
-                margin: 0 0 var(--spacing-sm) 0;
-                color: var(--text-primary);
-                font-size: 2rem;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                background-clip: text;
-            }
-            
-            .bond-tab-subtitle {
-                color: var(--text-secondary);
-                font-size: 1.1rem;
-                margin: 0;
-            }
-            
-            .bond-tab-loading {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                color: var(--text-secondary);
-            }
-            
-            .bond-tab-loading-spinner {
-                width: 40px;
-                height: 40px;
-                border: 4px solid rgba(255, 255, 255, 0.1);
-                border-top: 4px solid var(--primary);
-                border-radius: 50%;
-                animation: bond-tab-spin 1s linear infinite;
-                margin-bottom: var(--spacing-md);
-            }
-            
-            @keyframes bond-tab-spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            
-            .bond-tab-content {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-lg);
-                transition: opacity 0.3s ease-out;
-            }
-            
-            .bond-tab-content.bond-tab-refreshing {
-                opacity: 0.7;
-            }
-            
-            /* Not Whitelisted Screen Styles */
-            .bond-tab-not-whitelisted {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 400px;
-                padding: var(--spacing-xl);
-            }
-            
-            .bond-tab-not-whitelisted-container {
-                background: linear-gradient(145deg, #1a1a1a 0%, #2c2c2c 100%);
-                border-radius: var(--border-radius);
-                padding: var(--spacing-xl);
-                padding-top: calc(var(--spacing-xl) + var(--spacing-md));
-                max-width: 520px;
-                width: 100%;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                text-align: center;
-            }
-            
-            .bond-tab-status-section {
-                margin-bottom: var(--spacing-xl);
-                padding-bottom: var(--spacing-lg);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .bond-tab-status-icon {
-                width: 80px;
-                height: 80px;
-                margin: 0 auto var(--spacing-lg);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                background: linear-gradient(135deg, rgba(220, 53, 69, 0.2) 0%, rgba(255, 107, 107, 0.2) 100%);
-                border: 2px solid rgba(220, 53, 69, 0.3);
-                color: #ff6b6b;
-            }
-            
-            .bond-tab-not-whitelisted-container h3 {
-                color: var(--text-primary);
-                margin: 0 0 var(--spacing-md) 0;
-                font-size: 1.5rem;
-                font-weight: 700;
-            }
-            
-            .bond-tab-status-description {
-                color: var(--text-secondary);
-                margin: 0;
-                line-height: 1.6;
-                font-size: 15px;
-                max-width: 400px;
-                margin: 0 auto;
-            }
-            
-            .bond-tab-info-section {
-                margin-bottom: var(--spacing-xl);
-            }
-            
-            .bond-tab-network-stats {
-                text-align: center;
-                margin-bottom: var(--spacing-lg);
-            }
-            
-            .bond-tab-apy-display {
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                border-radius: var(--border-radius-sm);
-                padding: var(--spacing-lg);
-                border: 1px solid rgba(40, 167, 69, 0.3);
-                transition: all 0.3s ease;
-                display: inline-block;
-                min-width: 180px;
-            }
-            
-            .bond-tab-apy-display:hover {
-                background: linear-gradient(145deg, #333333 0%, #404040 100%);
-                border-color: rgba(40, 167, 69, 0.5);
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-            }
-            
-            .bond-tab-apy-value {
-                display: block;
-                font-size: 24px;
-                font-weight: 800;
-                color: #28a745;
-                margin-top: var(--spacing-sm);
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-                letter-spacing: -0.5px;
-            }
-            
-            .bond-tab-address-container {
-                margin-top: var(--spacing-lg);
-                text-align: center;
-            }
-            
-            .bond-tab-address-copy {
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                border-radius: var(--border-radius-sm);
-                padding: var(--spacing-md);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                transition: all 0.3s ease;
-                cursor: pointer;
-                position: relative;
-                margin-top: var(--spacing-sm);
-            }
-            
-            .bond-tab-address-copy:hover {
-                background: linear-gradient(145deg, #333333 0%, #404040 100%);
-                border-color: rgba(99, 102, 241, 0.3);
-                transform: translateY(-1px);
-            }
-            
-            .bond-tab-full-address {
-                font-family: monospace;
-                font-size: 13px;
-                word-break: break-all;
-                display: block;
-            }
-            
-            
-            .bond-tab-info-label {
-                display: block;
-                color: var(--text-secondary);
-                font-size: 12px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 4px;
-            }
-            
-            .bond-tab-info-value {
-                color: var(--text-primary);
-                font-size: 14px;
-                font-weight: 700;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            }
-            
-            .bond-tab-address-value {
-                font-family: monospace;
-                font-size: 13px;
-                cursor: help;
-            }
-            
-            .bond-tab-help-section {
-                text-align: left;
-                margin-bottom: var(--spacing-xl);
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                border-radius: var(--border-radius-sm);
-                padding: var(--spacing-lg);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .bond-tab-help-section h4 {
-                color: var(--text-primary);
-                margin: 0 0 var(--spacing-md) 0;
-                font-size: 1.1rem;
-                font-weight: 600;
-            }
-            
-            .bond-tab-help-list {
-                margin: 0;
-                padding-left: var(--spacing-lg);
-                color: var(--text-secondary);
-                line-height: 1.6;
-            }
-            
-            .bond-tab-help-list li {
-                margin-bottom: var(--spacing-sm);
-                font-size: 14px;
-            }
-            
-            .bond-tab-help-list li:last-child {
-                margin-bottom: 0;
-            }
-            
-            .bond-tab-actions-section {
-                margin-top: var(--spacing-xl);
-            }
-            
-            .bond-tab-summary-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: var(--spacing-md);
-                margin-bottom: var(--spacing-lg);
-            }
-            
-            .bond-tab-card {
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                border-radius: 12px;
-                padding: var(--spacing-md);
-                display: flex;
-                flex-direction: column;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                height: 120px;
-                position: relative;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-            }
-            
-            .bond-tab-card:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(99, 102, 241, 0.3);
-                border-color: rgba(99, 102, 241, 0.6);
-                background: linear-gradient(145deg, #333333 0%, #404040 100%);
-            }
-            
-            .bond-tab-card h3 {
-                font-size: 12px;
-                margin: 0 0 6px 0;
-                color: #a0a0a0;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            
-            .bond-tab-main-value {
-                font-size: 24px;
-                font-weight: 800;
-                color: var(--text-primary);
-                position: absolute;
-                top: 50%;
-                left: 16px;
-                right: 16px;
-                transform: translateY(-50%);
-                text-align: center;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                letter-spacing: -0.3px;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            }
-            
-            .bond-tab-value-content {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                animation: bond-tab-fade-in 0.5s ease-out;
-            }
-            
-            @keyframes bond-tab-fade-in {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            
-            .bond-tab-rune-icon {
-                width: 24px;
-                height: 24px;
-                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-            }
-            
-            .bond-tab-btc-icon {
-                width: 16px;
-                height: 16px;
-                filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-            }
-            
-            .bond-tab-sub-values {
-                display: flex;
-                justify-content: space-between;
-                font-size: 12px;
-                color: #c0c0c0;
-                position: absolute;
-                bottom: 16px;
-                left: 16px;
-                right: 16px;
-                font-weight: 500;
-            }
-            
-            .bond-tab-usd-value {
-                text-align: left;
-            }
-            
-            .bond-tab-btc-value,
-            .bond-tab-rune-value {
-                text-align: right;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 4px;
-            }
-            
-            .bond-tab-churn {
-                background: linear-gradient(145deg, #4a4a4a 0%, #5a5a5a 100%);
-                border: 2px solid rgba(255, 165, 0, 0.3);
-            }
-            
-            .bond-tab-churn:hover {
-                border-color: rgba(255, 165, 0, 0.6);
-                background: linear-gradient(145deg, #555555 0%, #606060 100%);
-                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 165, 0, 0.3);
-            }
-            
-            .bond-tab-churn-info {
-                text-align: center;
-                color: #c0c0c0;
-                font-size: 11px;
-                font-style: italic;
-                width: 100%;
-            }
-            
-            .bond-tab-network-section {
-                margin-top: var(--spacing-lg);
-            }
-            
-            .bond-tab-network-section h3 {
-                color: var(--text-primary);
-                margin: 0 0 var(--spacing-md) 0;
-                font-size: 1.3rem;
-                font-weight: 600;
-            }
-            
-            .bond-tab-network-info-container {
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                border-radius: 12px;
-                padding: var(--spacing-lg);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                margin-bottom: var(--spacing-lg);
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            
-            .bond-tab-network-info-container:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 20px rgba(99, 102, 241, 0.3);
-                border-color: rgba(99, 102, 241, 0.6);
-                background: linear-gradient(145deg, #333333 0%, #404040 100%);
-            }
-            
-            .bond-tab-network-grid {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: var(--spacing-lg);
-            }
-            
-            .bond-tab-network-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-                transition: all 0.3s ease;
-            }
-            
-            .bond-tab-network-label {
-                color: var(--text-secondary);
-                font-size: 12px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: var(--spacing-sm);
-            }
-            
-            .bond-tab-network-value {
-                color: var(--text-primary);
-                font-size: 18px;
-                font-weight: 700;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            }
-            
-            .bond-tab-network-rune {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: var(--spacing-xs);
-            }
-            
-            .bond-tab-network-rune-icon {
-                width: 18px;
-                height: 18px;
-                filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-            }
-            
-            .bond-tab-network-loading {
-                text-align: center;
-                color: var(--text-secondary);
-                font-style: italic;
-                padding: var(--spacing-lg);
-            }
-            
-            .bond-tab-nodes-section {
-                margin-top: var(--spacing-lg);
-            }
-            
-            .bond-tab-nodes-section h3 {
-                color: var(--text-primary);
-                margin: 0 0 var(--spacing-md) 0;
-                font-size: 1.3rem;
-                font-weight: 600;
-            }
-            
-            .bond-tab-nodes-table-container {
-                background: var(--bg-card);
-                border-radius: var(--border-radius);
-                overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                border: 1px solid var(--border-color);
-            }
-            
-            .bond-tab-nodes-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 14px;
-            }
-            
-            .bond-tab-nodes-table th {
-                background: var(--bg-secondary);
-                color: var(--text-primary);
-                padding: var(--spacing-md);
-                text-align: left;
-                font-weight: 600;
-                border-bottom: 1px solid var(--border-color);
-                text-transform: uppercase;
-                font-size: 12px;
-                letter-spacing: 0.5px;
-            }
-            
-            .bond-tab-nodes-table td {
-                padding: var(--spacing-md);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                vertical-align: middle;
-            }
-            
-            .bond-tab-node-row:hover {
-                background: rgba(99, 102, 241, 0.05);
-            }
-            
-            .bond-tab-node-address {
-                display: flex;
-                align-items: center;
-                gap: var(--spacing-sm);
-            }
-            
-            .bond-tab-node-suffix {
-                font-weight: 600;
-                color: var(--text-primary);
-                font-family: monospace;
-            }
-            
-            .bond-tab-node-link {
-                background: none;
-                border: none;
-                color: var(--primary);
-                cursor: pointer;
-                padding: 4px;
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-                opacity: 0.7;
-            }
-            
-            .bond-tab-node-link:hover {
-                background-color: rgba(99, 102, 241, 0.2);
-                opacity: 1;
-                transform: scale(1.1);
-            }
-            
-            .bond-tab-node-status {
-                display: flex;
-                align-items: center;
-                gap: var(--spacing-sm);
-            }
-            
-            .bond-tab-status-indicator {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                flex-shrink: 0;
-            }
-            
-            .bond-tab-status-indicator.bond-tab-active {
-                background-color: #28a745;
-                box-shadow: 0 0 6px rgba(40, 167, 69, 0.4);
-            }
-            
-            .bond-tab-status-indicator.bond-tab-inactive {
-                background-color: #dc3545;
-                box-shadow: 0 0 6px rgba(220, 53, 69, 0.4);
-            }
-            
-            .bond-tab-status-text {
-                color: var(--text-primary);
-                font-weight: 500;
-            }
-            
-            .bond-tab-bond-value {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                margin-bottom: 2px;
-            }
-            
-            .bond-tab-bond-rune {
-                font-weight: 600;
-                color: var(--text-primary);
-            }
-            
-            .bond-tab-table-rune-icon {
-                width: 16px;
-                height: 16px;
-            }
-            
-            .bond-tab-bond-usd,
-            .bond-tab-ownership {
-                font-size: 12px;
-                color: var(--text-secondary);
-            }
-            
-            .bond-tab-node-fee {
-                color: var(--text-primary);
-                font-weight: 500;
-            }
-            
-            .bond-tab-node-actions {
-                display: flex;
-                gap: var(--spacing-xs);
-            }
-            
-            .bond-tab-table-btn {
-                width: 32px;
-                height: 32px;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-            }
-            
-            .bond-tab-table-btn.bond-tab-add-btn {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                color: white;
-            }
-            
-            .bond-tab-table-btn.bond-tab-add-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-            }
-            
-            .bond-tab-table-btn.bond-tab-remove-btn {
-                background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
-                color: white;
-            }
-            
-            .bond-tab-table-btn.bond-tab-remove-btn:hover:not(:disabled) {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-            }
-            
-            .bond-tab-table-btn:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-                background: #6c757d;
-            }
-            
-            .bond-tab-refresh-section {
-                display: flex;
-                justify-content: center;
-                margin-top: var(--spacing-lg);
-            }
-            
-            .bond-tab-action-btn {
-                padding: var(--spacing-md) var(--spacing-lg);
-                border-radius: var(--border-radius);
-                border: none;
-                cursor: pointer;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: var(--spacing-xs);
-                min-width: 140px;
-                justify-content: center;
-                font-size: 14px;
-            }
-            
-            .bond-tab-refresh-btn {
-                background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-                color: white;
-                box-shadow: 0 4px 14px 0 rgba(108, 117, 125, 0.4);
-            }
-            
-            .bond-tab-refresh-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px 0 rgba(108, 117, 125, 0.5);
-            }
-            
-            .bond-tab-error {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                color: var(--text-secondary);
-                text-align: center;
-            }
-            
-            .bond-tab-error-icon {
-                font-size: 3rem;
-                margin-bottom: var(--spacing-md);
-            }
-            
-            @media (max-width: 768px) {
-                .bond-tab-summary-grid {
-                    grid-template-columns: 1fr;
-                    gap: var(--spacing-sm);
-                }
-                
-                .bond-tab-card {
-                    height: auto;
-                    min-height: 110px;
-                }
-                
-                .bond-tab-main-value {
-                    position: static;
-                    transform: none;
-                    margin: var(--spacing-sm) 0;
-                    font-size: 22px;
-                }
-                
-                .bond-tab-sub-values {
-                    position: static;
-                    margin-top: var(--spacing-sm);
-                }
-                
-                .bond-tab-network-grid {
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: var(--spacing-md);
-                }
-                
-                .bond-tab-network-value {
-                    font-size: 16px;
-                }
-                
-                .bond-tab-network-rune-icon {
-                    width: 16px;
-                    height: 16px;
-                }
-                
-                .bond-tab-nodes-table-container {
-                    overflow-x: auto;
-                }
-                
-                .bond-tab-nodes-table {
-                    min-width: 600px;
-                }
-                
-                .bond-tab-churn .bond-tab-main-value {
-                    font-size: 20px;
-                }
-            }
-            
-            /* Bond Amount Modal Styles */
-            .bond-tab-modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.75);
-                backdrop-filter: blur(4px);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 10000;
-                animation: bond-tab-modal-fade-in 0.3s ease-out;
-            }
-            
-            .bond-tab-modal {
-                background: linear-gradient(145deg, #1a1a1a 0%, #2c2c2c 100%);
-                border-radius: var(--border-radius);
-                width: 90%;
-                max-width: 520px;
-                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                animation: bond-tab-modal-slide-up 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                overflow: hidden;
-            }
-            
-            .bond-tab-modal-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
-                background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 69, 19, 0.1) 100%);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .bond-tab-modal-header h3 {
-                margin: 0;
-                color: var(--text-primary);
-                font-size: 1.4rem;
-                font-weight: 700;
-                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            }
-            
-            .bond-tab-modal-close {
-                background: rgba(255, 255, 255, 0.1);
-                border: none;
-                color: var(--text-secondary);
-                font-size: 20px;
-                cursor: pointer;
-                padding: 8px 10px;
-                border-radius: var(--border-radius-sm);
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 36px;
-                height: 36px;
-            }
-            
-            .bond-tab-modal-close:hover {
-                background: rgba(255, 255, 255, 0.2);
-                color: var(--text-primary);
-                transform: scale(1.1);
-            }
-            
-            .bond-tab-modal-body {
-                padding: var(--spacing-xl);
-            }
-            
-            .bond-tab-modal-node-info {
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                border-radius: var(--border-radius);
-                padding: var(--spacing-lg);
-                margin-bottom: var(--spacing-xl);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            }
-            
-            .bond-tab-modal-node-header {
-                display: flex;
-                align-items: center;
-                gap: var(--spacing-md);
-                margin-bottom: var(--spacing-lg);
-                padding-bottom: var(--spacing-md);
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            
-            .bond-tab-modal-node-icon {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 48px;
-                height: 48px;
-                border-radius: var(--border-radius);
-                background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 69, 19, 0.2) 100%);
-                border: 1px solid rgba(99, 102, 241, 0.3);
-            }
-            
-            .bond-tab-modal-node-details h4 {
-                margin: 0 0 4px 0;
-                color: var(--text-primary);
-                font-size: 1.1rem;
-                font-weight: 600;
-            }
-            
-            .bond-tab-modal-node-status {
-                color: var(--text-secondary);
-                font-size: 14px;
-                font-weight: 500;
-            }
-            
-            .bond-tab-modal-info-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: var(--spacing-md);
-            }
-            
-            .bond-tab-modal-info-item {
-                background: linear-gradient(145deg, #333333 0%, #404040 100%);
-                border-radius: var(--border-radius-sm);
-                padding: var(--spacing-md);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                transition: all 0.3s ease;
-            }
-            
-            .bond-tab-modal-info-item:hover {
-                background: linear-gradient(145deg, #383838 0%, #454545 100%);
-                border-color: rgba(99, 102, 241, 0.3);
-                transform: translateY(-1px);
-            }
-            
-            .bond-tab-modal-info-label {
-                display: block;
-                color: var(--text-secondary);
-                font-size: 12px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 4px;
-            }
-            
-            .bond-tab-modal-info-value {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                color: var(--text-primary);
-                font-size: 14px;
-                font-weight: 700;
-                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-            }
-            
-            .bond-tab-modal-rune-icon {
-                width: 16px;
-                height: 16px;
-                filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-            }
-            
-            .bond-tab-modal-input-group {
-                margin-bottom: var(--spacing-xl);
-            }
-            
-            .bond-tab-modal-input-group label {
-                display: block;
-                color: var(--text-primary);
-                font-weight: 600;
-                margin-bottom: var(--spacing-md);
-                font-size: 15px;
-            }
-            
-            .bond-tab-modal-input-wrapper {
-                position: relative;
-            }
-            
-            .bond-tab-modal-input {
-                width: 100%;
-                padding: var(--spacing-md) var(--spacing-lg);
-                padding-right: 50px;
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                border-radius: var(--border-radius);
-                background: linear-gradient(145deg, #2c2c2c 0%, #3a3a3a 100%);
-                color: var(--text-primary);
-                font-size: 16px;
-                font-weight: 500;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                box-sizing: border-box;
-                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-            }
-            
-            .bond-tab-modal-input:focus {
-                outline: none;
-                border-color: rgba(99, 102, 241, 0.6);
-                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.3);
-                background: linear-gradient(145deg, #333333 0%, #404040 100%);
-                transform: translateY(-1px);
-            }
-            
-            .bond-tab-modal-input-icon {
-                position: absolute;
-                right: var(--spacing-md);
-                top: 50%;
-                transform: translateY(-50%);
-                width: 20px;
-                height: 20px;
-                pointer-events: none;
-                filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-            }
-            
-            .bond-tab-modal-hint {
-                display: block;
-                color: var(--text-secondary);
-                font-size: 13px;
-                margin-top: var(--spacing-sm);
-                font-style: italic;
-                opacity: 0.8;
-            }
-            
-            .bond-tab-modal-actions {
-                display: flex;
-                gap: var(--spacing-md);
-                justify-content: flex-end;
-            }
-            
-            .bond-tab-modal-btn {
-                padding: var(--spacing-md) var(--spacing-xl);
-                border-radius: var(--border-radius);
-                border: none;
-                cursor: pointer;
-                font-weight: 600;
-                font-size: 14px;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                min-width: 120px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                height: 44px;
-            }
-            
-            .bond-tab-modal-cancel {
-                background: var(--bg-secondary);
-                color: var(--text-secondary);
-                border: 1px solid var(--border-color);
-            }
-            
-            .bond-tab-modal-cancel:hover {
-                background: var(--bg-card);
-                color: var(--text-primary);
-                transform: translateY(-1px);
-            }
-            
-            .bond-tab-modal-confirm {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                box-shadow: 0 4px 14px 0 rgba(102, 126, 234, 0.4);
-            }
-            
-            .bond-tab-modal-confirm:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px 0 rgba(102, 126, 234, 0.5);
-            }
-            
-            @keyframes bond-tab-modal-fade-in {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            
-            @keyframes bond-tab-modal-slide-up {
-                from { 
-                    opacity: 0; 
-                    transform: translateY(30px) scale(0.9);
-                }
-                to { 
-                    opacity: 1; 
-                    transform: translateY(0) scale(1);
-                }
-            }
-            
-            @media (max-width: 600px) {
-                .bond-tab-modal {
-                    width: 95%;
-                    margin: var(--spacing-md);
-                }
-                
-                .bond-tab-modal-info-grid {
-                    grid-template-columns: 1fr;
-                }
-                
-                .bond-tab-modal-actions {
-                    flex-direction: column;
-                }
-                
-                .bond-tab-modal-btn {
-                    min-width: auto;
-                }
-            }
-        `
-        document.head.appendChild(style)
+        // Styles are now externalized to BondTab.css file
+        // This method is retained for backwards compatibility
+        // but no longer injects inline styles
     }
 
     private renderError(message: string): void {
@@ -1794,7 +862,7 @@ export class BondTab {
                     <div class="bond-tab-error-icon">❌</div>
                     <h3>Error Loading Bond Tab</h3>
                     <p>${message}</p>
-                    <button class="btn btn-primary" onclick="this.render()">
+                    <button class="bond-tab-error-retry-btn" data-action="refresh">
                         Retry
                     </button>
                 </div>
