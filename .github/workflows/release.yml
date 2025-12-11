@@ -54,7 +54,7 @@ jobs:
         timeout-minutes: 15
         env:
           DEBUG: electron-builder
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_IDENTITY_AUTO_DISCOVERY: true
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
           # Notarization credentials (macOS only)
           APPLE_ID: ${{ secrets.APPLE_ID }}
