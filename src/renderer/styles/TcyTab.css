@@ -927,3 +927,394 @@
     background: rgba(0, 122, 204, 0.2);
   }
 }
+
+/* =============================================================================
+   Cumulative Payout Graph
+   ============================================================================= */
+
+.tcy-payout-graph-section {
+  margin-bottom: var(--spacing-xl, 32px);
+}
+
+.tcy-payout-graph-section h5 {
+  margin: 0 0 var(--spacing-md, 16px) 0;
+  color: var(--text-primary, #ffffff);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  position: relative;
+}
+
+.tcy-payout-graph-section h5::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary, #007acc), var(--accent-success, #28a745));
+  border-radius: 1px;
+}
+
+.tcy-payout-graph-container {
+  background: linear-gradient(135deg, 
+    rgba(0, 122, 204, 0.03) 0%, 
+    rgba(40, 167, 69, 0.02) 100%);
+  border: 1px solid rgba(0, 122, 204, 0.2);
+  border-radius: 12px;
+  padding: var(--spacing-lg, 24px);
+  position: relative;
+  overflow: hidden;
+}
+
+.tcy-payout-graph-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary, #007acc), var(--accent-success, #28a745));
+  border-radius: 12px 12px 0 0;
+}
+
+.tcy-payout-graph {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Graph loading placeholder */
+.tcy-graph-loading {
+  width: 100%;
+  max-width: 800px;
+  height: 300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tcy-graph-loading-content {
+  text-align: center;
+  color: var(--text-secondary, #ccc);
+}
+
+.tcy-graph-loading-content p {
+  margin: var(--spacing-md, 16px) 0 0 0;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.tcy-graph-skeleton {
+  width: 100%;
+  max-width: 600px;
+  height: 200px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  animation: tcy-skeleton-shimmer 2s infinite;
+}
+
+.tcy-graph-skeleton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 20%;
+  right: 20%;
+  bottom: 20%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(0, 122, 204, 0.1) 50%,
+    transparent 70%
+  );
+  border-radius: 4px;
+}
+
+/* Skeleton animation */
+@keyframes tcy-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.tcy-payout-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Graph background */
+.tcy-graph-background {
+  fill: rgba(0, 0, 0, 0.05);
+  stroke: none;
+}
+
+/* Grid lines */
+.tcy-grid-line {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+  stroke-dasharray: 2,2;
+}
+
+/* Main graph line */
+.tcy-graph-line {
+  stroke: var(--accent-primary, #007acc);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 4px rgba(0, 122, 204, 0.3));
+  animation: tcy-line-draw 2s ease-out;
+}
+
+/* Area gradient */
+.tcy-gradient-start {
+  stop-color: var(--accent-primary, #007acc);
+  stop-opacity: 0.3;
+}
+
+.tcy-gradient-end {
+  stop-color: var(--accent-success, #28a745);
+  stop-opacity: 0.1;
+}
+
+.tcy-graph-area {
+  animation: tcy-area-fade-in 2s ease-out;
+}
+
+/* Axes */
+.tcy-graph-axis {
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 2;
+}
+
+/* Data points */
+.tcy-graph-point {
+  fill: var(--accent-primary, #007acc);
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: tcy-point-appear 0.6s ease-out backwards;
+}
+
+.tcy-graph-point:hover {
+  r: 6;
+  fill: var(--accent-success, #28a745);
+  filter: drop-shadow(0 0 8px rgba(40, 167, 69, 0.6));
+}
+
+/* Tooltip styles */
+.tcy-graph-tooltip {
+  pointer-events: none;
+}
+
+.tcy-tooltip-bg {
+  fill: rgba(0, 0, 0, 0.9);
+  stroke: var(--accent-primary, #007acc);
+  stroke-width: 1;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.tcy-tooltip-date {
+  fill: var(--text-primary, #ffffff);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tcy-tooltip-day-amount {
+  fill: var(--accent-success, #28a745);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.tcy-tooltip-cumulative {
+  fill: var(--accent-primary, #007acc);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Graph labels */
+.tcy-graph-label-x,
+.tcy-graph-label-y {
+  fill: var(--text-secondary, #ccc);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.tcy-graph-label-axis {
+  fill: var(--text-primary, #ffffff);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* No data message */
+.tcy-no-data {
+  text-align: center;
+  color: var(--text-secondary, #ccc);
+  font-style: italic;
+  padding: var(--spacing-xl, 32px);
+  margin: 0;
+}
+
+/* Animations */
+@keyframes tcy-line-draw {
+  from {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes tcy-area-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tcy-point-appear {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Removed pulsing animation */
+
+/* =============================================================================
+   Graph Responsive Design
+   ============================================================================= */
+
+@media (max-width: 1024px) {
+  .tcy-payout-graph-container {
+    padding: var(--spacing-md, 16px);
+  }
+  
+  .tcy-graph-label-x,
+  .tcy-graph-label-y {
+    font-size: 10px;
+  }
+  
+  .tcy-graph-label-axis {
+    font-size: 11px;
+  }
+  
+  .tcy-graph-current-label {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tcy-payout-graph-section h5 {
+    font-size: 16px;
+  }
+  
+  .tcy-payout-graph-container {
+    padding: var(--spacing-sm, 12px);
+  }
+  
+  .tcy-payout-svg {
+    min-height: 200px;
+  }
+  
+  .tcy-graph-line {
+    stroke-width: 2;
+  }
+  
+  .tcy-graph-point {
+    r: 3;
+  }
+  
+  .tcy-graph-point:hover {
+    r: 5;
+  }
+  
+  .tcy-graph-current-point {
+    r: 5;
+  }
+}
+
+@media (max-width: 480px) {
+  .tcy-payout-graph-section {
+    margin-bottom: var(--spacing-lg, 24px);
+  }
+  
+  .tcy-payout-graph-section h5 {
+    font-size: 14px;
+    margin-bottom: var(--spacing-sm, 12px);
+  }
+  
+  .tcy-graph-label-x,
+  .tcy-graph-label-y,
+  .tcy-graph-label-axis,
+  .tcy-graph-current-label {
+    font-size: 9px;
+  }
+}
+
+/* Accessibility for graph */
+@media (prefers-reduced-motion: reduce) {
+  .tcy-graph-line,
+  .tcy-graph-area,
+  .tcy-graph-point {
+    animation: none !important;
+  }
+  
+  .tcy-graph-point {
+    transition: none !important;
+  }
+  
+  .tcy-graph-skeleton {
+    animation: none !important;
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+@media (prefers-contrast: high) {
+  .tcy-payout-graph-container {
+    border-width: 2px;
+  }
+  
+  .tcy-graph-line {
+    stroke-width: 4;
+  }
+  
+  .tcy-grid-line {
+    stroke: rgba(255, 255, 255, 0.3);
+  }
+  
+  .tcy-graph-axis {
+    stroke: rgba(255, 255, 255, 0.7);
+  }
+}

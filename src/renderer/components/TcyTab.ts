@@ -297,6 +297,24 @@ export class TcyTab {
                             </div>
                         </div>
 
+                        <!-- Cumulative Payout Graph -->
+                        <div class="tcy-payout-graph-section" id="tcyPayoutGraphSection">
+                            <h5>Cumulative TCY Rewards</h5>
+                            <div class="tcy-payout-graph-container">
+                                <!-- Loading placeholder -->
+                                <div class="tcy-graph-loading" id="tcyGraphLoading">
+                                    <div class="tcy-graph-loading-content">
+                                        <div class="tcy-graph-skeleton"></div>
+                                        <p>Loading rewards chart...</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Actual graph container -->
+                                <div class="tcy-payout-graph hidden" id="tcyPayoutGraph">
+                                    <!-- SVG graph will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Distribution History -->
                         <div class="tcy-history-section">
@@ -773,6 +791,8 @@ export class TcyTab {
             
             if (hasStakedBalance || hasDistributions) {
                 this.showElement('tcyRewardsSection')
+                // Show graph section immediately, then load chart async
+                this.updatePayoutGraph()
                 this.updateDistributionHistory()
                 this.updateDistributionHistoryTitle()
             }
@@ -859,6 +879,212 @@ export class TcyTab {
         `
     }
 
+    private generateCumulativeData(): Array<{date: number, cumulativeRune: number}> {
+        if (!this.allDistributions || this.allDistributions.length === 0) {
+            return []
+        }
+
+        // Sort distributions by date in ascending order for cumulative calculation
+        const sortedDistributions = [...this.allDistributions].sort((a, b) => Number(a.date) - Number(b.date))
+        
+        let cumulativeRune = 0
+        return sortedDistributions.map(dist => {
+            cumulativeRune += Number(dist.amount) / 1e8
+            return {
+                date: Number(dist.date),
+                cumulativeRune
+            }
+        })
+    }
+
+    private updatePayoutGraph(): void {
+        // Show loading immediately
+        this.showGraphLoading()
+        
+        // Defer chart rendering to not block UI
+        setTimeout(() => {
+            this.renderPayoutGraph()
+        }, 100)
+    }
+    
+    private showGraphLoading(): void {
+        const loadingContainer = document.getElementById('tcyGraphLoading')
+        const graphContainer = document.getElementById('tcyPayoutGraph')
+        
+        if (loadingContainer) loadingContainer.classList.remove('hidden')
+        if (graphContainer) graphContainer.classList.add('hidden')
+    }
+    
+    private hideGraphLoading(): void {
+        const loadingContainer = document.getElementById('tcyGraphLoading')
+        const graphContainer = document.getElementById('tcyPayoutGraph')
+        
+        if (loadingContainer) loadingContainer.classList.add('hidden')
+        if (graphContainer) graphContainer.classList.remove('hidden')
+    }
+
+    private renderPayoutGraph(): void {
+        const graphContainer = document.getElementById('tcyPayoutGraph')
+        if (!graphContainer) {
+            this.hideGraphLoading()
+            return
+        }
+        
+        if (!this.allDistributions || this.allDistributions.length === 0) {
+            graphContainer.innerHTML = '<p class="tcy-no-data">No distribution data available for graph</p>'
+            this.hideGraphLoading()
+            return
+        }
+
+        const cumulativeData = this.generateCumulativeData()
+        if (cumulativeData.length === 0) {
+            graphContainer.innerHTML = '<p class="tcy-no-data">Insufficient data for graph</p>'
+            return
+        }
+
+        // Graph dimensions
+        const width = 800
+        const height = 300
+        const padding = { top: 20, right: 60, bottom: 60, left: 120 }
+        const graphWidth = width - padding.left - padding.right
+        const graphHeight = height - padding.top - padding.bottom
+
+        // Data ranges
+        const minDate = Math.min(...cumulativeData.map(d => d.date))
+        const maxDate = Math.max(...cumulativeData.map(d => d.date))
+        const maxRune = Math.max(...cumulativeData.map(d => d.cumulativeRune))
+        const minRune = 0 // Always start from 0
+
+        // Scale functions
+        const scaleX = (date: number) => padding.left + ((date - minDate) / (maxDate - minDate)) * graphWidth
+        const scaleY = (rune: number) => padding.top + ((maxRune - rune) / (maxRune - minRune)) * graphHeight
+
+        // Generate path data
+        const pathData = cumulativeData.map((d, i) => {
+            const x = scaleX(d.date)
+            const y = scaleY(d.cumulativeRune)
+            return i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`
+        }).join(' ')
+
+        // Generate gradient path (area under curve)
+        const areaPathData = `M ${scaleX(minDate)} ${scaleY(0)} L ${pathData.substring(2)} L ${scaleX(maxDate)} ${scaleY(0)} Z`
+
+        // Create Y-axis labels
+        const yTicks = 5
+        const yLabels = Array.from({ length: yTicks + 1 }, (_, i) => {
+            const value = (maxRune * i) / yTicks
+            return {
+                value,
+                y: scaleY(value),
+                label: this.formatNumber(value)
+            }
+        }).reverse()
+
+        // Create X-axis labels (dates)
+        const xTicks = Math.min(6, cumulativeData.length)
+        const xLabels = Array.from({ length: xTicks }, (_, i) => {
+            const index = Math.floor((cumulativeData.length - 1) * i / (xTicks - 1))
+            const dataPoint = cumulativeData[index]
+            return {
+                x: scaleX(dataPoint.date),
+                label: new Date(dataPoint.date * 1000).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                })
+            }
+        })
+
+        graphContainer.innerHTML = `
+            <svg class="tcy-payout-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" onclick="tcyGraphBackgroundClick(event)">
+                <!-- Background -->
+                <rect class="tcy-graph-background" width="${width}" height="${height}" />
+                
+                <!-- Grid lines -->
+                <g class="tcy-graph-grid">
+                    ${yLabels.slice(1, -1).map(tick => `
+                        <line x1="${padding.left}" y1="${tick.y}" x2="${padding.left + graphWidth}" y2="${tick.y}" class="tcy-grid-line" />
+                    `).join('')}
+                </g>
+                
+                <!-- Area gradient -->
+                <defs>
+                    <linearGradient id="tcyPayoutGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" class="tcy-gradient-start" />
+                        <stop offset="100%" class="tcy-gradient-end" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- Area under curve -->
+                <path class="tcy-graph-area" d="${areaPathData}" fill="url(#tcyPayoutGradient)" />
+                
+                <!-- Main line -->
+                <path class="tcy-graph-line" d="${pathData}" fill="none" />
+                
+                <!-- Data points -->
+                <g class="tcy-graph-points">
+                    ${cumulativeData.map((d, i) => {
+                        const originalDist = this.allDistributions.find(dist => Number(dist.date) === d.date)
+                        const dayAmount = originalDist ? Number(originalDist.amount) / 1e8 : 0
+                        return `
+                        <circle class="tcy-graph-point" 
+                                cx="${scaleX(d.date)}" 
+                                cy="${scaleY(d.cumulativeRune)}" 
+                                r="4"
+                                data-date="${d.date}"
+                                data-cumulative="${d.cumulativeRune}"
+                                data-day-amount="${dayAmount}"
+                                onclick="tcyGraphPointClick(this)"
+                                onmouseenter="tcyGraphPointHover(this, true)"
+                                onmouseleave="tcyGraphPointHover(this, false)">
+                        </circle>
+                    `}).join('')}
+                </g>
+                
+                <!-- Y-axis -->
+                <line class="tcy-graph-axis" x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + graphHeight}" />
+                
+                <!-- X-axis -->
+                <line class="tcy-graph-axis" x1="${padding.left}" y1="${padding.top + graphHeight}" x2="${padding.left + graphWidth}" y2="${padding.top + graphHeight}" />
+                
+                <!-- Y-axis labels -->
+                <g class="tcy-graph-labels">
+                    ${yLabels.map(tick => `
+                        <text class="tcy-graph-label-y" x="${padding.left - 25}" y="${tick.y + 4}" text-anchor="end">${tick.label}</text>
+                    `).join('')}
+                </g>
+                
+                <!-- Y-axis title (separate container) -->
+                <g class="tcy-graph-axis-title">
+                    <text class="tcy-graph-label-axis" x="15" y="${height / 2}" text-anchor="middle" transform="rotate(-90 15 ${height / 2})">RUNE Earned</text>
+                </g>
+                
+                <!-- X-axis labels -->
+                <g class="tcy-graph-labels">
+                    ${xLabels.map(tick => `
+                        <text class="tcy-graph-label-x" x="${tick.x}" y="${padding.top + graphHeight + 20}" text-anchor="middle">${tick.label}</text>
+                    `).join('')}
+                    <text class="tcy-graph-label-axis" x="${width / 2}" y="${height - 10}" text-anchor="middle">Distribution Date</text>
+                </g>
+                
+                <!-- Tooltip container -->
+                <g class="tcy-graph-tooltip" id="tcyGraphTooltip" style="display: none;">
+                    <rect class="tcy-tooltip-bg" rx="8" ry="8" />
+                    <text class="tcy-tooltip-date" y="15"></text>
+                    <text class="tcy-tooltip-day-amount" y="35"></text>
+                    <text class="tcy-tooltip-cumulative" y="55"></text>
+                </g>
+            </svg>
+        `
+        
+        // Add global functions for graph interaction
+        ;(window as any).tcyGraphPointHover = this.handleGraphPointHover.bind(this)
+        ;(window as any).tcyGraphPointClick = this.handleGraphPointClick.bind(this)
+        ;(window as any).tcyGraphBackgroundClick = this.handleGraphBackgroundClick.bind(this)
+        
+        // Hide loading and show chart
+        this.hideGraphLoading()
+    }
+
     private updateDistributionHistoryTitle(): void {
         const titleElement = document.getElementById('distributionHistoryTitle')
         if (!titleElement || this.allDistributions.length === 0) return
@@ -870,6 +1096,111 @@ export class TcyTab {
             titleElement.textContent = `Distribution History (${totalCount} events)`
         } else {
             titleElement.textContent = `Recent Distributions (${displayCount} of ${totalCount} events)`
+        }
+    }
+
+    private hoverTimeout: NodeJS.Timeout | null = null
+    private pinnedPoint: Element | null = null
+
+    private handleGraphPointHover(element: Element, isEntering: boolean): void {
+        if (this.pinnedPoint === element) return // Don't show hover for pinned point
+        
+        if (this.hoverTimeout) {
+            clearTimeout(this.hoverTimeout)
+            this.hoverTimeout = null
+        }
+        
+        if (isEntering) {
+            this.hoverTimeout = setTimeout(() => {
+                this.showGraphTooltip(element)
+            }, 200) // 0.2 second delay
+        } else {
+            this.hideGraphTooltip()
+        }
+    }
+
+    private handleGraphPointClick(element: Element): void {
+        if (this.pinnedPoint === element) {
+            // Unpin if clicking the same point
+            this.pinnedPoint = null
+            this.hideGraphTooltip()
+        } else {
+            // Pin to new point
+            this.pinnedPoint = element
+            this.showGraphTooltip(element)
+        }
+    }
+
+    private handleGraphBackgroundClick(event: Event): void {
+        const target = event.target as Element
+        if (!target.classList.contains('tcy-graph-point')) {
+            this.pinnedPoint = null
+            this.hideGraphTooltip()
+        }
+    }
+
+    private showGraphTooltip(element: Element): void {
+        const tooltip = document.getElementById('tcyGraphTooltip')
+        if (!tooltip) return
+        
+        const date = Number(element.getAttribute('data-date'))
+        const cumulative = Number(element.getAttribute('data-cumulative'))
+        const dayAmount = Number(element.getAttribute('data-day-amount'))
+        
+        const dateText = tooltip.querySelector('.tcy-tooltip-date') as SVGTextElement
+        const dayAmountText = tooltip.querySelector('.tcy-tooltip-day-amount') as SVGTextElement
+        const cumulativeText = tooltip.querySelector('.tcy-tooltip-cumulative') as SVGTextElement
+        const bg = tooltip.querySelector('.tcy-tooltip-bg') as SVGRectElement
+        
+        if (dateText && dayAmountText && cumulativeText && bg) {
+            dateText.textContent = new Date(date * 1000).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric', 
+                year: 'numeric'
+            })
+            dayAmountText.textContent = `Daily: ${this.formatNumber(dayAmount)} RUNE`
+            cumulativeText.textContent = `Total: ${this.formatNumber(cumulative)} RUNE`
+            
+            // Position tooltip near the point
+            const cx = Number(element.getAttribute('cx'))
+            const cy = Number(element.getAttribute('cy'))
+            
+            const tooltipWidth = 140
+            const tooltipHeight = 70
+            
+            // Position tooltip to the right if there's space, otherwise to the left
+            const svgWidth = 800
+            let tooltipX = cx + 15
+            if (tooltipX + tooltipWidth > svgWidth - 20) {
+                tooltipX = cx - tooltipWidth - 15
+            }
+            
+            let tooltipY = cy - tooltipHeight / 2
+            if (tooltipY < 20) tooltipY = 20
+            if (tooltipY + tooltipHeight > 280) tooltipY = 280 - tooltipHeight
+            
+            bg.setAttribute('x', tooltipX.toString())
+            bg.setAttribute('y', tooltipY.toString())
+            bg.setAttribute('width', tooltipWidth.toString())
+            bg.setAttribute('height', tooltipHeight.toString())
+            
+            dateText.setAttribute('x', (tooltipX + 10).toString())
+            dateText.setAttribute('y', (tooltipY + 15).toString())
+            dayAmountText.setAttribute('x', (tooltipX + 10).toString())
+            dayAmountText.setAttribute('y', (tooltipY + 35).toString())
+            cumulativeText.setAttribute('x', (tooltipX + 10).toString())
+            cumulativeText.setAttribute('y', (tooltipY + 55).toString())
+            
+            tooltip.style.display = 'block'
+        }
+    }
+
+    private hideGraphTooltip(): void {
+        if (this.pinnedPoint) return // Don't hide if pinned
+        
+        const tooltip = document.getElementById('tcyGraphTooltip')
+        if (tooltip) {
+            tooltip.style.display = 'none'
         }
     }
 
