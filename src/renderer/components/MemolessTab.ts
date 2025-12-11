@@ -562,6 +562,8 @@ export class MemolessTab {
             <ul class="instructions-list-bullets">
               <li><strong>Send Exact Amount:</strong> Use precisely the calculated amount - no changes</li>
               <li><strong>Copy Address:</strong> Use copy button to prevent address errors</li>
+              <li><strong>Do Not Use Smart Contract Wallet:</strong> Send from a regular wallet only</li>
+              <li><strong>Correct Blockchain:</strong> Ensure you are sending on the correct blockchain</li>
               <li><strong>Sufficient Gas:</strong> Ensure confirmation within 10 minutes</li>
               <li><strong>Final Check:</strong> Verify all details - transactions are irreversible</li>
             </ul>
