@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.11] - 2024-12-11
+
+### Fixed
+- **Changelog Script**: Fixed changelog extraction script to look for CHANGELOG.md in root directory
+- **Release Process**: Corrected path from docs/CHANGELOG.md to CHANGELOG.md for proper CI execution
+
+---
+
 ## [0.2.10] - 2024-12-11
 
 ### Fixed

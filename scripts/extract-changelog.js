@@ -15,7 +15,7 @@ function extractChangelog() {
         const currentVersion = packageJson.version;
         
         // Read CHANGELOG.md
-        const changelogPath = path.join(__dirname, '..', 'docs', 'CHANGELOG.md');
+        const changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
         const changelogContent = fs.readFileSync(changelogPath, 'utf8');
         
         console.log(`📝 Extracting changelog for version ${currentVersion}`);
