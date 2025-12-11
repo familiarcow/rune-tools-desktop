@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.8] - 2024-12-11
+
+### Fixed
+- **Build Files**: Added `build/**/*` to files array to ensure afterSignHook.js is included in the package
+- Resolved "Cannot find module afterSignHook.js" error during CI builds
+
+---
+
 ## [0.2.7] - 2024-12-11
 
 ### Fixed
