@@ -24,6 +24,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Import Apple certificates (macOS)
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create keychain
+          security create-keychain -p actions build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p actions build.keychain
+          
+          # Import certificate
+          echo $APPLE_CERTIFICATE | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P $APPLE_CERTIFICATE_PASSWORD -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
+          
+          # Clean up
+          rm certificate.p12
+
       - name: Import GPG key (Unix)
         if: runner.os != 'Windows'
         run: |
@@ -54,7 +73,8 @@ jobs:
         timeout-minutes: 15
         env:
           DEBUG: electron-builder
-          CSC_IDENTITY_AUTO_DISCOVERY: true
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
           # Notarization credentials (macOS only)
           APPLE_ID: ${{ secrets.APPLE_ID }}
