@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-12-11
+
+- Add Apple app notarization
+
 ## [0.2.1] - 2025-12-11
 
 - Fix GitHub Actions workflow to properly distribute macOS DMG files

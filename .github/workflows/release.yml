@@ -56,6 +56,10 @@ jobs:
           DEBUG: electron-builder
           CSC_IDENTITY_AUTO_DISCOVERY: false
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          # Notarization credentials (macOS only)
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Create release manifest
         run: node scripts/create-manifest.js
