@@ -872,7 +872,12 @@ export class TcyTab {
             ${this.rewardsData.distributions.map(dist => `
                 <div class="tcy-history-row">
                     <div class="tcy-history-col">${this.formatDate(Number(dist.date))}</div>
-                    <div class="tcy-history-col">${this.formatNumber(Number(dist.amount) / 1e8)} RUNE</div>
+                    <div class="tcy-history-col">
+                        <div class="tcy-history-amount-with-logo">
+                            ${this.formatNumber(Number(dist.amount) / 1e8)}
+                            ${AssetService.GetLogoWithChain('THOR.RUNE', 16)}
+                        </div>
+                    </div>
                     <div class="tcy-history-col">${this.formatCurrency(dist.usdValue)}</div>
                 </div>
             `).join('')}
