@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -54,13 +54,13 @@
     "appId": "com.familiarcow.runetools",
     "productName": "Rune.Tools (beta)",
     "directories": {
-      "output": "dist-electron"
+      "output": "dist-electron",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
       "images/**/*",
-      "node_modules/**/*",
-      "build/**/*"
+      "node_modules/**/*"
     ],
     "afterSign": "build/afterSignHook.js",
     "mac": {

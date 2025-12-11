@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.9] - 2024-12-11
+
+### Fixed
+- **Build Resources**: Properly configured buildResources directory to ensure afterSignHook.js is accessible during builds
+- **Framework Signing**: Confirmed enhanced framework component signing works correctly for Squirrel and Mantle frameworks
+- **Local Build Tested**: Verified complete build process works with proper certificate signing
+
+---
+
 ## [0.2.8] - 2024-12-11
 
 ### Fixed
