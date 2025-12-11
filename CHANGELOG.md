@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.15] - 2024-12-11
+
+### Fixed
+- **Build Timeout**: Increased timeout from 30 to 45 minutes to handle slow Apple notarization servers
+- **Notarization Process**: Previous build confirmed notarization was working but timed out after 28+ minutes
+- **Apple Server Delays**: Account for peak-time delays in Apple's notarization service
+
+---
+
 ## [0.2.14] - 2024-12-11
 
 ### Fixed

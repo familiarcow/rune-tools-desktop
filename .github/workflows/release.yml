@@ -70,7 +70,7 @@ jobs:
 
       - name: Build application
         run: npm run dist
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           DEBUG: ${{ runner.os == 'macOS' && 'electron-builder,electron-notarize' || 'electron-builder' }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
