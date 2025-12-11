@@ -7,15 +7,33 @@ interface UpdateInfo {
     changelogUrl: string;
 }
 
-import { APP_VERSION, GITHUB_REPO, UPDATE_CHECK_TIMEOUT, RELEASE_PGP_PUBLIC_KEY } from '../constants/AppConstants';
+import { getAppVersion, GITHUB_REPO, UPDATE_CHECK_TIMEOUT, RELEASE_PGP_PUBLIC_KEY } from '../constants/AppConstants';
 import * as openpgp from 'openpgp';
 
 export class UpdateService {
-    private currentVersion = APP_VERSION;
+    private currentVersion: string = '0.0.0';
     private readonly GITHUB_REPO = GITHUB_REPO;
     private readonly RELEASES_API = `https://api.github.com/repos/${this.GITHUB_REPO}/releases/latest`;
 
+    constructor() {
+        // Initialize current version asynchronously
+        this.initCurrentVersion();
+    }
+
+    private async initCurrentVersion() {
+        try {
+            this.currentVersion = await getAppVersion();
+        } catch (error) {
+            console.error('Failed to get current version:', error);
+            this.currentVersion = '0.0.0';
+        }
+    }
+
     async checkForUpdates(): Promise<UpdateInfo | null> {
+        // Ensure current version is loaded
+        if (this.currentVersion === '0.0.0') {
+            await this.initCurrentVersion();
+        }
         try {
             console.log('🔍 Checking for updates...');
             
