@@ -71,6 +71,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            dist-electron/*.dmg
             dist-electron/*.pkg
             dist-electron/*.zip
             dist-electron/*.exe
