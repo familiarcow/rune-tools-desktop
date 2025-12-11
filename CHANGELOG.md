@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.14] - 2024-12-11
+
+### Fixed
+- **Windows Build**: Fixed DEBUG environment variable causing Windows build failure by making electron-notarize debug conditional on macOS only
+- **Build Matrix**: Restored dual-platform builds (macOS + Windows) after identifying root cause
+- **Debug Logging**: Use electron-notarize debug only on macOS, standard electron-builder debug on Windows
+
+---
+
 ## [0.2.13] - 2024-12-11
 
 ### Fixed

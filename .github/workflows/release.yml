@@ -72,7 +72,7 @@ jobs:
         run: npm run dist
         timeout-minutes: 30
         env:
-          DEBUG: electron-builder,electron-notarize
+          DEBUG: ${{ runner.os == 'macOS' && 'electron-builder,electron-notarize' || 'electron-builder' }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
