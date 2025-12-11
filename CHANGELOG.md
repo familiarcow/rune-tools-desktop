@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.10] - 2024-12-11
+
+### Fixed
+- **Git Tracking**: Added build/afterSignHook.js to git repository (was excluded by .gitignore)
+- **Build Resources**: Updated .gitignore to allow build/ scripts while excluding build outputs
+- **CI Compatibility**: Ensure afterSignHook.js is available in GitHub Actions environment
+
+---
+
 ## [0.2.9] - 2024-12-11
 
 ### Fixed

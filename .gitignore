@@ -3,7 +3,10 @@ node_modules/
 
 # Build outputs
 dist/
-build/
+build/output/
+build/*.dmg
+build/*.pkg
+build/*.exe
 out/
 
 # Electron build artifacts
