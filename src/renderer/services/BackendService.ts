@@ -29,7 +29,7 @@ export class BackendService {
             this.ipc = {
                 invoke: async (channel: string, ...args: any[]) => {
                     console.warn(`⚠️ Using mock IPC for ${channel} - real IPC not available`)
-                    return this.getMockResponse(channel, args)
+                    return await this.getMockResponse(channel, args)
                 }
             }
             console.log('🔧 BackendService created (using mock - consider checking preload.js)')
@@ -66,7 +66,7 @@ export class BackendService {
     }
 
     // Mock responses for development
-    private getMockResponse(channel: string, args: any[]): any {
+    private async getMockResponse(channel: string, args: any[]): Promise<any> {
         switch (channel) {
             case 'get-network':
                 return {
@@ -102,7 +102,7 @@ export class BackendService {
             case 'get-trade-account':
                 return this.getMockTradeAccount()
             case 'get-node-info':
-                return this.getMockNodeInfo()
+                return await this.getMockNodeInfo()
             case 'save-wallet':
                 // Mock saving - just return success
                 console.log('Mock wallet saved:', args[0]?.name || 'Unknown wallet')
@@ -158,11 +158,18 @@ export class BackendService {
         }
     }
 
-    private getMockNodeInfo(): any {
+    private async getMockNodeInfo(): Promise<any> {
+        let version = '1.0.0';
+        try {
+            version = await (window as any).electronAPI?.invoke('get-app-version') || '1.0.0';
+        } catch (error) {
+            console.error('Failed to get app version for mock:', error);
+        }
+        
         return {
             network: this.currentNetwork,
             status: 'active',
-            version: '1.0.0',
+            version,
             bond: '1000000000000'
         }
     }

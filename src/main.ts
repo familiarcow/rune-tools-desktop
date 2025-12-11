@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { THORWalletService } from './services/walletService';
@@ -722,6 +722,27 @@ ipcMain.handle('unlock-wallet', async (event, walletId: string, password: string
   } catch (error) {
     console.error('Error unlocking wallet:', error);
     throw error;
+  }
+});
+
+// IPC handler for getting application version
+ipcMain.handle('get-app-version', async () => {
+  try {
+    return app.getVersion();
+  } catch (error) {
+    console.error('❌ Failed to get app version:', error);
+    return '0.0.0';
+  }
+});
+
+// IPC handler for opening external URLs
+ipcMain.handle('open-external', async (event, url: string) => {
+  try {
+    await shell.openExternal(url);
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to open external URL:', error);
+    return false;
   }
 });
 

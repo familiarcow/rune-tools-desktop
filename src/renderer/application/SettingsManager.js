@@ -103,7 +103,7 @@ class SettingsManager {
             ${this.renderActiveWalletSection()}
             ${this.renderNetworkSection()}
             ${this.renderWalletManagementSection()}
-            ${this.renderApplicationSection()}
+            ${await this.renderApplicationSection()}
         `;
         
         // Attach section event listeners
@@ -250,8 +250,17 @@ class SettingsManager {
         `;
     }
 
-    renderApplicationSection() {
+    async renderApplicationSection() {
         const currentSettings = this.services.state.getState('settings') || {};
+        
+        // Fetch app version dynamically
+        let appVersion = 'v0.0.0';
+        try {
+            const version = await window.electronAPI.invoke('get-app-version');
+            appVersion = version ? `v${version}` : 'v0.0.0';
+        } catch (error) {
+            console.error('Failed to get app version:', error);
+        }
         
         return `
             <section class="settings-section">
@@ -292,9 +301,12 @@ class SettingsManager {
                 </div>
                 
                 <div class="app-info">
-                    <p><strong>Version:</strong> 1.0.0</p>
+                    <p><strong>Application Version:</strong> ${appVersion} <strong>Updates & Releases:</strong> <a href="#" onclick="window.electronAPI.invoke('open-external', 'https://github.com/familiarcow/rune-tools-desktop/releases'); return false;">🔗 View Releases</a></p>
                     <button class="btn btn-secondary" id="exportLogsBtn">Export Logs</button>
                     <button class="btn btn-secondary" id="resetSettingsBtn">Reset Settings</button>
+                    <p class="developer-credit">
+                        Developed by <a href="#" onclick="window.electronAPI.invoke('open-external', 'https://x.com/familiarcow'); return false;">FamiliarCow</a> under MIT License
+                    </p>
                 </div>
             </section>
         `;

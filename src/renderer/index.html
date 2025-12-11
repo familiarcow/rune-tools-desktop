@@ -5110,10 +5110,11 @@
   
   <!-- Version Display Script -->
   <script type="module">
-    import { APP_VERSION } from './constants/AppConstants.js';
+    import { getAppVersion } from './constants/AppConstants.js';
     
     // Update all version displays when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      const version = await getAppVersion();
       const versionElements = [
         'splash-version',
         'wallet-selection-version', 
@@ -5123,7 +5124,7 @@
       versionElements.forEach(elementId => {
         const element = document.getElementById(elementId);
         if (element) {
-          element.textContent = APP_VERSION;
+          element.textContent = version;
         }
       });
     });

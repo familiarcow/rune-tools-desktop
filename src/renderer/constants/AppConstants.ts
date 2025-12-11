@@ -1,5 +1,14 @@
-// App version - update this when package.json changes
-export const APP_VERSION = '0.1.5';
+// App version - fetched dynamically from main process
+export async function getAppVersion(): Promise<string> {
+  try {
+    const version = await (window as any).electronAPI.invoke('get-app-version');
+    return version || '0.0.0';
+  } catch (error) {
+    console.error('Failed to get app version:', error);
+    return '0.0.0';
+  }
+}
+
 
 // GitHub repository info
 export const GITHUB_REPO = 'familiarcow/rune-tools-desktop';
