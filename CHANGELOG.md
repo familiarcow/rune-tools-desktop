@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.7] - 2024-12-11
+
+### Fixed
+- **Electron Builder Configuration**: Fixed notarize configuration to use boolean value instead of object
+- Corrected invalid schema error that prevented builds from completing
+
+---
+
 ## [0.2.6] - 2024-12-11
 
 ### Changed
