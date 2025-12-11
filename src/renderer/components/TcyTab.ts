@@ -24,6 +24,7 @@ export interface TcyTabData {
 
 interface TcyMarketData {
     tcyPriceUsd: number
+    runePriceUsd: number
     tcyMarketCap: number
     runeMarketCap: number
     tcyVsRunePercentage: number
@@ -46,6 +47,10 @@ interface TcyBalanceData {
 interface TcyRewardsData {
     apr: number
     totalRuneDistributed: number
+    avgDailyRune: number
+    annualizedRune: number
+    annualizedUsd: number
+    distributionDays: number
     nextDistributionTime: string
     nextDistributionAmount: number
     blocksRemaining: number
@@ -53,6 +58,7 @@ interface TcyRewardsData {
         amount: string
         date: string
         usdValue: number
+        historicalRunePrice: number
     }>
 }
 
@@ -80,6 +86,9 @@ export class TcyTab {
     private rewardsData: TcyRewardsData | null = null
     private mimirData: TcyMimirData | null = null
     private isLoading: boolean = false
+    private historicalRunePrices: Array<{startTime: string, endTime: string, runePriceUSD: string}> = []
+    private allDistributions: Array<{amount: string; date: string; usdValue: number; historicalRunePrice: number}> = []
+    private showAllDistributions: boolean = false
 
     constructor(container: HTMLElement, backend: BackendService) {
         this.container = container
@@ -198,6 +207,32 @@ export class TcyTab {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Yield Details Section (moved from rewards section) -->
+                        <div class="tcy-yield-details-section hidden" id="tcyYieldDetailsSection">
+                            <h5>Yield Statistics</h5>
+                            <div class="tcy-yield-details-grid">
+                                <div class="tcy-yield-stat">
+                                    <div class="tcy-yield-stat-label">Total RUNE Earned</div>
+                                    <div class="tcy-yield-stat-value" id="totalRuneEarnedDetailed">0.00 RUNE</div>
+                                </div>
+                                
+                                <div class="tcy-yield-stat">
+                                    <div class="tcy-yield-stat-label">Average Daily RUNE</div>
+                                    <div class="tcy-yield-stat-value" id="avgDailyRune">0.00 RUNE</div>
+                                </div>
+                                
+                                <div class="tcy-yield-stat">
+                                    <div class="tcy-yield-stat-label">Annualized RUNE</div>
+                                    <div class="tcy-yield-stat-value" id="annualizedRune">0.00 RUNE</div>
+                                </div>
+                                
+                                <div class="tcy-yield-stat">
+                                    <div class="tcy-yield-stat-label">Distribution Days</div>
+                                    <div class="tcy-yield-stat-value" id="distributionDays">0 days</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Section 2: Market Info -->
@@ -260,17 +295,13 @@ export class TcyTab {
                                 <div class="tcy-reward-value" id="nextDistribution">Calculating...</div>
                                 <div class="tcy-reward-sub" id="nextDistributionSub">0 blocks remaining</div>
                             </div>
-                            
-                            <div class="tcy-reward-card">
-                                <div class="tcy-reward-label">Estimated Reward</div>
-                                <div class="tcy-reward-value" id="estimatedReward">0.00 RUNE</div>
-                            </div>
                         </div>
+
 
                         <!-- Distribution History -->
                         <div class="tcy-history-section">
                             <div class="tcy-history-header">
-                                <h5>Recent Distributions</h5>
+                                <h5 id="distributionHistoryTitle">Recent Distributions</h5>
                                 <div class="tcy-history-controls">
                                     <button class="tcy-btn tcy-btn-text" id="toggleHistoryBtn">
                                         Show All
@@ -400,6 +431,7 @@ export class TcyTab {
         
         return {
             tcyPriceUsd,
+            runePriceUsd,
             tcyMarketCap,
             runeMarketCap,
             tcyVsRunePercentage,
@@ -431,11 +463,13 @@ export class TcyTab {
         let stakedTcyBalance = '0'
         try {
             const stakedResponse = await fetch(`${baseUrl}/thorchain/tcy_staker/${this.tcyData.address}`)
+            console.log('🔍 Staked balance response status:', stakedResponse.status)
             if (stakedResponse.ok) {
                 const stakedData = await stakedResponse.json()
-                console.log('🏦 Staked TCY response:', stakedData)
+                console.log('🔍 Staked TCY response:', stakedData)
                 if (stakedData && stakedData.amount) {
                     stakedTcyBalance = (Number(stakedData.amount) / 1e8).toString()
+                    console.log('🔍 Calculated staked balance:', stakedTcyBalance)
                 }
             } else {
                 console.log('🏦 No staked balance found, status:', stakedResponse.status)
@@ -472,17 +506,36 @@ export class TcyTab {
         }
     }
 
+    private async fetchHistoricalRunePrices(distributionCount: number): Promise<void> {
+        // No longer fetching historical prices separately since distribution data includes prices
+        // Keep this method for interface compatibility but make it a no-op
+        console.log('📊 Using RUNE prices from distribution data instead of fetching historical prices')
+    }
+
+    private getHistoricalRunePrice(timestamp: number): number {
+        // No longer using historical price lookup - distribution data includes prices
+        // Return current RUNE price as fallback (though this shouldn't be called anymore)
+        console.log('⚠️ getHistoricalRunePrice called but using current RUNE price as fallback')
+        return this.marketData?.runePriceUsd || 0
+    }
+
     private async loadRewardsData(): Promise<TcyRewardsData> {
-        if (!this.tcyData?.address || !this.balanceData || parseFloat(this.balanceData.stakedTcyBalance) <= 0) {
+        if (!this.tcyData?.address) {
             return {
                 apr: 0,
                 totalRuneDistributed: 0,
-                nextDistributionTime: 'No staked balance',
+                avgDailyRune: 0,
+                annualizedRune: 0,
+                annualizedUsd: 0,
+                distributionDays: 0,
+                nextDistributionTime: 'No address',
                 nextDistributionAmount: 0,
                 blocksRemaining: 0,
                 distributions: []
             }
         }
+
+        const hasStakedBalance = this.balanceData && parseFloat(this.balanceData.stakedTcyBalance) > 0
 
         // Calculate next distribution using block height (independent of distribution history)
         let nextDistributionTime = 'Calculating...'
@@ -522,21 +575,98 @@ export class TcyTab {
 
         let apr = 0
         let totalRuneDistributed = 0
-        let distributions: Array<{ amount: string; date: string; usdValue: number }> = []
+        let avgDailyRune = 0
+        let annualizedRune = 0
+        let annualizedUsd = 0
+        let distributionDays = 0
+        let distributions: Array<{ amount: string; date: string; usdValue: number; historicalRunePrice: number }> = []
 
         try {
+            console.log('🔍 Loading TCY distributions for address:', this.tcyData.address)
             const distributionsResponse = await fetch(`${baseUrl}/v2/tcy/distribution/${this.tcyData.address}`)
+            console.log('🔍 Distributions response status:', distributionsResponse.status)
+            
             if (distributionsResponse.ok) {
                 const distributionsData = await distributionsResponse.json()
+                console.log('🔍 Raw distributions data:', distributionsData)
                 
-                distributions = distributionsData.distributions?.map((d: any) => ({
-                    amount: d.amount,
-                    date: d.date,
-                    usdValue: (Number(d.amount) / 1e8) * (Number(d.price) / 1e8)
-                })) || []
+                const rawDistributions = distributionsData.distributions || []
+                console.log('🔍 Raw distributions count:', rawDistributions.length)
+                
+                // No need to fetch historical prices since distribution data includes them
 
-                apr = Number(distributionsData.apr || 0) * 100
+                distributions = rawDistributions.map((d: any) => {
+                    // Use the price from the distribution data directly (RUNEUSD price in 1e8 format)
+                    const historicalRunePrice = Number(d.price) / 1e8
+                    const runeAmount = Number(d.amount) / 1e8
+                    const usdValue = runeAmount * historicalRunePrice
+                    
+                    console.log('📊 Processing distribution:', {
+                        date: new Date(Number(d.date) * 1000).toLocaleDateString(),
+                        rawAmount: d.amount,
+                        runeAmount,
+                        rawPrice: d.price,
+                        historicalRunePrice,
+                        usdValue
+                    })
+                    
+                    return {
+                        amount: d.amount,
+                        date: d.date,
+                        usdValue,
+                        historicalRunePrice
+                    }
+                })
+
+                // Sort distributions by date in descending order (most recent first)
+                distributions.sort((a, b) => Number(b.date) - Number(a.date))
+                
+                // Store all distributions for toggle functionality
+                this.allDistributions = distributions
+
                 totalRuneDistributed = Number(distributionsData.total || 0) / 1e8
+                
+                // Calculate additional yield statistics like the legacy app
+                if (distributions.length > 0) {
+                    distributionDays = distributions.length
+                    avgDailyRune = totalRuneDistributed / distributionDays
+                    annualizedRune = avgDailyRune * 365
+                    
+                    // Get current RUNE price for annualized USD calculation
+                    const currentRunePrice = this.marketData?.runePriceUsd || 0
+                    annualizedUsd = annualizedRune * currentRunePrice
+                    
+                    // Calculate APY using actual staked TCY value (like legacy app)
+                    const stakedBalance = parseFloat(this.balanceData?.stakedTcyBalance || '0')
+                    const tcyPriceUsd = this.marketData?.tcyPriceUsd || 0
+                    const stakedValueUsd = stakedBalance * tcyPriceUsd
+                    
+                    if (stakedValueUsd > 0) {
+                        apr = (annualizedUsd / stakedValueUsd) * 100
+                        console.log('📊 Enhanced APY calculation:', {
+                            stakedBalance,
+                            tcyPriceUsd,
+                            stakedValueUsd,
+                            annualizedUsd,
+                            calculatedAPR: apr
+                        })
+                    } else {
+                        // Fallback to Midgard APR if we can't calculate
+                        apr = Number(distributionsData.apr || 0) * 100
+                    }
+                    
+                    console.log('📊 Enhanced yield calculations:', {
+                        totalRuneDistributed,
+                        distributionDays,
+                        avgDailyRune,
+                        annualizedRune,
+                        annualizedUsd,
+                        finalAPR: apr
+                    })
+                } else {
+                    // No distributions, use Midgard APR
+                    apr = Number(distributionsData.apr || 0) * 100
+                }
             } else {
                 console.log('📊 No distribution history found (new staker)')
             }
@@ -547,10 +677,14 @@ export class TcyTab {
         return {
             apr,
             totalRuneDistributed,
+            avgDailyRune,
+            annualizedRune,
+            annualizedUsd,
+            distributionDays,
             nextDistributionTime,
             nextDistributionAmount,
             blocksRemaining,
-            distributions: distributions.slice(0, 10) // Recent 10
+            distributions: this.showAllDistributions ? distributions : distributions.slice(0, 10) // Recent 10 or all
         }
     }
 
@@ -621,12 +755,26 @@ export class TcyTab {
             this.updateElement('totalRuneEarned', this.formatNumber(this.rewardsData.totalRuneDistributed))
             this.updateElement('nextDistribution', this.rewardsData.nextDistributionTime)
             this.updateElement('nextDistributionSub', `${this.rewardsData.blocksRemaining} blocks remaining`)
-            this.updateElement('estimatedReward', `${this.formatNumber(this.rewardsData.nextDistributionAmount)} RUNE`)
             
-            // Show rewards section if user has staked balance
-            if (this.balanceData && parseFloat(this.balanceData.stakedTcyBalance) > 0) {
+            // Update yield details section
+            this.updateElement('totalRuneEarnedDetailed', `${this.formatNumber(this.rewardsData.totalRuneDistributed)} RUNE`)
+            this.updateElement('avgDailyRune', `${this.formatNumber(this.rewardsData.avgDailyRune)} RUNE`)
+            this.updateElement('annualizedRune', `${this.formatNumber(this.rewardsData.annualizedRune)} RUNE`)
+            this.updateElement('distributionDays', `${this.rewardsData.distributionDays} days`)
+            
+            // Show rewards section if user has staked balance OR has distribution history
+            const hasStakedBalance = this.balanceData && parseFloat(this.balanceData.stakedTcyBalance) > 0
+            const hasDistributions = this.rewardsData.distributions && this.rewardsData.distributions.length > 0
+            
+            // Show yield statistics in balances section if there are distributions
+            if (hasDistributions) {
+                this.showElement('tcyYieldDetailsSection')
+            }
+            
+            if (hasStakedBalance || hasDistributions) {
                 this.showElement('tcyRewardsSection')
                 this.updateDistributionHistory()
+                this.updateDistributionHistoryTitle()
             }
         }
 
@@ -709,6 +857,20 @@ export class TcyTab {
                 </div>
             `).join('')}
         `
+    }
+
+    private updateDistributionHistoryTitle(): void {
+        const titleElement = document.getElementById('distributionHistoryTitle')
+        if (!titleElement || this.allDistributions.length === 0) return
+        
+        const displayCount = this.rewardsData?.distributions.length || 0
+        const totalCount = this.allDistributions.length
+        
+        if (this.showAllDistributions) {
+            titleElement.textContent = `Distribution History (${totalCount} events)`
+        } else {
+            titleElement.textContent = `Recent Distributions (${displayCount} of ${totalCount} events)`
+        }
     }
 
     private showStakeDialog(): void {
@@ -815,11 +977,26 @@ export class TcyTab {
     }
 
     private toggleDistributionHistory(): void {
-        // Implementation for showing/hiding full history
+        // Toggle between showing all distributions and recent 10
+        this.showAllDistributions = !this.showAllDistributions
+        
         const toggleBtn = document.getElementById('toggleHistoryBtn')
         if (toggleBtn) {
-            const isShowingAll = toggleBtn.textContent === 'Show Recent'
-            toggleBtn.textContent = isShowingAll ? 'Show All' : 'Show Recent'
+            toggleBtn.textContent = this.showAllDistributions ? 'Show Recent' : 'Show All'
+        }
+        
+        // Update the distribution history display
+        if (this.rewardsData && this.allDistributions.length > 0) {
+            // Create temporary rewards data with the correct distributions to display
+            const displayDistributions = this.showAllDistributions 
+                ? this.allDistributions 
+                : this.allDistributions.slice(0, 10)
+            
+            this.rewardsData.distributions = displayDistributions
+            this.updateDistributionHistory()
+            
+            // Update the header title
+            this.updateDistributionHistoryTitle()
         }
     }
 

@@ -1,5 +1,48 @@
 /* TCY Tab Component Styles - Scoped to .tcy-tab */
 
+/* Yield Details Section */
+.tcy-yield-details-section {
+  margin-top: var(--spacing-lg);
+}
+
+.tcy-yield-details-section h5 {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tcy-yield-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.tcy-yield-stat {
+  padding: var(--spacing-md);
+  background: var(--surface-elevated);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.tcy-yield-stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tcy-yield-stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
 .tcy-tab-actions-card {
   display: flex;
   flex-direction: column;
