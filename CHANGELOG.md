@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.13] - 2024-12-11
+
+### Fixed
+- **Notarization Config**: Reverted notarize config back to boolean true (electron-builder schema requirement)
+- **Build Timeout**: Increased GitHub Actions timeout from 15 to 30 minutes for Apple notarization  
+- **Debug Output**: Added electron-notarize debug logging for better build visibility
+
+---
+
 ## [0.2.12] - 2024-12-11
 
 ### Fixed

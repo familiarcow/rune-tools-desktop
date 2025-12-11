@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -71,9 +71,7 @@
       "gatekeeperAssess": false,
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
-      "notarize": {
-        "tool": "notarytool"
-      },
+      "notarize": true,
       "signIgnore": [
         "node_modules/secp256k1/prebuilds"
       ],
