@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.49] - 2024-12-12
+
+### Fixed
+- **NOTARYTOOL ENVIRONMENT VARIABLE**: Force notarytool usage via NOTARIZE_TOOL environment variable
+- **Schema Compatibility**: Fixed electron-builder 26.3.4 schema validation by using boolean notarize config
+- **Invalid Ticket Resolution**: Address notarization ticket validity issues causing malware warnings
+- **Modern Tool Chain**: Ensure @electron/notarize uses notarytool instead of deprecated altool
+
+---
+
 ## [0.2.48] - 2024-12-12
 
 ### Fixed
