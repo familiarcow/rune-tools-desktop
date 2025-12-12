@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.37] - 2024-12-12
+
+### Fixed
+- **CRITICAL DMG VERSION FIX**: Added version verification to prevent DMG creation with wrong app version
+- **App Version Validation**: Build now fails if app bundle version doesn't match package.json version
+- **Root Cause Resolution**: Fixed issue where DMG contained v0.2.33 app instead of correct v0.2.36+ app
+- **Version Consistency**: Ensures DMG always contains the correctly versioned and notarized app bundle
+
+---
+
 ## [0.2.36] - 2024-12-12
 
 ### Fixed

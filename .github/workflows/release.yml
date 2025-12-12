@@ -129,6 +129,19 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           
           echo "Creating DMG with notarized app: $APP_NAME"
+          echo "App version check:"
+          plutil -p "$APP_PATH/Contents/Info.plist" | grep CFBundleShortVersionString || true
+          
+          # Verify app version matches package.json
+          APP_VERSION=$(plutil -extract CFBundleShortVersionString raw "$APP_PATH/Contents/Info.plist" 2>/dev/null || echo "unknown")
+          echo "App bundle version: $APP_VERSION"
+          echo "Package.json version: $VERSION"
+          
+          if [ "$APP_VERSION" != "$VERSION" ]; then
+            echo "❌ ERROR: App version ($APP_VERSION) doesn't match package.json ($VERSION)"
+            echo "This suggests the wrong app was built. Aborting DMG creation."
+            exit 1
+          fi
           
           # Wait a moment and force remove old DMG files
           sleep 2
