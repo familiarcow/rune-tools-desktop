@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.46] - 2024-12-12
+
+### Fixed  
+- **CORRECT DMG CONFIGURATION**: Fixed invalid DMG notarization config that was causing build failures
+- **Apple Best Practices**: Following correct approach - notarize app bundle, keep DMG unsigned
+- **Configuration Fix**: Removed invalid `notarize: true` from DMG config, set `sign: false` as recommended
+- **Gatekeeper Compatibility**: Apple Gatekeeper detects notarized app inside unsigned DMG and allows installation
+
+---
+
 ## [0.2.45] - 2024-12-12
 
 ### Fixed
 - **DMG NOTARIZATION**: Added explicit DMG signing and notarization configuration to electron-builder
-- **Comprehensive Notarization**: Now notarizing both app bundle AND DMG file for complete Apple security compliance
+- **Comprehensive Notarization**: Now notarizing both app bundle AND DMG file for complete Apple security compliance  
 - **Malware Warning Fix**: DMG notarization should resolve "Apple could not verify app is free of malware" warnings
 - **Best Practices**: Following Apple's 2024 guidelines for both app and distribution format notarization
 
