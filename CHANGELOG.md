@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.60] - 2024-12-12
+
+### Fixed
+- **ROOT CAUSE IDENTIFIED**: Notarization ticket must be stapled to DMG, not app inside
+- **Critical Insight**: "The notarization ticket is stapled to the .dmg, not the .app inside"
+- **Distribution Reality**: Apps extracted from DMG cannot be redistributed independently in notarized fashion
+- **Correct Approach**: Notarize the final DMG file that users actually download from GitHub
+- **Extended Attributes**: DMG notarization preserves tickets through GitHub releases distribution
+
+---
+
 ## [0.2.59] - 2024-12-12
 
 ### Fixed
