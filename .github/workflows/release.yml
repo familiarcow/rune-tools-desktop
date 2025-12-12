@@ -92,7 +92,7 @@ jobs:
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
-      - name: Notarize and staple macOS app
+      - name: Notarize and staple macOS DMG
         if: runner.os == 'macOS'
         shell: bash
         run: |
@@ -102,25 +102,25 @@ jobs:
             --team-id "${{ secrets.APPLE_TEAM_ID }}" \
             --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
           
-          # Find the built app
-          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
-          echo "Found app at: $APP_PATH"
+          # Find the built DMG
+          DMG_PATH=$(find dist-electron -name "*.dmg" | head -1)
+          echo "Found DMG at: $DMG_PATH"
           
-          # Notarize the app
-          echo "Starting notarization..."
-          xcrun notarytool submit "$APP_PATH" \
+          # Notarize the DMG (which includes the app)
+          echo "Starting notarization of DMG..."
+          xcrun notarytool submit "$DMG_PATH" \
             --keychain-profile "APPLE_NOTARIZATION_PROFILE" \
             --wait
           
-          # Staple the notarization ticket
-          echo "Stapling notarization ticket..."
-          xcrun stapler staple "$APP_PATH"
+          # Staple the notarization ticket to the DMG
+          echo "Stapling notarization ticket to DMG..."
+          xcrun stapler staple "$DMG_PATH"
           
           # Verify stapling
-          echo "Verifying stapling..."
-          xcrun stapler validate "$APP_PATH"
+          echo "Verifying DMG stapling..."
+          xcrun stapler validate "$DMG_PATH"
           
-          echo "✅ Notarization and stapling completed successfully"
+          echo "✅ DMG notarization and stapling completed successfully"
 
       - name: Build application (Windows)
         if: runner.os == 'Windows'

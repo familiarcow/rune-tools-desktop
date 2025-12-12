@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.27] - 2024-12-12
+
+### Fixed
+- **DMG Notarization**: Fixed notarization to target DMG file instead of app bundle
+- **Proper Notarization Flow**: Notarize the complete DMG package rather than individual app
+
+---
+
 ## [0.2.26] - 2024-12-12
 
 ### Fixed
