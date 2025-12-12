@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.59] - 2024-12-12
+
+### Fixed
+- **CRITICAL: Add Post-Upload Validation**: CI now downloads and validates GitHub releases to catch notarization corruption
+- **Root Cause Detection**: Added validation step that downloads release from GitHub and tests notarization
+- **Build Failure on Corruption**: CI will fail if notarization is lost during upload/download process
+- **End-to-End Testing**: Complete validation from build → upload → download → user experience
+
+---
+
 ## [0.2.58] - 2024-12-12
 
 ### Fixed

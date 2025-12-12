@@ -244,6 +244,78 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
+      - name: Post-upload notarization validation (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "🔍 CRITICAL: Validating uploaded release preserves notarization..."
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          
+          # Wait for upload to propagate
+          echo "⏳ Waiting 30 seconds for GitHub release propagation..."
+          sleep 30
+          
+          # Download the uploaded DMG
+          DOWNLOAD_DIR="/tmp/release-validation-$$"
+          mkdir -p "$DOWNLOAD_DIR"
+          cd "$DOWNLOAD_DIR"
+          
+          # Download using curl to simulate user experience
+          DMG_NAME=$(ls -1 ../../../dist-electron/*.dmg | head -1 | xargs basename)
+          RELEASE_URL="https://github.com/familiarcow/rune-tools-desktop/releases/download/v${VERSION}/${DMG_NAME}"
+          
+          echo "📥 Downloading from GitHub releases: $RELEASE_URL"
+          curl -L -o "downloaded.dmg" "$RELEASE_URL"
+          
+          if [ ! -f "downloaded.dmg" ]; then
+            echo "❌ CRITICAL: Failed to download DMG from GitHub releases"
+            exit 1
+          fi
+          
+          # Validate the downloaded DMG
+          echo "🔍 Validating downloaded DMG notarization..."
+          MOUNT_POINT="/tmp/validation-mount-$$"
+          mkdir -p "$MOUNT_POINT"
+          
+          if hdiutil attach "downloaded.dmg" -mountpoint "$MOUNT_POINT" -quiet; then
+            APP_IN_DMG=$(find "$MOUNT_POINT" -name "*.app" -type d | head -1)
+            if [ -n "$APP_IN_DMG" ]; then
+              echo "🔍 Validating app notarization in downloaded DMG..."
+              if xcrun stapler validate "$APP_IN_DMG"; then
+                echo "✅ SUCCESS: Downloaded app has valid notarization ticket"
+                
+                # Also test spctl
+                if spctl -a -vvv "$APP_IN_DMG" 2>&1 | grep -q "accepted"; then
+                  echo "✅ SUCCESS: Downloaded app passes Gatekeeper assessment"
+                  echo "🎉 NOTARIZATION PRESERVED through GitHub releases!"
+                else
+                  echo "❌ CRITICAL: Downloaded app FAILS Gatekeeper assessment"
+                  echo "❌ NOTARIZATION CORRUPTED during GitHub upload/download"
+                  hdiutil detach "$MOUNT_POINT" -quiet || true
+                  exit 1
+                fi
+              else
+                echo "❌ CRITICAL: Downloaded app LACKS notarization ticket"
+                echo "❌ NOTARIZATION LOST during GitHub upload/download"
+                hdiutil detach "$MOUNT_POINT" -quiet || true
+                exit 1
+              fi
+            else
+              echo "❌ CRITICAL: No app found in downloaded DMG"
+              hdiutil detach "$MOUNT_POINT" -quiet || true
+              exit 1
+            fi
+            hdiutil detach "$MOUNT_POINT" -quiet || true
+          else
+            echo "❌ CRITICAL: Failed to mount downloaded DMG"
+            exit 1
+          fi
+          
+          # Cleanup
+          rm -rf "$DOWNLOAD_DIR"
+          echo "✅ Post-upload validation PASSED - releases preserve notarization"
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+
       - name: Windows release upload
         if: runner.os == 'Windows'  
         run: |
