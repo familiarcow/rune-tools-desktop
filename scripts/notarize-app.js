@@ -13,29 +13,23 @@ async function notarizeApp(context) {
   const { electronPlatformName, appOutDir } = context
   
   if (electronPlatformName !== 'darwin') {
-    console.log('Skipping notarization - not building for macOS')
+    console.log('Skipping app notarization - not building for macOS')
     return
   }
 
-  // Find the DMG file that electron-builder created
-  const dmgFiles = fs.readdirSync(appOutDir.replace('/mac-arm64', '')).filter(file => file.endsWith('.dmg'))
+  const appName = context.packager.appInfo.productFilename || context.packager.appInfo.productName
+  const appPath = path.join(appOutDir, `${appName}.app`)
   
-  if (dmgFiles.length === 0) {
-    throw new Error('No DMG file found for notarization')
-  }
+  console.log(`🍎 Starting app notarization for: ${appPath}`)
   
-  const dmgPath = path.join(appOutDir.replace('/mac-arm64', ''), dmgFiles[0])
-  
-  console.log(`🍎 Starting notarization for DMG: ${dmgPath}`)
-  
-  // Check if DMG exists
-  if (!fs.existsSync(dmgPath)) {
-    throw new Error(`DMG not found at: ${dmgPath}`)
+  // Check if app exists
+  if (!fs.existsSync(appPath)) {
+    throw new Error(`App not found at: ${appPath}`)
   }
 
   // Prepare notarization options
   let notarizeOptions = {
-    appPath: dmgPath,
+    appPath: appPath,
     tool: 'notarytool'
   }
 
@@ -98,31 +92,30 @@ async function notarizeApp(context) {
     await performNotarizationWithRetry(notarizeOptions)
   }
   
-  console.log('✅ Notarization completed successfully!')
+  console.log('✅ App notarization completed successfully!')
   
-  // Verify stapling worked on the DMG
-  console.log('🔍 Verifying notarization ticket was stapled on DMG...')
+  // Verify stapling worked on the app
+  console.log('🔍 Verifying app notarization ticket was stapled...')
   try {
-    const { execSync } = require('child_process')
-    const result = execSync(`xcrun stapler validate "${dmgPath}"`, { 
+    const result = execSync(`xcrun stapler validate "${appPath}"`, { 
       encoding: 'utf8',
       timeout: 30000
     })
-    console.log('✅ DMG notarization ticket verification successful!')
+    console.log('✅ App notarization ticket verification successful!')
   } catch (error) {
-    console.warn('⚠️ DMG stapler validation failed:', error.message)
+    console.warn('⚠️ App stapler validation failed:', error.message)
     console.log('🔄 Waiting 10 seconds for stapling to complete...')
     await sleep(10000)
     
     try {
-      const result = execSync(`xcrun stapler validate "${dmgPath}"`, { 
+      const result = execSync(`xcrun stapler validate "${appPath}"`, { 
         encoding: 'utf8',
         timeout: 30000
       })
-      console.log('✅ DMG notarization ticket verification successful after wait!')
+      console.log('✅ App notarization ticket verification successful after wait!')
     } catch (retryError) {
-      console.error('❌ DMG stapler validation still failing after wait:', retryError.message)
-      throw new Error(`DMG stapling verification failed: ${retryError.message}`)
+      console.error('❌ App stapler validation still failing after wait:', retryError.message)
+      throw new Error(`App stapling verification failed: ${retryError.message}`)
     }
   }
 }
@@ -130,18 +123,18 @@ async function notarizeApp(context) {
 async function performNotarizationWithRetry(options) {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      console.log(`📤 Notarization attempt ${attempt}/${MAX_ATTEMPTS}`)
+      console.log(`📤 App notarization attempt ${attempt}/${MAX_ATTEMPTS}`)
       
       await notarize(options)
       
-      console.log('🎉 Notarization successful!')
+      console.log('🎉 App notarization successful!')
       return
       
     } catch (error) {
-      console.error(`❌ Notarization attempt ${attempt} failed:`, error.message)
+      console.error(`❌ App notarization attempt ${attempt} failed:`, error.message)
       
       if (attempt === MAX_ATTEMPTS) {
-        throw new Error(`Notarization failed after ${MAX_ATTEMPTS} attempts: ${error.message}`)
+        throw new Error(`App notarization failed after ${MAX_ATTEMPTS} attempts: ${error.message}`)
       }
       
       const delay = Math.pow(2, attempt - 1) * 1000 // Exponential backoff: 1s, 2s, 4s
