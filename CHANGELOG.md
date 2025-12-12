@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.54] - 2024-12-12
+
+### Fixed
+- **CRITICAL BUG: DMG Notarization Was Being Skipped**: Fixed platform detection bug in notarize-dmg.js
+- **Root Cause**: afterAllArtifactBuild context doesn't have electronPlatformName property
+- **Result**: DMG notarization was completely skipped, leaving DMGs with invalid tickets
+- **Solution**: Remove incorrect platform check, process all .dmg files found
+
+---
+
+## [0.2.53] - 2024-12-12
+
+### Fixed
+- **SIMPLIFIED: DMG-Only Notarization**: Following Apple's recommendation to notarize only the DMG (automatically notarizes contents)
+- **Removed App Notarization**: No longer notarizing app bundle separately, only the DMG containing signed app
+- **Apple Best Practice**: "When you notarize a DMG, everything inside is automatically unpacked and notarized as well"
+- **Single Pass**: One notarization call for the entire distribution package
+
+---
+
 ## [0.2.52] - 2024-12-12
 
 ### Fixed

@@ -10,18 +10,15 @@ async function sleep(ms) {
 }
 
 async function notarizeDMG(context) {
-  if (context.electronPlatformName !== 'darwin') {
-    console.log('Skipping DMG notarization - not building for macOS')
-    return
-  }
-
   // Find all DMG files in the output directory
   const dmgFiles = context.artifactPaths.filter(filePath => filePath.endsWith('.dmg'))
   
   if (dmgFiles.length === 0) {
-    console.log('No DMG files found for notarization')
+    console.log('Skipping DMG notarization - no DMG files found')
     return
   }
+  
+  console.log(`Found ${dmgFiles.length} DMG file(s) for notarization`)
 
   for (const dmgPath of dmgFiles) {
     console.log(`🍎 Starting DMG notarization for: ${dmgPath}`)
