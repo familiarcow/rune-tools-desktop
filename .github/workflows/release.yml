@@ -134,13 +134,12 @@ jobs:
           echo "📦 Testing electron-builder DMG: $DMG_FILE"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           
-          # Test 1: DMG should have notarization ticket (correct approach)
-          echo "🔍 Test 1: DMG notarization ticket check"
+          # Test 1: DMG should be unsigned, app inside should be notarized
+          echo "🔍 Test 1: DMG should be unsigned (standard practice)"
           if xcrun stapler validate "$DMG_FILE" 2>/dev/null; then
-            echo "✅ DMG has notarization ticket (correct for DMG distribution)"
+            echo "⚠️ DMG has notarization ticket (unusual but not wrong)"
           else
-            echo "❌ CRITICAL: DMG lacks notarization ticket"
-            exit 1
+            echo "✅ DMG is unsigned (correct - app inside should be notarized)"
           fi
           
           # Test 2: DMG Gatekeeper assessment  
@@ -153,8 +152,8 @@ jobs:
             echo "⚠️ DMG Gatekeeper assessment unclear - checking app inside"
           fi
           
-          # Test 3: App inside DMG can be launched (functionality test)
-          echo "🔍 Test 3: App inside DMG functionality"
+          # Test 3: App inside DMG should be notarized (CRITICAL TEST)
+          echo "🔍 Test 3: App inside DMG notarization validation"
           MOUNT_POINT="/tmp/eb-test-mount-$$"
           mkdir -p "$MOUNT_POINT"
           
@@ -162,8 +161,26 @@ jobs:
             APP_IN_DMG=$(find "$MOUNT_POINT" -name "*.app" -type d | head -1)
             if [ -n "$APP_IN_DMG" ]; then
               echo "Found app: $APP_IN_DMG"
-              echo "✅ App extracted successfully from notarized DMG"
-              echo "📋 NOTE: App inherits notarization from parent DMG"
+              
+              # CRITICAL: Test app notarization
+              echo "🔍 Testing app notarization with stapler..."
+              if xcrun stapler validate "$APP_IN_DMG"; then
+                echo "✅ App has valid notarization ticket!"
+              else
+                echo "❌ CRITICAL: App lacks notarization ticket!"
+                hdiutil detach "$MOUNT_POINT" -quiet || true
+                exit 1
+              fi
+              
+              # Test app with spctl  
+              echo "🔍 Testing app with spctl..."
+              if spctl -a -vvv "$APP_IN_DMG" 2>&1 | grep -q "accepted"; then
+                echo "✅ App passes Gatekeeper assessment!"
+              else
+                echo "❌ CRITICAL: App fails Gatekeeper assessment!"
+                hdiutil detach "$MOUNT_POINT" -quiet || true
+                exit 1
+              fi
             else
               echo "❌ No app found in DMG"
               hdiutil detach "$MOUNT_POINT" -quiet || true
@@ -177,10 +194,10 @@ jobs:
           fi
           
           echo ""
-          echo "🎉 SUCCESS: DMG notarization worked perfectly!"
-          echo "✅ DMG has notarization ticket stapled to it"
-          echo "✅ DMG can be distributed via GitHub releases"  
-          echo "✅ App inside DMG inherits notarization from parent DMG"
+          echo "🎉 SUCCESS: App notarization worked perfectly!"
+          echo "✅ App inside DMG has notarization ticket stapled to it"
+          echo "✅ App passes Gatekeeper assessment"  
+          echo "✅ DMG can be distributed via GitHub releases"
           echo "✅ Ready for distribution"
 
       - name: Create GitHub release with preserved notarization
@@ -265,23 +282,43 @@ jobs:
             exit 1
           fi
           
-          # Validate the downloaded DMG has notarization ticket
-          echo "🔍 Validating downloaded DMG notarization..."
-          if xcrun stapler validate "downloaded.dmg"; then
-            echo "✅ SUCCESS: Downloaded DMG has valid notarization ticket"
-            
-            # Also test spctl on the DMG
-            if spctl -a -vvv "downloaded.dmg" 2>&1 | grep -q "accepted"; then
-              echo "✅ SUCCESS: Downloaded DMG passes Gatekeeper assessment"
-              echo "🎉 NOTARIZATION PRESERVED through GitHub releases!"
+          # Validate the app inside the downloaded DMG has notarization
+          echo "🔍 Validating app inside downloaded DMG..."
+          VALIDATION_MOUNT_POINT="/tmp/validation-mount-$$"
+          mkdir -p "$VALIDATION_MOUNT_POINT"
+          
+          if hdiutil attach "downloaded.dmg" -mountpoint "$VALIDATION_MOUNT_POINT" -quiet; then
+            DOWNLOADED_APP=$(find "$VALIDATION_MOUNT_POINT" -name "*.app" -type d | head -1)
+            if [ -n "$DOWNLOADED_APP" ]; then
+              echo "Found app in downloaded DMG: $DOWNLOADED_APP"
+              
+              # Test app notarization
+              if xcrun stapler validate "$DOWNLOADED_APP"; then
+                echo "✅ SUCCESS: App in downloaded DMG has valid notarization ticket"
+                
+                # Test app with spctl
+                if spctl -a -vvv "$DOWNLOADED_APP" 2>&1 | grep -q "accepted"; then
+                  echo "✅ SUCCESS: App in downloaded DMG passes Gatekeeper"
+                  echo "🎉 NOTARIZATION PRESERVED through GitHub releases!"
+                else
+                  echo "❌ CRITICAL: App in downloaded DMG fails Gatekeeper"
+                  hdiutil detach "$VALIDATION_MOUNT_POINT" -quiet || true
+                  exit 1
+                fi
+              else
+                echo "❌ CRITICAL: App in downloaded DMG LACKS notarization ticket"
+                echo "❌ NOTARIZATION LOST during GitHub upload/download"
+                hdiutil detach "$VALIDATION_MOUNT_POINT" -quiet || true
+                exit 1
+              fi
             else
-              echo "⚠️ DMG spctl check unclear - this is normal for DMG files"
-              echo "✅ DMG notarization ticket is present and valid"
-              echo "🎉 NOTARIZATION PRESERVED through GitHub releases!"
+              echo "❌ CRITICAL: No app found in downloaded DMG"
+              hdiutil detach "$VALIDATION_MOUNT_POINT" -quiet || true
+              exit 1
             fi
+            hdiutil detach "$VALIDATION_MOUNT_POINT" -quiet || true
           else
-            echo "❌ CRITICAL: Downloaded DMG LACKS notarization ticket"
-            echo "❌ NOTARIZATION LOST during GitHub upload/download"
+            echo "❌ CRITICAL: Failed to mount downloaded DMG"
             exit 1
           fi
           

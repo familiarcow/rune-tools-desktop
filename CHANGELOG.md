@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.66] - 2024-12-12
+
+### Fixed
+- **UPDATE TESTS**: Corrected CI validation to test app inside DMG for notarization tickets
+- **Proper Validation**: Test stapler and spctl on the app bundle, not the DMG
+- **End-to-End Testing**: Updated post-upload validation to test downloaded app notarization
+- **Complete Workflow**: Now testing the actual user experience path correctly
+
+---
+
 ## [0.2.65] - 2024-12-12
 
 ### Fixed
