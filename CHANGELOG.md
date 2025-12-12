@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.65] - 2024-12-12
+
+### Fixed
+- **CORRECT APPROACH DISCOVERED**: Switch back to afterSign hook for app notarization
+- **Following Working Examples**: Successful projects notarize the app bundle, not DMG
+- **Proper Workflow**: Sign app → notarize app → staple to app → create DMG with notarized app
+- **Research-Based**: Based on multiple working Electron projects that successfully distribute via GitHub
+- **Revert Complex Changes**: Remove HTTP upload workaround, use standard GitHub CLI upload
+
+---
+
 ## [0.2.64] - 2024-12-12
 
 ### Fixed
