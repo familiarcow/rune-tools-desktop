@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.18] - 2024-12-11
+
+### Fixed
+- **Platform-Specific Builds**: Fixed Windows build failure caused by Unix shell commands in monitoring script
+- **macOS Monitoring**: Enhanced macOS build with verbose notarization logging and progress monitoring
+- **Windows Compatibility**: Separate simple build process for Windows without Unix-specific monitoring
+- **90-Minute Timeout**: Extended timeout for both platforms to handle worst-case delays
+
+---
+
 ## [0.2.17] - 2024-12-11
 
 ### Fixed

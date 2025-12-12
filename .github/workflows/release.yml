@@ -68,7 +68,8 @@ jobs:
         shell: powershell
 
 
-      - name: Build application
+      - name: Build application (macOS with monitoring)
+        if: runner.os == 'macOS'
         run: |
           # Start build in background with verbose logging
           npm run dist &
@@ -85,7 +86,7 @@ jobs:
           wait $BUILD_PID
         timeout-minutes: 90
         env:
-          DEBUG: ${{ runner.os == 'macOS' && 'electron-builder,electron-notarize,electron-notarize:verbose' || 'electron-builder' }}
+          DEBUG: electron-builder,electron-notarize,electron-notarize:verbose
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
@@ -93,6 +94,16 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Build application (Windows)
+        if: runner.os == 'Windows'
+        run: npm run dist
+        timeout-minutes: 90
+        env:
+          DEBUG: electron-builder
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
+          GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
       - name: Create release manifest
         run: node scripts/create-manifest.js
