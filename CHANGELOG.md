@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.17] - 2024-12-11
+
+### Fixed
+- **Extended Timeout**: Increased build timeout to 90 minutes to handle worst-case Apple notarization delays
+- **Persistent Server Issues**: Apple notarization servers experiencing unusually long response times (45+ minutes)
+- **Maximum Tolerance**: Allow up to 90 minutes for complete signing and notarization pipeline
+
+---
+
 ## [0.2.15] - 2024-12-11
 
 ### Fixed

@@ -69,10 +69,23 @@ jobs:
 
 
       - name: Build application
-        run: npm run dist
-        timeout-minutes: 45
+        run: |
+          # Start build in background with verbose logging
+          npm run dist &
+          BUILD_PID=$!
+          
+          # Monitor progress every 5 minutes
+          while kill -0 $BUILD_PID 2>/dev/null; do
+            sleep 300  # 5 minutes
+            echo "Build still running at $(date)..."
+            ps aux | grep -E "(electron|notary)" | grep -v grep || echo "No electron/notary processes found"
+          done
+          
+          # Wait for completion
+          wait $BUILD_PID
+        timeout-minutes: 90
         env:
-          DEBUG: ${{ runner.os == 'macOS' && 'electron-builder,electron-notarize' || 'electron-builder' }}
+          DEBUG: ${{ runner.os == 'macOS' && 'electron-builder,electron-notarize,electron-notarize:verbose' || 'electron-builder' }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
