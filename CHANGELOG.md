@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.22] - 2024-12-12
+
+### Fixed
+- **Complete Notarization Fix**: Fixed "App is Damaged" error by properly configuring notarytool in GitHub Actions
+- **Notarization Profile Setup**: Added proper Apple notarization keychain profile configuration
+- **GitHub Actions Enhancement**: Removed deprecated notarization environment variables in favor of keychain profiles
+- **macOS Gatekeeper Compatibility**: Apps downloaded from GitHub releases now properly notarized and trusted by macOS
+
+---
+
 ## [0.2.21] - 2024-12-12
 
 ### Fixed
