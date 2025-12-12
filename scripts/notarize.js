@@ -93,6 +93,32 @@ async function notarizeApp(context) {
   }
   
   console.log('✅ Notarization completed successfully!')
+  
+  // Verify stapling worked
+  console.log('🔍 Verifying notarization ticket was stapled...')
+  try {
+    const { execSync } = require('child_process')
+    const result = execSync(`xcrun stapler validate "${notarizeOptions.appPath}"`, { 
+      encoding: 'utf8',
+      timeout: 30000
+    })
+    console.log('✅ Notarization ticket verification successful!')
+  } catch (error) {
+    console.warn('⚠️ Stapler validation failed:', error.message)
+    console.log('🔄 Waiting 10 seconds for stapling to complete...')
+    await sleep(10000)
+    
+    try {
+      const result = execSync(`xcrun stapler validate "${notarizeOptions.appPath}"`, { 
+        encoding: 'utf8',
+        timeout: 30000
+      })
+      console.log('✅ Notarization ticket verification successful after wait!')
+    } catch (retryError) {
+      console.error('❌ Stapler validation still failing after wait:', retryError.message)
+      throw new Error(`Stapling verification failed: ${retryError.message}`)
+    }
+  }
 }
 
 async function performNotarizationWithRetry(options) {
