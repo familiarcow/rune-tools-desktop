@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.41] - 2024-12-12
+
+### Changed
+- **MAJOR: Standard electron-builder Notarization**: Switched from complex manual process to standard electron-builder approach
+- **Simplified Workflow**: Let electron-builder handle entire signing → notarization → stapling → DMG creation pipeline
+- **Robust Process**: Use proven electron-builder patterns instead of custom manual workflow
+- **Comprehensive Verification**: Added testing to ensure electron-builder's notarization works correctly
+- **GitHub CLI Upload**: Preserve file attributes during distribution
+
+### Fixed
+- **Process Simplification**: Removed complex manual notarization workflow that was error-prone
+- **Standard Configuration**: Use electron-builder's built-in notarization with teamId configuration
+- **Proper Environment Variables**: Standard APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID setup
+
+---
+
 ## [0.2.40] - 2024-12-12
 
 ### Fixed
