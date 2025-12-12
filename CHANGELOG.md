@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.31] - 2024-12-12
+
+### Fixed
+- **Simple DMG Creation**: Switch from electron-builder to native macOS hdiutil for DMG creation after notarization
+- **Reliability**: Remove electron-builder complexity from post-notarization DMG step
+- **GitHub Actions**: Use simple file operations to package notarized app into DMG
+
+---
+
 ## [0.2.30] - 2024-12-12
 
 ### Fixed
