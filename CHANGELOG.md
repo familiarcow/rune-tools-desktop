@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.51] - 2024-12-12
+
+### Fixed
+- **CRITICAL: Timing Issue Fix**: Added explicit stapler validation after notarization completion
+- **Stapling Verification**: Prevent DMG creation before stapling is fully complete
+- **Ticket Validation**: Wait 10 seconds if initial stapler validation fails to ensure stapling finishes
+- **Root Cause Resolution**: Fixed invalid ticket issue where spctl reports "Unnotarized Developer ID" despite successful notarization
+
+---
+
 ## [0.2.50] - 2024-12-12
 
 ### Fixed
