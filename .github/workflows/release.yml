@@ -71,16 +71,17 @@ jobs:
       - name: Build application (macOS) 
         if: runner.os == 'macOS'
         run: |
-          echo "🔨 Building Electron app with standard electron-builder notarization..."
-          echo "📋 electron-builder will handle the complete Apple sequence:"
-          echo "   1. Build and sign app bundle with Developer ID certificate"
-          echo "   2. Submit app bundle to Apple for notarization"
-          echo "   3. Wait for Apple approval and download ticket"
-          echo "   4. Staple notarization ticket to app bundle"
-          echo "   5. Create DMG containing the notarized app"
-          echo "   6. Submit DMG to Apple for notarization" 
-          echo "   7. Staple notarization ticket to DMG"
-          echo "   8. Final notarized DMG ready for distribution"
+          echo "🔨 Building Electron app with custom notarization (Asgardex-style)..."
+          echo "📋 Process sequence:"
+          echo "   1. electron-builder builds and signs app bundle with Developer ID certificate"
+          echo "   2. Custom afterSign hook (scripts/notarize.js) handles notarization:"
+          echo "      - Uses App Store Connect API key authentication (preferred)"
+          echo "      - Falls back to Apple ID authentication if needed"
+          echo "      - Implements retry logic with exponential backoff"
+          echo "      - Submits app bundle to Apple for notarization"
+          echo "      - Downloads and staples notarization ticket to app bundle"
+          echo "   3. electron-builder creates DMG containing the notarized app"
+          echo "   4. Final DMG ready for distribution (unsigned DMG, notarized app inside)"
           echo ""
           npm run dist
         timeout-minutes: 90
@@ -91,7 +92,9 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          NOTARIZE_TOOL: notarytool
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
       - name: Build application (Windows)
@@ -114,8 +117,8 @@ jobs:
       - name: Verify electron-builder notarization (macOS)
         if: runner.os == 'macOS'
         run: |
-          echo "🔍 VERIFYING: electron-builder's notarization results"
-          echo "Expected: notarized app bundle inside unsigned DMG (Apple best practice)"
+          echo "🔍 VERIFYING: Custom notarization results"
+          echo "Expected: notarized app bundle inside unsigned DMG (Asgardex-style)"
           echo ""
           
           # Find the DMG created by electron-builder
@@ -194,9 +197,9 @@ jobs:
           fi
           
           echo ""
-          echo "🎉 SUCCESS: electron-builder followed Apple best practices!"
+          echo "🎉 SUCCESS: Custom notarization worked perfectly!"
           echo "✅ DMG is unsigned (recommended by Apple)"
-          echo "✅ App inside DMG is notarized and stapled"  
+          echo "✅ App inside DMG is notarized and stapled by custom script"  
           echo "✅ App passes Gatekeeper assessment"
           echo "✅ Ready for distribution"
 
