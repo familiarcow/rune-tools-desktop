@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.25] - 2024-12-12
+
+### Fixed
+- **Complete Notarization Fix**: Fixed "App is Damaged" error by excluding secp256k1 binaries from signing process
+- **Code Signing Architecture**: Restructured build process to avoid afterSign hook conflicts with notarization
+- **Binary Inclusion Strategy**: Use extraFiles to include secp256k1 prebuilds without signature conflicts
+- **macOS Security Compatibility**: App now properly passes macOS Gatekeeper and notarization requirements
+
+---
+
 ## [0.2.24] - 2024-12-12
 
 ### Fixed

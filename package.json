@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -59,10 +59,16 @@
     },
     "files": [
       "dist/**/*",
-      "images/**/*",
-      "node_modules/**/*"
+      "images/**/*", 
+      "node_modules/**/*",
+      "!node_modules/secp256k1/prebuilds/**/*"
     ],
-    "afterSign": "build/afterSignHook.js",
+    "extraFiles": [
+      {
+        "from": "node_modules/secp256k1/prebuilds",
+        "to": "Resources/app.asar.unpacked/node_modules/secp256k1/prebuilds"
+      }
+    ],
     "mac": {
       "icon": "images/logos/odin.icns",
       "category": "public.app-category.productivity",
