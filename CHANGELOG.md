@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.28] - 2024-12-12
+
+### Fixed
+- **Correct Notarization Workflow**: Follow Apple/Electron best practices - notarize app bundle before DMG creation
+- **Zip-based Notarization**: Use proper zip format for notarization submission as required by Apple
+- **App Bundle Stapling**: Staple notarization ticket to the app itself, not the DMG
+
+---
+
 ## [0.2.27] - 2024-12-12
 
 ### Fixed
