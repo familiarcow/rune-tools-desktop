@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.44] - 2024-12-12
+
+### Fixed
+- **CRITICAL MISSING DEPENDENCY**: Added @electron/notarize package required for electron-builder notarization
+- **Root Cause Identified**: electron-builder was silently skipping notarization due to missing @electron/notarize dependency
+- **Standard Notarization**: electron-builder will now actually run Apple notarization process
+- **Verification System**: Comprehensive tests will confirm notarization works properly
+
+---
+
 ## [0.2.43] - 2024-12-12
 
 ### Fixed
