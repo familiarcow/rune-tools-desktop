@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.56] - 2024-12-12
+
+### Fixed
+- **CORRECT APPROACH: App-Only Notarization**: Follow official @electron/notarize recommendation
+- **Unsigned DMG**: Create unsigned DMG with notarized app inside (Apple best practice)
+- **Root Cause**: Was incorrectly trying to notarize DMG instead of app contents
+- **Documentation**: "use an unsigned, unnotarized DMG with a notarized .app inside"
+
+---
+
 ## [0.2.55] - 2024-12-12
 
 ### Fixed
