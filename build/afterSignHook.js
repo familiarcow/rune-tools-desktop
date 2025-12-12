@@ -81,5 +81,19 @@ exports.default = async function(context) {
     signFrameworkComponents(mantlePath, identity);
   }
   
+  // Sign secp256k1.node binary that was causing notarization failure
+  const secp256k1Path = path.join(appPath, 'Contents', 'Resources', 'app.asar.unpacked', 'node_modules', 'secp256k1', 'prebuilds', 'darwin-arm64', 'secp256k1.node');
+  if (fs.existsSync(secp256k1Path)) {
+    try {
+      console.log('Signing secp256k1.node binary...');
+      execSync(`codesign --force --sign "${identity}" --timestamp --options runtime "${secp256k1Path}"`, { stdio: 'inherit' });
+      console.log('  ✅ secp256k1.node signed successfully');
+    } catch (error) {
+      console.error(`Failed to sign secp256k1.node: ${error.message}`);
+    }
+  } else {
+    console.log('secp256k1.node not found at expected path');
+  }
+  
   console.log('afterSign hook completed');
 };
