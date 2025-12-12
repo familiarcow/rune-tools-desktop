@@ -95,14 +95,17 @@ async function notarizeDMG(context) {
     
     console.log('✅ DMG notarization completed successfully!')
     
-    // Verify stapling worked on the DMG
+    // Verify stapling worked on the DMG - CRITICAL: MUST NOT FAIL
     console.log('🔍 Verifying DMG notarization ticket was stapled...')
+    let validationSuccess = false
+    
     try {
       const result = execSync(`xcrun stapler validate "${dmgPath}"`, { 
         encoding: 'utf8',
         timeout: 30000
       })
       console.log('✅ DMG notarization ticket verification successful!')
+      validationSuccess = true
     } catch (error) {
       console.warn('⚠️ DMG stapler validation failed:', error.message)
       console.log('🔄 Waiting 10 seconds for stapling to complete...')
@@ -114,10 +117,31 @@ async function notarizeDMG(context) {
           timeout: 30000
         })
         console.log('✅ DMG notarization ticket verification successful after wait!')
+        validationSuccess = true
       } catch (retryError) {
         console.error('❌ DMG stapler validation still failing after wait:', retryError.message)
-        throw new Error(`DMG stapling verification failed: ${retryError.message}`)
+        console.error('❌ CRITICAL: DMG notarization verification FAILED')
+        console.error('❌ This DMG will show malware warnings to users')
+        process.exit(1) // FAIL THE BUILD
       }
+    }
+    
+    if (!validationSuccess) {
+      console.error('❌ CRITICAL: DMG validation failed - build must fail')
+      process.exit(1)
+    }
+    
+    // Additional spctl check
+    try {
+      const spctlResult = execSync(`spctl -a -t open --context context:primary-signature -v "${dmgPath}"`, { 
+        encoding: 'utf8',
+        timeout: 30000
+      })
+      console.log('✅ DMG spctl verification successful!')
+    } catch (spctlError) {
+      console.error('❌ CRITICAL: DMG spctl verification failed:', spctlError.message)
+      console.error('❌ This DMG will be rejected by Gatekeeper')
+      process.exit(1) // FAIL THE BUILD
     }
   }
 }
