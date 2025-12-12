@@ -245,7 +245,7 @@ jobs:
       - name: Windows release upload
         if: runner.os == 'Windows'  
         run: |
-          echo "📦 Uploading Windows release assets..."
+          Write-Host "Uploading Windows release assets..."
           $VERSION = "${{ github.ref_name }}" -replace '^v', ''
           
           # Upload Windows files
@@ -253,7 +253,7 @@ jobs:
             if (Test-Path $_.FullName) {
               Write-Host "Uploading: $($_.Name)"
               gh release upload "v$VERSION" $_.FullName
-              Write-Host "✅ Uploaded: $($_.Name)"
+              Write-Host "Uploaded: $($_.Name)"
             }
           }
           
@@ -263,7 +263,7 @@ jobs:
             gh release upload "v$VERSION" release-manifest.json.asc
           }
           
-          Write-Host "🎉 Windows assets uploaded successfully"
+          Write-Host "Windows assets uploaded successfully"
         shell: powershell
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}

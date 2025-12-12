@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.43] - 2024-12-12
+
+### Fixed
+- **Windows PowerShell Fix**: Remove emoji characters that cause PowerShell encoding issues in GitHub Actions
+- **Upload Script**: Fix Windows release upload PowerShell script parsing errors
+
+---
+
 ## [0.2.42] - 2024-12-12
 
 ### Fixed
