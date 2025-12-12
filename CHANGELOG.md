@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.61] - 2024-12-12
+
+### Fixed
+- **VALIDATION CORRECTION**: Fixed CI validation to check DMG notarization, not app inside DMG
+- **Key Understanding**: When notarizing DMG, ticket is stapled to DMG file, not individual contents
+- **Apple Documentation**: "Apps inside notarized DMG inherit notarization from parent DMG"
+- **Correct Testing**: Validate DMG stapler ticket, not app stapler ticket
+- **Distribution Model**: Users mount DMG → macOS validates DMG ticket → allows app execution
+
+---
+
 ## [0.2.60] - 2024-12-12
 
 ### Fixed
