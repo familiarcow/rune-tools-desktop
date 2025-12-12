@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.47] - 2024-12-12
+
+### Fixed
+- **VERIFICATION SCRIPT FIX**: Updated GitHub Actions verification to expect unsigned DMG (Apple best practice)
+- **Correct Expectations**: Script now passes when DMG is unsigned but app inside is notarized
+- **Apple Guidelines Compliance**: Verification now aligns with Apple's recommendation for DMG distribution
+- **Build Success**: Builds will now succeed when following correct notarization approach
+
+---
+
 ## [0.2.46] - 2024-12-12
 
 ### Fixed  
