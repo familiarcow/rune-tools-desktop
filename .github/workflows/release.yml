@@ -123,15 +123,18 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          # Remove old DMG
-          rm -f dist-electron/*.dmg
-          
           # Find the notarized app
           APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
           APP_NAME=$(basename "$APP_PATH")
           VERSION=$(node -p "require('./package.json').version")
           
           echo "Creating DMG with notarized app: $APP_NAME"
+          
+          # Wait a moment and force remove old DMG files
+          sleep 2
+          sudo pkill -f "dist-electron.*dmg" || true
+          sleep 1
+          rm -f dist-electron/*.dmg dist-electron/*.dmg.blockmap || true
           
           # Create temporary DMG directory
           mkdir -p dist-electron/dmg-temp

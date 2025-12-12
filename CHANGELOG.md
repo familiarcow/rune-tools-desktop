@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.36] - 2024-12-12
+
+### Fixed
+- **DMG Recreation Fix**: Add delays and force cleanup to resolve "Resource busy" error during DMG recreation
+- **File Handle Issues**: Kill processes using DMG files before attempting recreation
+- **Notarization Sequence**: App notarization in v0.2.35 succeeded, fixing DMG step
+
+---
+
 ## [0.2.35] - 2024-12-12
 
 ### Fixed
