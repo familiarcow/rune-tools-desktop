@@ -131,16 +131,61 @@ async function notarizeDMG(context) {
       process.exit(1)
     }
     
-    // Additional spctl check
+    // CRITICAL: Verify app inside DMG also has notarization ticket
+    console.log('🔍 Verifying app inside DMG has notarization ticket...')
     try {
-      const spctlResult = execSync(`spctl -a -t open --context context:primary-signature -v "${dmgPath}"`, { 
+      // Mount the DMG to check the app inside
+      const mountOutput = execSync(`hdiutil attach "${dmgPath}" -readonly -nobrowse`, {
         encoding: 'utf8',
         timeout: 30000
       })
-      console.log('✅ DMG spctl verification successful!')
-    } catch (spctlError) {
-      console.error('❌ CRITICAL: DMG spctl verification failed:', spctlError.message)
-      console.error('❌ This DMG will be rejected by Gatekeeper')
+      
+      const mountPoint = mountOutput.split('\n').find(line => line.includes('/Volumes/')).split('\t').pop().trim()
+      console.log(`📁 Mounted DMG at: ${mountPoint}`)
+      
+      // Find the app inside
+      const appInsideDMG = path.join(mountPoint, 'Rune.Tools (beta).app')
+      
+      if (fs.existsSync(appInsideDMG)) {
+        console.log(`🔍 Checking notarization ticket on app: ${appInsideDMG}`)
+        
+        const appStaplerResult = execSync(`xcrun stapler validate "${appInsideDMG}"`, {
+          encoding: 'utf8',
+          timeout: 30000
+        })
+        console.log('✅ App inside DMG has valid notarization ticket!')
+        
+        // Also check spctl on the app
+        const appSpctlResult = execSync(`spctl -a -vvv "${appInsideDMG}"`, {
+          encoding: 'utf8', 
+          timeout: 30000
+        })
+        console.log('✅ App inside DMG passes spctl verification!')
+        
+      } else {
+        console.error('❌ CRITICAL: Could not find app inside DMG')
+        process.exit(1)
+      }
+      
+      // Unmount the DMG
+      execSync(`hdiutil detach "${mountPoint}"`, { timeout: 30000 })
+      console.log('📤 Unmounted DMG')
+      
+    } catch (appCheckError) {
+      console.error('❌ CRITICAL: App inside DMG validation failed:', appCheckError.message)
+      console.error('❌ App inside DMG lacks valid notarization ticket')
+      
+      // Try to unmount on error
+      try {
+        const mountOutput = execSync(`hdiutil info | grep "${dmgPath}"`, { encoding: 'utf8' })
+        if (mountOutput) {
+          const mountPoint = mountOutput.split('\n')[0].split('\t').pop().trim()
+          execSync(`hdiutil detach "${mountPoint}"`, { timeout: 10000 })
+        }
+      } catch (unmountError) {
+        console.warn('⚠️ Could not unmount DMG after error')
+      }
+      
       process.exit(1) // FAIL THE BUILD
     }
   }

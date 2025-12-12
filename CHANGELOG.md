@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.55] - 2024-12-12
+
+### Fixed
+- **CRITICAL: Validate App Inside DMG**: Added validation that app inside DMG has notarization ticket
+- **Mount and Test**: DMG notarization script now mounts DMG and validates the app inside
+- **Fail Build if App Invalid**: Build fails if app inside DMG lacks notarization ticket
+- **Complete Verification**: Both DMG and app inside must pass stapler + spctl validation
+
+---
+
 ## [0.2.54] - 2024-12-12
 
 ### Fixed
