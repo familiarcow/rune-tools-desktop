@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.38] - 2024-12-12
+
+### Fixed
+- **CRITICAL NOTARIZATION UPLOAD FIX**: Fixed release uploading electron-builder's unnotarized DMG instead of manually notarized DMG
+- **DMG File Cleanup**: Now removes ALL existing DMG files before creating the notarized version
+- **Single DMG Strategy**: Ensures only the properly notarized DMG exists for upload to GitHub releases
+- **Root Cause**: CI had both electron-builder DMG (unnotarized) and manual DMG (notarized) in directory
+
+---
+
 ## [0.2.37] - 2024-12-12
 
 ### Fixed

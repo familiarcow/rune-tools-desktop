@@ -143,11 +143,12 @@ jobs:
             exit 1
           fi
           
-          # Wait a moment and force remove old DMG files
+          # Wait a moment and force remove ALL existing DMG files (including electron-builder's unnotarized DMG)
           sleep 2
           sudo pkill -f "dist-electron.*dmg" || true
           sleep 1
           rm -f dist-electron/*.dmg dist-electron/*.dmg.blockmap || true
+          echo "🗑️ Removed all existing DMG files to ensure only notarized DMG exists"
           
           # Create temporary DMG directory
           mkdir -p dist-electron/dmg-temp
