@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.32] - 2024-12-12
+
+### Added
+- **Verification Step**: Add explicit notarization ticket verification in CI before DMG creation
+- **Debug Stapling**: Check if stapling actually works in CI environment vs just reporting success
+- **Gatekeeper Test**: Test spctl assessment in CI to catch stapling failures early
+
+---
+
 ## [0.2.31] - 2024-12-12
 
 ### Fixed

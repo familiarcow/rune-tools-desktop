@@ -130,6 +130,26 @@ jobs:
           
           echo "✅ App notarization and stapling completed successfully"
 
+      - name: Verify notarization ticket (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Find the app
+          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
+          echo "Verifying notarization ticket for: $APP_PATH"
+          
+          # Check if ticket is actually stapled
+          if xcrun stapler validate "$APP_PATH"; then
+            echo "✅ Notarization ticket verified - stapling successful"
+          else
+            echo "❌ No notarization ticket found - stapling failed"
+            exit 1
+          fi
+          
+          # Also check with spctl
+          echo "Checking Gatekeeper assessment..."
+          spctl -a -vvv "$APP_PATH" || echo "Gatekeeper check completed"
+
       - name: Create DMG after notarization (macOS)
         if: runner.os == 'macOS'
         shell: bash
