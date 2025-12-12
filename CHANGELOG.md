@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.57] - 2024-12-12
+
+### Fixed
+- **OFFICIAL APPLE GUIDANCE: DMG-Only Notarization**: Follow Apple's exact recommendation
+- **Apple Quote**: "When you notarize a DMG, everything inside is automatically unpacked and notarized as well"
+- **Single Pass**: "You only need to upload the 'top level' file for notarizing in a single pass"
+- **Unsigned DMG**: Apple accepts unsigned DMG and notarizes contents automatically
+- **Comprehensive Validation**: Enhanced testing to verify both DMG and app inside are properly notarized
+
+---
+
 ## [0.2.56] - 2024-12-12
 
 ### Fixed
