@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.21] - 2024-12-12
+
+### Fixed
+- **Critical signIgnore Fix**: Removed signIgnore for secp256k1 prebuilds that was preventing signing
+- **Enhanced Binary Signing**: Comprehensive recursive signing of all .node files in secp256k1 prebuilds
+- **Build Failure Prevention**: afterSignHook now fails the build if signing fails, ensuring no unsigned binaries
+- **Apple Notarization**: Final fix for "binary is not signed" errors blocking notarization
+
+---
+
 ## [0.2.20] - 2024-12-12
 
 ### Fixed

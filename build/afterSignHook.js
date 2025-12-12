@@ -81,18 +81,36 @@ exports.default = async function(context) {
     signFrameworkComponents(mantlePath, identity);
   }
   
-  // Sign secp256k1.node binary that was causing notarization failure
-  const secp256k1Path = path.join(appPath, 'Contents', 'Resources', 'app.asar.unpacked', 'node_modules', 'secp256k1', 'prebuilds', 'darwin-arm64', 'secp256k1.node');
-  if (fs.existsSync(secp256k1Path)) {
-    try {
-      console.log('Signing secp256k1.node binary...');
-      execSync(`codesign --force --sign "${identity}" --timestamp --options runtime "${secp256k1Path}"`, { stdio: 'inherit' });
-      console.log('  ✅ secp256k1.node signed successfully');
-    } catch (error) {
-      console.error(`Failed to sign secp256k1.node: ${error.message}`);
+  // Sign all secp256k1 prebuilds - this was being ignored by signIgnore
+  const secp256k1Dir = path.join(appPath, 'Contents', 'Resources', 'app.asar.unpacked', 'node_modules', 'secp256k1', 'prebuilds');
+  if (fs.existsSync(secp256k1Dir)) {
+    console.log('Scanning secp256k1 prebuilds directory...');
+    
+    function signSecp256k1Files(dir) {
+      const items = fs.readdirSync(dir);
+      for (const item of items) {
+        const itemPath = path.join(dir, item);
+        const stat = fs.statSync(itemPath);
+        
+        if (stat.isDirectory()) {
+          signSecp256k1Files(itemPath); // Recursively scan subdirectories
+        } else if (item.endsWith('.node')) {
+          try {
+            console.log(`  Signing secp256k1 binary: ${path.relative(secp256k1Dir, itemPath)}`);
+            execSync(`codesign --force --sign "${identity}" --timestamp --options runtime "${itemPath}"`, { stdio: 'inherit' });
+            console.log(`    ✅ ${item} signed successfully`);
+          } catch (error) {
+            console.error(`    ❌ Failed to sign ${item}: ${error.message}`);
+            throw error; // Fail the build if signing fails
+          }
+        }
+      }
     }
+    
+    signSecp256k1Files(secp256k1Dir);
   } else {
-    console.log('secp256k1.node not found at expected path');
+    console.log('secp256k1 prebuilds directory not found');
+    console.log(`Expected path: ${secp256k1Dir}`);
   }
   
   console.log('afterSign hook completed');
