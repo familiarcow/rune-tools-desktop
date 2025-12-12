@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.48] - 2024-12-12
+
+### Fixed
+- **NOTARYTOOL CONFIGURATION**: Explicitly configure @electron/notarize to use notarytool instead of deprecated altool
+- **Invalid Ticket Fix**: Address issue where notarization tickets were present but invalid causing spctl rejection
+- **Team ID Specification**: Add explicit teamId to notarize configuration for better compatibility
+- **Modern Notarization**: Use Apple's current notarization toolchain to resolve "Unnotarized Developer ID" errors
+
+---
+
 ## [0.2.47] - 2024-12-12
 
 ### Fixed
