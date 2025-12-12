@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.29] - 2024-12-12
+
+### Fixed
+- **CRITICAL: Workflow Order Fix**: Fixed notarization timing - now notarize app BEFORE DMG creation instead of after
+- **Build Process**: Modified electron-builder to create app bundle first, then notarize, then create DMG with notarized content
+- **Gatekeeper Resolution**: DMG now contains properly notarized and stapled app, resolving "Unnotarized Developer ID" errors
+
+---
+
 ## [0.2.28] - 2024-12-12
 
 ### Fixed

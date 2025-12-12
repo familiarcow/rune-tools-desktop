@@ -130,6 +130,19 @@ jobs:
           
           echo "✅ App notarization and stapling completed successfully"
 
+      - name: Create DMG after notarization (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Find the notarized app
+          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
+          echo "Creating DMG for notarized app at: $APP_PATH"
+          
+          # Create DMG using electron-builder's DMG functionality
+          npx electron-builder --mac --config.mac.target.target=dmg --config.directories.output=dist-electron --config.directories.buildResources=build --dir="$APP_PATH"
+          
+          echo "✅ DMG created with notarized app"
+
       - name: Build application (Windows)
         if: runner.os == 'Windows'
         run: npm run dist
