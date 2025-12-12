@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.20] - 2024-12-12
+
+### Fixed
+- **Complete Apple Notarization Fix**: All changes now properly integrated in single release
+- **Notarization Validation**: Fixed critical Apple notarization failure by signing secp256k1.node binary
+- **Shell Compatibility**: Fixed macOS monitoring script to run in bash instead of PowerShell
+- **Binary Signing**: Enhanced afterSignHook.js to sign all required native binaries for successful notarization
+
+---
+
 ## [0.2.19] - 2024-12-12
 
 ### Fixed
