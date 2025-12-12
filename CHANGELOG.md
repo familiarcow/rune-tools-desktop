@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.33] - 2024-12-12
+
+### Changed
+- **MAJOR: Standard electron-builder Approach**: Switch to standard electron-builder notarization instead of manual process
+- **Simplified Workflow**: Remove all custom notarization, stapling, and DMG creation code
+- **Best Practices**: Use standard APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD environment variables
+- **Built-in Process**: Let electron-builder handle entire signing → notarization → stapling → DMG creation workflow
+- **Proper Integration**: Restore DMG target and remove manual workflow complexity
+
+---
+
 ## [0.2.32] - 2024-12-12
 
 ### Added

@@ -68,111 +68,18 @@ jobs:
         shell: powershell
 
 
-      - name: Build application (macOS with monitoring)
+      - name: Build application (macOS)
         if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          # Start build in background with verbose logging
-          npm run dist &
-          BUILD_PID=$!
-          
-          # Monitor progress every 5 minutes
-          while kill -0 $BUILD_PID 2>/dev/null; do
-            sleep 300  # 5 minutes
-            echo "Build still running at $(date)..."
-            ps aux | grep -E "(electron|notary)" | grep -v grep || echo "No electron/notary processes found"
-          done
-          
-          # Wait for completion
-          wait $BUILD_PID
+        run: npm run dist
         timeout-minutes: 90
         env:
           DEBUG: electron-builder
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-
-      - name: Notarize and staple macOS app
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          # Set up notarization profile
-          xcrun notarytool store-credentials "APPLE_NOTARIZATION_PROFILE" \
-            --apple-id "${{ secrets.APPLE_ID }}" \
-            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
-            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
-          
-          # Find the built app (before DMG creation)
-          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
-          echo "Found app at: $APP_PATH"
-          
-          # Create zip for notarization (required format)
-          ZIP_PATH="${APP_PATH}.zip"
-          echo "Creating zip for notarization..."
-          ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
-          
-          # Notarize the zipped app
-          echo "Starting notarization of app..."
-          xcrun notarytool submit "$ZIP_PATH" \
-            --keychain-profile "APPLE_NOTARIZATION_PROFILE" \
-            --wait
-          
-          # Remove the zip file
-          rm "$ZIP_PATH"
-          
-          # Staple the notarization ticket to the app
-          echo "Stapling notarization ticket to app..."
-          xcrun stapler staple "$APP_PATH"
-          
-          # Verify stapling
-          echo "Verifying app stapling..."
-          xcrun stapler validate "$APP_PATH"
-          
-          echo "✅ App notarization and stapling completed successfully"
-
-      - name: Verify notarization ticket (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          # Find the app
-          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
-          echo "Verifying notarization ticket for: $APP_PATH"
-          
-          # Check if ticket is actually stapled
-          if xcrun stapler validate "$APP_PATH"; then
-            echo "✅ Notarization ticket verified - stapling successful"
-          else
-            echo "❌ No notarization ticket found - stapling failed"
-            exit 1
-          fi
-          
-          # Also check with spctl
-          echo "Checking Gatekeeper assessment..."
-          spctl -a -vvv "$APP_PATH" || echo "Gatekeeper check completed"
-
-      - name: Create DMG after notarization (macOS)
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          # Find the notarized app
-          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
-          APP_NAME=$(basename "$APP_PATH")
-          VERSION=$(node -p "require('./package.json').version")
-          
-          echo "Creating DMG for notarized app: $APP_NAME"
-          
-          # Create temporary DMG directory
-          mkdir -p dist-electron/dmg-temp
-          cp -R "$APP_PATH" dist-electron/dmg-temp/
-          
-          # Create DMG
-          DMG_PATH="dist-electron/${APP_NAME%-*}-${VERSION}-arm64.dmg"
-          hdiutil create -volname "Rune.Tools (beta)" -srcfolder dist-electron/dmg-temp -ov -format UDZO "$DMG_PATH"
-          
-          # Clean up temp directory
-          rm -rf dist-electron/dmg-temp
-          
-          echo "✅ DMG created: $DMG_PATH"
 
       - name: Build application (Windows)
         if: runner.os == 'Windows'
