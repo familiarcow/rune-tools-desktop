@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.2.33",
+  "version": "0.2.34",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -77,7 +77,7 @@
       "gatekeeperAssess": false,
       "entitlements": "assets/entitlements.mac.plist",
       "entitlementsInherit": "assets/entitlements.mac.plist",
-      "notarize": true,
+      "notarize": false,
       "extendInfo": {
         "LSUIElement": false
       },

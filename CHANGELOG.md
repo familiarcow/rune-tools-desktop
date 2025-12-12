@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.34] - 2024-12-12
+
+### Fixed
+- **CORRECT NOTARIZATION**: Follow Apple best practices - notarize the DMG file, not just the app bundle
+- **DMG Notarization**: Disable electron-builder app notarization and notarize the final DMG instead
+- **Proper Distribution**: DMG itself gets notarization ticket, resolving "malware" warnings when opening DMG
+- **Apple Guidelines**: "If you ship a disk image to end users, it's best to sign, notarize, and staple that disk image"
+
+---
+
 ## [0.2.33] - 2024-12-12
 
 ### Changed
