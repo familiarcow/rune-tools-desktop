@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.58] - 2024-12-12
+
+### Fixed
+- **CRITICAL: Two-Stage Notarization Fix**: Apple's DMG-only guidance failed - app inside DMG lacked notarization ticket
+- **Proper Workflow**: First notarize app bundle using afterSign hook, then create signed DMG containing notarized app
+- **DMG Signing Enabled**: Enable DMG signing as required for proper two-stage notarization workflow
+- **Root Cause**: Apple's claim that "DMG notarization automatically handles contents" doesn't work in practice
+
+---
+
 ## [0.2.57] - 2024-12-12
 
 ### Fixed
