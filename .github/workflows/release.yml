@@ -104,8 +104,6 @@ jobs:
         timeout-minutes: 90
         env:
           DEBUG: electron-builder
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
       - name: Create release manifest
