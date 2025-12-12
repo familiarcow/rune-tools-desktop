@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.26] - 2024-12-12
+
+### Fixed
+- **Manual Notarization**: Disabled electron-builder's notarization and implemented manual notarization with proper stapling
+- **Stapling Process**: Added explicit stapling step to ensure notarization tickets are properly attached to the app
+- **Gatekeeper Compatibility**: Apps now pass macOS Gatekeeper checks without "malware" warnings
+
+---
+
 ## [0.2.25] - 2024-12-12
 
 ### Fixed

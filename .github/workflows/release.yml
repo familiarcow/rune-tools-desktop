@@ -87,14 +87,40 @@ jobs:
           wait $BUILD_PID
         timeout-minutes: 90
         env:
-          DEBUG: electron-builder,electron-notarize,electron-notarize:verbose
+          DEBUG: electron-builder
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-          # Notarization credentials for electron-builder 26.3.4
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Notarize and staple macOS app
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Set up notarization profile
+          xcrun notarytool store-credentials "APPLE_NOTARIZATION_PROFILE" \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
+          
+          # Find the built app
+          APP_PATH=$(find dist-electron -name "*.app" -type d | head -1)
+          echo "Found app at: $APP_PATH"
+          
+          # Notarize the app
+          echo "Starting notarization..."
+          xcrun notarytool submit "$APP_PATH" \
+            --keychain-profile "APPLE_NOTARIZATION_PROFILE" \
+            --wait
+          
+          # Staple the notarization ticket
+          echo "Stapling notarization ticket..."
+          xcrun stapler staple "$APP_PATH"
+          
+          # Verify stapling
+          echo "Verifying stapling..."
+          xcrun stapler validate "$APP_PATH"
+          
+          echo "✅ Notarization and stapling completed successfully"
 
       - name: Build application (Windows)
         if: runner.os == 'Windows'
