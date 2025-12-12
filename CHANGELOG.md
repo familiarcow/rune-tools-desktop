@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.62] - 2024-12-12
+
+### Fixed
+- **POST-UPLOAD VALIDATION**: Fixed filename detection and URL encoding in validation script
+- **Debug Information**: Added debugging to show available files and filename resolution
+- **URL Encoding**: Properly encode special characters in DMG filename for GitHub downloads
+- **Fallback Logic**: Use expected filename if file detection fails
+- **Complete End-to-End Test**: Validate entire pipeline from build → upload → download → user experience
+
+---
+
 ## [0.2.61] - 2024-12-12
 
 ### Fixed

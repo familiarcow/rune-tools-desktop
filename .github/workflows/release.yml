@@ -240,7 +240,22 @@ jobs:
           cd "$DOWNLOAD_DIR"
           
           # Download using curl to simulate user experience
-          DMG_NAME=$(ls -1 ../../../dist-electron/*.dmg | head -1 | xargs basename)
+          # Debug: Show what files exist
+          echo "🔍 Debug: Files in dist-electron:"
+          ls -la ../../../dist-electron/ || echo "dist-electron not found"
+          
+          # Get DMG filename from dist-electron directory
+          DMG_NAME=$(find ../../../dist-electron -name "*.dmg" -type f 2>/dev/null | head -1 | xargs basename 2>/dev/null)
+          if [ -z "$DMG_NAME" ]; then
+            # Fallback: construct expected filename with URL encoding for special chars
+            DMG_NAME="Rune.Tools%20%28beta%29-${VERSION}-arm64.dmg"
+            echo "⚠️ Using expected DMG filename: $DMG_NAME"
+          else
+            echo "📋 Found DMG filename: $DMG_NAME"
+            # URL encode the filename for GitHub downloads
+            DMG_NAME=$(echo "$DMG_NAME" | sed 's/ /%20/g' | sed 's/(/%28/g' | sed 's/)/%29/g')
+            echo "📋 URL encoded filename: $DMG_NAME"
+          fi
           RELEASE_URL="https://github.com/familiarcow/rune-tools-desktop/releases/download/v${VERSION}/${DMG_NAME}"
           
           echo "📥 Downloading from GitHub releases: $RELEASE_URL"
