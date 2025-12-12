@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.42] - 2024-12-12
+
+### Fixed
+- **Configuration Fix**: Use boolean `"notarize": true` instead of object format for electron-builder v26.3.4 compatibility
+- **Standard Format**: electron-builder expects boolean notarize flag with environment variables
+
+---
+
 ## [0.2.41] - 2024-12-12
 
 ### Changed
