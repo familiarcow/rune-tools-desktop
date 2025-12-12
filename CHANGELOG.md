@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.63] - 2024-12-12
+
+### Fixed
+- **FILENAME FORMAT**: Corrected expected DMG filename to match actual GitHub release format
+- **Actual Format**: `Rune.Tools.beta.-VERSION-arm64.dmg` (dots and dash, not spaces and parentheses)
+- **Discovery**: Found real filename by checking GitHub release assets via API
+- **Final Test**: This should complete the end-to-end validation successfully
+
+---
+
 ## [0.2.62] - 2024-12-12
 
 ### Fixed
