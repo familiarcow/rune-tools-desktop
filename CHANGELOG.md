@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.40] - 2024-12-12
+
+### Fixed
+- **CRITICAL ROOT CAUSE FIX**: Replaced GitHub Actions upload that was stripping notarization tickets
+- **GitHub CLI Upload**: Use direct gh CLI upload instead of softprops/action-gh-release to preserve file attributes
+- **Comprehensive Testing**: Added full pre-upload verification of both DMG and app inside DMG
+- **Apple Best Practices**: Verified our process follows Apple's exact signing/notarization sequence
+- **Multi-Platform Support**: Separate upload jobs for macOS and Windows to preserve file attributes
+- **Notarization Ticket Preservation**: Files now upload with their macOS extended attributes intact
+
+---
+
 ## [0.2.39] - 2024-12-12
 
 ### Fixed

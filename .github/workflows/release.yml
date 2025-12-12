@@ -70,7 +70,18 @@ jobs:
 
       - name: Build application (macOS)
         if: runner.os == 'macOS'
-        run: npm run dist
+        run: |
+          echo "🔨 Building Electron app with code signing..."
+          echo "📋 Following Apple's recommended sequence:"
+          echo "   1. Build app bundle with electron-builder"
+          echo "   2. Sign app bundle with Developer ID certificate"  
+          echo "   3. Manual notarization of app bundle"
+          echo "   4. Staple notarization ticket to app"
+          echo "   5. Create DMG containing notarized app"
+          echo "   6. Sign and notarize DMG"
+          echo "   7. Staple notarization ticket to DMG"
+          echo ""
+          npm run dist
         timeout-minutes: 90
         env:
           DEBUG: electron-builder
@@ -215,36 +226,142 @@ jobs:
       - name: Sign manifest
         run: gpg --batch --yes --armor --detach-sign release-manifest.json
 
-      - name: Final verification before upload (macOS)
+      - name: Comprehensive pre-upload verification (macOS)
         if: runner.os == 'macOS'
         run: |
-          echo "🔍 FINAL VERIFICATION: Checking all DMG files before upload"
+          echo "🔍 COMPREHENSIVE VERIFICATION: Testing files before upload"
+          
           for dmg in dist-electron/*.dmg; do
             if [ -f "$dmg" ]; then
-              echo "Checking: $dmg"
-              xcrun stapler validate "$dmg" || {
-                echo "❌ CRITICAL: $dmg does not have notarization ticket!"
-                echo "This DMG will cause malware warnings. Failing build."
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              echo "📦 Testing: $dmg"
+              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+              
+              # Test 1: Stapler validation
+              echo "🔍 Test 1: Stapler validation"
+              if xcrun stapler validate "$dmg"; then
+                echo "✅ DMG has valid notarization ticket"
+              else
+                echo "❌ CRITICAL: DMG validation failed!"
                 exit 1
-              }
-              echo "✅ $dmg has valid notarization ticket"
+              fi
+              
+              # Test 2: Gatekeeper assessment  
+              echo "🔍 Test 2: Gatekeeper assessment"
+              if spctl -a -vvv "$dmg" 2>&1 | grep -q "accepted"; then
+                echo "✅ DMG passes Gatekeeper assessment"
+              else
+                echo "⚠️ DMG may not pass Gatekeeper (expected if DMG not signed separately)"
+              fi
+              
+              # Test 3: Mount and test app inside
+              echo "🔍 Test 3: Testing app inside DMG"
+              MOUNT_POINT="/tmp/test-mount-$$"
+              mkdir -p "$MOUNT_POINT"
+              
+              if hdiutil attach "$dmg" -mountpoint "$MOUNT_POINT" -quiet; then
+                APP_IN_DMG=$(find "$MOUNT_POINT" -name "*.app" -type d | head -1)
+                if [ -n "$APP_IN_DMG" ]; then
+                  echo "Found app in DMG: $APP_IN_DMG"
+                  
+                  # Test app notarization
+                  if xcrun stapler validate "$APP_IN_DMG"; then
+                    echo "✅ App inside DMG has valid notarization ticket"
+                  else
+                    echo "❌ CRITICAL: App inside DMG lacks notarization ticket!"
+                    hdiutil detach "$MOUNT_POINT" -quiet || true
+                    exit 1
+                  fi
+                  
+                  # Test app Gatekeeper
+                  if spctl -a -vvv "$APP_IN_DMG" 2>&1 | grep -q "accepted"; then
+                    echo "✅ App passes Gatekeeper assessment"
+                  else
+                    echo "❌ CRITICAL: App fails Gatekeeper assessment!"
+                    spctl -a -vvv "$APP_IN_DMG" || true
+                    hdiutil detach "$MOUNT_POINT" -quiet || true
+                    exit 1
+                  fi
+                else
+                  echo "❌ No app found in DMG"
+                  hdiutil detach "$MOUNT_POINT" -quiet || true
+                  exit 1
+                fi
+                
+                hdiutil detach "$MOUNT_POINT" -quiet || true
+              else
+                echo "❌ Failed to mount DMG"
+                exit 1
+              fi
+              
+              echo "🎉 ALL TESTS PASSED - DMG is properly notarized and ready"
             fi
           done
 
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist-electron/*.dmg
-            dist-electron/*.pkg
-            dist-electron/*.zip
-            dist-electron/*.exe
-            release-manifest.json
-            release-manifest.json.asc
-            changelog.md
-          draft: false
-          prerelease: false
-          body_path: changelog.md
+      - name: Create GitHub release with preserved notarization
+        if: runner.os == 'macOS'
+        run: |
+          echo "🚀 Creating GitHub release with preserved file attributes..."
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          
+          # Create the release
+          gh release create "v${VERSION}" \
+            --title "Rune Tools Desktop v${VERSION}" \
+            --notes-file changelog.md \
+            --verify-tag
+          
+          echo "📦 Uploading release assets with preserved notarization..."
+          
+          # Upload DMG files with preserved extended attributes
+          for file in dist-electron/*.dmg; do
+            if [ -f "$file" ]; then
+              echo "Uploading notarized DMG: $file"
+              # Use gh CLI which should preserve macOS extended attributes
+              gh release upload "v${VERSION}" "$file"
+              echo "✅ Uploaded: $(basename "$file")"
+            fi
+          done
+          
+          # Upload other platform files
+          for file in dist-electron/*.pkg dist-electron/*.zip dist-electron/*.exe; do
+            if [ -f "$file" ]; then
+              echo "Uploading: $file"  
+              gh release upload "v${VERSION}" "$file"
+              echo "✅ Uploaded: $(basename "$file")"
+            fi
+          done
+          
+          # Upload manifest and signature
+          gh release upload "v${VERSION}" release-manifest.json
+          gh release upload "v${VERSION}" release-manifest.json.asc
+          
+          echo "🎉 All assets uploaded successfully with preserved attributes"
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+
+      - name: Windows release upload
+        if: runner.os == 'Windows'  
+        run: |
+          echo "📦 Uploading Windows release assets..."
+          $VERSION = "${{ github.ref_name }}" -replace '^v', ''
+          
+          # Upload Windows files
+          Get-ChildItem dist-electron/*.exe, dist-electron/*.zip | ForEach-Object {
+            if (Test-Path $_.FullName) {
+              Write-Host "Uploading: $($_.Name)"
+              gh release upload "v$VERSION" $_.FullName
+              Write-Host "✅ Uploaded: $($_.Name)"
+            }
+          }
+          
+          # Upload manifest files (created by macOS job)  
+          if (Test-Path release-manifest.json) {
+            gh release upload "v$VERSION" release-manifest.json
+            gh release upload "v$VERSION" release-manifest.json.asc
+          }
+          
+          Write-Host "🎉 Windows assets uploaded successfully"
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
