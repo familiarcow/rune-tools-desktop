@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.35] - 2024-12-12
+
+### Fixed
+- **CRITICAL FIX**: Notarize app bundle FIRST, then create DMG with notarized app
+- **Correct Sequence**: Sign app → Notarize app → Staple app → Create DMG → Notarize DMG  
+- **App Bundle Notarization**: Ensure the app inside DMG has notarization ticket stapled
+- **Root Cause**: Was notarizing DMG but app bundle inside remained unnotarized
+
+---
+
 ## [0.2.34] - 2024-12-12
 
 ### Fixed
