@@ -70,6 +70,7 @@ jobs:
 
       - name: Build application (macOS with monitoring)
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           # Start build in background with verbose logging
           npm run dist &
