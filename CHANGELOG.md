@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.23] - 2024-12-12
+
+### Fixed
+- **Windows Build Fix**: Removed macOS code signing certificate from Windows build environment
+- **Cross-Platform Compatibility**: Fixed Windows builds failing due to incorrect certificate configuration
+
+---
+
 ## [0.2.22] - 2024-12-12
 
 ### Fixed
