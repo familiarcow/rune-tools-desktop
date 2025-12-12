@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.24] - 2024-12-12
+
+### Fixed
+- **Notarization API Compatibility**: Fixed electron-builder 26.3.4 compatibility by using boolean notarize flag
+- **Restored Notarization Credentials**: Re-added required Apple ID environment variables for GitHub Actions
+- **Build Configuration**: Corrected notarization setup for proper macOS app distribution
+
+---
+
 ## [0.2.23] - 2024-12-12
 
 ### Fixed

@@ -42,12 +42,6 @@ jobs:
           
           # Clean up
           rm certificate.p12
-          
-          # Set up notarization profile
-          xcrun notarytool store-credentials "APPLE_NOTARIZATION_PROFILE" \
-            --apple-id "${{ secrets.APPLE_ID }}" \
-            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
-            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}"
 
       - name: Import GPG key (Unix)
         if: runner.os != 'Windows'
@@ -97,6 +91,10 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
           CSC_NAME: "Developer ID Application: Tyler Bond (974SWJKYUP)"
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          # Notarization credentials for electron-builder 26.3.4
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Build application (Windows)
         if: runner.os == 'Windows'
