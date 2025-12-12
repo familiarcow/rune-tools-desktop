@@ -201,9 +201,33 @@ jobs:
           for file in dist-electron/*.dmg; do
             if [ -f "$file" ]; then
               echo "Uploading notarized DMG: $file"
-              # Use gh CLI which should preserve macOS extended attributes
-              gh release upload "v${VERSION}" "$file"
-              echo "✅ Uploaded: $(basename "$file")"
+              
+              # CRITICAL: Verify notarization before upload
+              echo "🔍 Pre-upload verification:"
+              if xcrun stapler validate "$file"; then
+                echo "✅ DMG has valid notarization ticket before upload"
+              else
+                echo "❌ CRITICAL: DMG lacks notarization ticket before upload!"
+                exit 1
+              fi
+              
+              # Try alternative upload method to preserve extended attributes
+              echo "🚀 Using direct HTTP upload to preserve notarization..."
+              
+              # Get upload URL for this asset
+              FILENAME=$(basename "$file")
+              UPLOAD_URL=$(curl -s -H "Authorization: token $GH_TOKEN" \
+                "https://api.github.com/repos/familiarcow/rune-tools-desktop/releases/tags/v${VERSION}" \
+                | jq -r '.upload_url' | sed 's/{?name,label}//')
+              
+              # Upload with preserved extended attributes
+              curl -X POST \
+                -H "Authorization: token $GH_TOKEN" \
+                -H "Content-Type: application/octet-stream" \
+                --data-binary "@$file" \
+                "${UPLOAD_URL}?name=${FILENAME}"
+                
+              echo "✅ Uploaded: $(basename "$file") via HTTP"
             fi
           done
           

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.64] - 2024-12-12
+
+### Fixed
+- **BYPASS GitHub CLI**: Use direct HTTP upload to GitHub API to preserve macOS extended attributes
+- **Pre-upload Verification**: Verify DMG has notarization ticket before upload
+- **Root Cause**: GitHub CLI appears to strip extended attributes containing notarization tickets
+- **Alternative Method**: Use curl with --data-binary to preserve file metadata
+- **Last Resort**: If this fails, the issue is fundamental with GitHub's file storage
+
+---
+
 ## [0.2.63] - 2024-12-12
 
 ### Fixed
