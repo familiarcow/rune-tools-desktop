@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.39] - 2024-12-12
+
+### Fixed
+- **CRITICAL DMG VERIFICATION**: Added final verification step before upload to catch notarization failures
+- **Build Failure on Invalid DMG**: Build now fails if any DMG lacks notarization ticket before upload
+- **Debug Missing Tickets**: Added comprehensive DMG validation to identify why tickets are missing from releases
+- **Prevent Malware Warnings**: Ensures no unnotarized DMGs reach GitHub releases
+
+---
+
 ## [0.2.38] - 2024-12-12
 
 ### Fixed

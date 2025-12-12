@@ -215,6 +215,21 @@ jobs:
       - name: Sign manifest
         run: gpg --batch --yes --armor --detach-sign release-manifest.json
 
+      - name: Final verification before upload (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          echo "🔍 FINAL VERIFICATION: Checking all DMG files before upload"
+          for dmg in dist-electron/*.dmg; do
+            if [ -f "$dmg" ]; then
+              echo "Checking: $dmg"
+              xcrun stapler validate "$dmg" || {
+                echo "❌ CRITICAL: $dmg does not have notarization ticket!"
+                echo "This DMG will cause malware warnings. Failing build."
+                exit 1
+              }
+              echo "✅ $dmg has valid notarization ticket"
+            fi
+          done
 
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
