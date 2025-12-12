@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.30] - 2024-12-12
+
+### Fixed
+- **DMG Creation Fix**: Added missing GH_TOKEN and --publish=never flag to DMG creation step
+- **Build Process**: Fixed electron-builder DMG creation failing due to missing GitHub token
+
+---
+
 ## [0.2.29] - 2024-12-12
 
 ### Fixed
