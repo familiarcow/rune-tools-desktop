@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.1] - 2024-12-12
+## [0.3.1] - 2024-12-13
 
 ### 🧹 Clean Release Files
 
@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - **CLEAR NAMING**: Platform-specific filenames (macOS/Windows in filename)
 - **DOCUMENTATION**: Fixed .pkg → .dmg references in installation docs
 - **SECURITY**: Manual updates only - no auto-updates to preserve user control
+- **README**: Added README
 
 ---
 
