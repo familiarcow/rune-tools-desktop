@@ -308,7 +308,7 @@ function checkCriticalRequirements() {
 function runQuickEncodingTest() {
   try {
     // Quick test of the encoding logic
-    const MockMemolessService = require('./test-memoless-final.js').MockMemolessService;
+    const MockMemolessService = require('../memoless/test-memoless-final.js').MockMemolessService;
     const service = new MockMemolessService();
     
     // Test exact examples from docs
