@@ -1,7 +1,7 @@
 {
   "name": "rune-tools-desktop",
   "productName": "Rune.Tools (beta)",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && vite build && cp src/preload.js dist/preload.js && cp -r images dist/renderer/",
@@ -54,6 +54,7 @@
   "build": {
     "appId": "com.familiarcow.runetools",
     "productName": "Rune.Tools (beta)",
+    "publish": null,
     "directories": {
       "output": "dist-electron",
       "buildResources": "build"
@@ -93,10 +94,18 @@
     },
     "afterSign": "scripts/notarize-app.js",
     "dmg": {
-      "sign": false
+      "sign": false,
+      "artifactName": "${productName}-macOS-${version}-${arch}.${ext}"
     },
     "win": {
-      "icon": "images/logos/odin.png"
+      "icon": "images/logos/odin.png",
+      "artifactName": "${productName}-Windows-${version}-${arch}.${ext}",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
     },
     "linux": {
       "icon": "images/logos/odin.png"
