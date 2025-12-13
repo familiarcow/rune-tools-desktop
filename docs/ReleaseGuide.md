@@ -161,12 +161,12 @@ git push && git push --tags
 Since we're not using code signing certificates, users will encounter security warnings. Include these instructions in your releases:
 
 ### macOS Users  
-1. Download the `.pkg` installer file
-2. If you see "cannot be opened because it is from an unidentified developer":
-   - Right-click the installer and select "Open"
+1. Download the `.dmg` file
+2. Double-click to mount the disk image
+3. Drag "Rune.Tools (beta)" to your Applications folder
+4. If you see "cannot be opened because it is from an unidentified developer":
+   - Right-click the app in Applications and select "Open"
    - Click "Open" in the confirmation dialog
-3. Follow the installer prompts (requires admin password)
-4. App installs automatically and launches without additional warnings
 
 ### Windows Users  
 1. Download the `.exe` file
@@ -181,7 +181,7 @@ Since we're not using code signing certificates, users will encounter security w
 ### Test Local Build
 ```bash
 npm run dist
-ls -la dist-electron/  # Verify .pkg and .exe files exist
+ls -la dist-electron/  # Verify .dmg and .exe files exist
 ```
 
 ### Test Update Notification
