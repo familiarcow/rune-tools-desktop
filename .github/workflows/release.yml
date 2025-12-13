@@ -54,7 +54,7 @@ jobs:
 
       - name: Build application
         run: |
-          echo "🔨 Building Electron app with custom notarization..."
+          echo "Building Electron app with custom notarization..."
           npm run dist
         timeout-minutes: 90
         env:
@@ -80,7 +80,7 @@ jobs:
 
       - name: Create GitHub release
         run: |
-          echo "🚀 Creating GitHub release..."
+          echo "Creating GitHub release..."
           VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
           
           # Create the release
@@ -89,14 +89,14 @@ jobs:
             --notes-file changelog.md \
             --verify-tag
           
-          echo "📦 Uploading macOS release assets..."
+          echo "Uploading macOS release assets..."
           
           # Upload macOS files
           for file in dist-electron/*.dmg dist-electron/*.pkg dist-electron/*.zip; do
             if [ -f "$file" ]; then
               echo "Uploading: $file"
               gh release upload "v${VERSION}" "$file"
-              echo "✅ Uploaded: $(basename "$file")"
+              echo "Uploaded: $(basename "$file")"
             fi
           done
           
@@ -104,7 +104,7 @@ jobs:
           gh release upload "v${VERSION}" release-manifest.json
           gh release upload "v${VERSION}" release-manifest.json.asc
           
-          echo "🎉 macOS assets uploaded successfully"
+          echo "macOS assets uploaded successfully"
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 
@@ -143,7 +143,7 @@ jobs:
 
       - name: Upload Windows release assets
         run: |
-          Write-Host "📦 Uploading Windows release assets..."
+          Write-Host "Uploading Windows release assets..."
           $VERSION = "${{ github.ref_name }}" -replace '^v', ''
           
           # Upload Windows files
@@ -151,11 +151,11 @@ jobs:
             if (Test-Path $_.FullName) {
               Write-Host "Uploading: $($_.Name)"
               gh release upload "v$VERSION" $_.FullName
-              Write-Host "✅ Uploaded: $($_.Name)"
+              Write-Host "Uploaded: $($_.Name)"
             }
           }
           
-          Write-Host "🎉 Windows assets uploaded successfully"
+          Write-Host "Windows assets uploaded successfully"
         shell: powershell
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
