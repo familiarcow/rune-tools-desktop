@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2025-12-24
+- Add public PGP key for signature verification
+- Fix manifest signature
+
 ## [0.3.3] - 2025-12-13
 - Fix windows build (remove emoji for powershell)
 

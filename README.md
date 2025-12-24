@@ -62,6 +62,42 @@ The application uses industry-standard encryption (AES-256-GCM) with proper key 
 - **SHA256 Checksums** - Release manifests include checksums for tamper detection
 - **Secure Distribution** - Releases distributed via GitHub's secure infrastructure
 
+### Verifying Release Authenticity
+
+To verify download integrity and authenticity:
+
+1. **Download the release manifest and signature:**
+   ```bash
+   curl -L -O https://github.com/familiarcow/rune-tools-desktop/releases/latest/download/release-manifest.json
+   curl -L -O https://github.com/familiarcow/rune-tools-desktop/releases/latest/download/release-manifest.json.asc
+   ```
+
+2. **Import the public signing key:**
+   ```bash
+   # From keyserver
+   gpg --keyserver keyserver.ubuntu.com --recv-keys C6DFD39BDE409E5DE7F9CA4E4733B6751C785B7F
+   
+   # Or from repository
+   curl -L https://raw.githubusercontent.com/familiarcow/rune-tools-desktop/main/PUBKEY.asc | gpg --import
+   ```
+
+3. **Verify the signature:**
+   ```bash
+   gpg --verify release-manifest.json.asc release-manifest.json
+   ```
+
+4. **Check file checksums:**
+   ```bash
+   # Extract checksum from manifest and verify downloaded file
+   cat release-manifest.json | jq -r '.checksums["filename.dmg"]' 
+   shasum -a 256 filename.dmg
+   ```
+
+**GPG Key Information:**
+- **Key ID**: `4733B6751C785B7F`
+- **Fingerprint**: `C6DFD39BDE409E5DE7F9CA4E4733B6751C785B7F`
+- **Owner**: `familiarcow <familiarcow@proton.me>`
+
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/familiarcow/rune-tools-desktop/issues)
