@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2025-12-24
+- Fix build regex pattern matching
+
 ## [0.3.4] - 2025-12-24
 - Add public PGP key for signature verification
 - Fix manifest signature
